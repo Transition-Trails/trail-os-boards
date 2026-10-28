@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Trail Crew Boards</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
 /* Trail Crew Boards v1: team header, eight views; renders only from Trail OS BoardData */
 :root{
@@ -15,18 +14,8 @@
   --ok:#2f7a4a; --ok-soft:#dcefe2; --warn:#a8650c; --warn-soft:#fbecd3; --crit:#b23b3b; --crit-soft:#f7dede;
   --display:"Bricolage Grotesque",Georgia,serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#111814; --surface:#18221c; --sunk:#0d130f; --line:#2c3a31; --fg:#e4ece6; --muted:#9aaba0;
-  --accent:#7cc9a0; --accent-ink:#0d1a12; --accent-soft:#1f3529;
-  --t-devops:#173f3a; --t-academy:#1c2f49; --t-penny:#4f2219; --t-marketing:#33244a;
-  --launch:#8cc3dd; --launch-soft:#1b2d38; --road:#bcaee0; --road-soft:#2a2438;
-  --ok:#7cc9a0; --ok-soft:#1d3527; --warn:#e7b05e; --warn-soft:#3a2b14; --crit:#ec8f8f; --crit-soft:#3c1d1d; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#111814; --surface:#18221c; --sunk:#0d130f; --line:#2c3a31; --fg:#e4ece6; --muted:#9aaba0;
-  --accent:#7cc9a0; --accent-ink:#0d1a12; --accent-soft:#1f3529;
-  --t-devops:#173f3a; --t-academy:#1c2f49; --t-penny:#4f2219; --t-marketing:#33244a;
-  --launch:#8cc3dd; --launch-soft:#1b2d38; --road:#bcaee0; --road-soft:#2a2438;
-  --ok:#7cc9a0; --ok-soft:#1d3527; --warn:#e7b05e; --warn-soft:#3a2b14; --crit:#ec8f8f; --crit-soft:#3c1d1d; color-scheme:dark}
+
+
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--team)}
@@ -205,7 +194,7 @@ select{font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--li
 .sched li b{display:block;font:600 12px var(--mono);color:var(--muted)}
 .sched li.done{background:var(--sunk);color:var(--muted)}
 .sched li.now{border-color:var(--team);box-shadow:inset 0 3px 0 var(--team)}
-.sched li.now b::after{content:" · now";color:var(--fg)}
+.sched li.now b::after{content:" &#183; now";color:var(--fg)}
 /* pipeline */
 .pipe{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
 @media (max-width:900px){.pipe{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -272,6 +261,35 @@ select{max-width:100%}
 .flink.linkbtn{color:var(--fg);border-bottom:1px solid var(--line)}
 .flags li.ok-li{background:var(--ok-soft)}
 #waiting{margin-top:8px}
+/* Trail OS light look (no dark theme yet) */
+:root{color-scheme:light;
+ --bg:#f6f5f1;--surface:#ffffff;--sunk:#f1f0ea;--line:#e3e1d9;--fg:#1e2a23;--muted:#5d6961;
+ --accent:#2f6b45;--accent-ink:#ffffff;--accent-soft:#e3efe6;
+ --display:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+ --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+ --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+h1,h2,h3{font-family:var(--body);letter-spacing:-.01em}
+header.top{background:var(--surface);color:var(--fg);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:18px 0}
+.eyebrow{color:var(--team);opacity:1}
+h1{font-size:clamp(24px,3vw,32px);margin:6px 0 4px}
+.sub{color:var(--muted);opacity:1}
+.teams{background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:3px}
+.teams button{color:var(--fg);opacity:1;border-radius:999px;padding:7px 14px}
+.teams button[aria-pressed="true"]{background:var(--team);color:#fff}
+.teams button:focus-visible{outline:3px solid var(--accent)}
+nav.tabs{gap:2px;margin-top:14px}
+nav.tabs a{color:var(--muted);opacity:1;border-radius:0;padding:10px 14px;border-bottom:3px solid transparent}
+nav.tabs a:hover{color:var(--fg)}
+nav.tabs a[aria-current="page"]{background:transparent;color:var(--fg);border-bottom-color:var(--team)}
+body::before{display:none}
+.panel,.feat,.person,details.bi,.tbl-wrap{border-radius:16px}
+.kpi,.stagebox,.pstage,.spr{border-radius:14px}
+.kpi b,.stagebox b,.pstage b{font-family:var(--body);font-weight:700}
+.btn.solid{border-radius:999px;padding:9px 18px}
+.btn.ghost{border-radius:999px;border-color:var(--line);color:var(--fg);background:var(--surface)}
+select,input[type=text]{border-radius:999px;padding:7px 12px}
+th{background:var(--sunk)}
 </style>
 </head>
 <body>
@@ -281,7 +299,7 @@ select{max-width:100%}
       <div>
         <div class="eyebrow">Trail Crew Boards</div>
         <h1 id="tname">Trail Crew Boards</h1>
-        <p class="sub" id="tmission">Loading from Trail OS…</p>
+        <p class="sub" id="tmission">Loading from Trail OS&#8230;</p>
       </div>
       <div class="teams" role="group" aria-label="Team" id="teambtns"></div>
     </div>
@@ -371,7 +389,7 @@ select{max-width:100%}
 </section>
 
 <section id="v-pipeline" class="view" hidden>
-  <div class="toolbar"><div><h2>Build pipeline</h2><p class="lede">Case → Change Request → Story → build items in Dev01 → change set to staging → QA → UAT → production.</p></div><span class="snap asof"></span></div>
+  <div class="toolbar"><div><h2>Build pipeline</h2><p class="lede">Case &#8594; Change Request &#8594; Story &#8594; build items in Dev01 &#8594; change set to staging &#8594; QA &#8594; UAT &#8594; production.</p></div><span class="snap asof"></span></div>
   <div class="pipe" id="pipe"></div>
   <div class="panel"><h3>Pipeline checks</h3><ul class="flags" id="pflags"></ul></div>
   <div><h3>Change requests</h3><p class="lede">Each row is one change request. The track shows how far its work has moved.</p></div>
@@ -516,13 +534,13 @@ function renderOverview(){
   let g=`<div class="mh">Feature</div>`+months.map(m=>`<div class="mh">${m.toLocaleString("en-US",{month:"short",timeZone:"UTC"})}</div>`).join("");
   teamFeatures().forEach(f=>{const n=cs.filter(c=>c.featureId===f.id).length;
     const bar=f.start&&f.end?`<div class="bar launch" style="left:${pos(f.start)}%;width:${Math.max(3,pos(f.end)-pos(f.start))}%">${esc(fmtDay(f.start))} to ${esc(fmtDay(f.end))}</div>`:`<div class="bar unplanned" style="left:0;width:100%">No dates yet</div>`;
-    g+=`<div class="lane"><div class="ln"><button type="button" class="flink linkbtn" data-feat="${esc(f.id)}">${esc(f.title||f.name)}</button><small>${esc(f.name)} · ${n} case${n===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7">${bar}</div></div>`});
+    g+=`<div class="lane"><div class="ln"><button type="button" class="flink linkbtn" data-feat="${esc(f.id)}">${esc(f.title||f.name)}</button><small>${esc(f.name)} \u00b7 ${n} case${n===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7">${bar}</div></div>`});
   const nf=cs.filter(c=>!c.featureId).length;
   if(nf)g+=`<div class="lane"><div class="ln">No Feature yet<small>${nf} case${nf===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7"><div class="bar unplanned" style="left:0;width:100%">Product owner groups these into Features</div></div></div>`;
   $("roadgrid").innerHTML=g;
   const sp=D.sprints.filter(s=>s.end>=D.today).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,3);
   const rels=D.releases.filter(r=>r.plannedDate&&r.plannedDate>=D.today);
-  $("miles").innerHTML=sp.map(s=>[s.start,`${esc(s.name)} starts`]).concat(rels.map(r=>[r.plannedDate,`${esc(r.name)} to production`])).sort((x,y)=>x[0].localeCompare(y[0])).map(([d,t])=>`<span><b>${esc(fmtDay(d))}</b> · ${t}</span>`).join("");
+  $("miles").innerHTML=sp.map(s=>[s.start,`${esc(s.name)} starts`]).concat(rels.map(r=>[r.plannedDate,`${esc(r.name)} to production`])).sort((x,y)=>x[0].localeCompare(y[0])).map(([d,t])=>`<span><b>${esc(fmtDay(d))}</b> \u00b7 ${t}</span>`).join("");
   const ins=insightsFor("overview",team);
   $("insas").textContent=ins?"From Claude, "+fmtWhen(D.insights.generatedAt):"Computed from the data";
   const F=ins||[];
@@ -556,7 +574,7 @@ const sameSet=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
 function drawPrio(){
   const s=$("fscope").value, T=D.teamBy[team]||{}, can=viewerCan.prioritize(T);
   const ids=orderDraft.ids.filter(id=>{const c=D.caseBy[id];return s==="all"||(s==="none"?!c.featureId:c.featureId===s)});
-  $("prio").innerHTML=ids.map((id,i)=>{const c=D.caseBy[id];return `<tr><td class="num">${orderDraft.ids.indexOf(id)+1}</td><td>${caseLink(c)}</td><td>${esc(c.subject)}</td><td>${fpill(c)}</td><td><span class="pill ${/High|Critical/.test(c.priority)?"high":""}">${esc(c.priority||"")}</span></td><td><span class="pill stage">${esc(stageName(c.stage))}</span></td><td>${esc(c.status||"")}</td><td>${esc(c.assignee||"Not assigned")}</td><td>${can?`<div class="ctrls"><button class="ib" data-mv="-1" data-id="${esc(id)}" aria-label="Move up" ${i===0?"disabled":""}>↑</button><button class="ib" data-mv="1" data-id="${esc(id)}" aria-label="Move down" ${i===ids.length-1?"disabled":""}>↓</button></div>`:""}</td></tr>`}).join("")||`<tr><td colspan="9" class="note">No open cases in this view.</td></tr>`;
+  $("prio").innerHTML=ids.map((id,i)=>{const c=D.caseBy[id];return `<tr><td class="num">${orderDraft.ids.indexOf(id)+1}</td><td>${caseLink(c)}</td><td>${esc(c.subject)}</td><td>${fpill(c)}</td><td><span class="pill ${/High|Critical/.test(c.priority)?"high":""}">${esc(c.priority||"")}</span></td><td><span class="pill stage">${esc(stageName(c.stage))}</span></td><td>${esc(c.status||"")}</td><td>${esc(c.assignee||"Not assigned")}</td><td>${can?`<div class="ctrls"><button class="ib" data-mv="-1" data-id="${esc(id)}" aria-label="Move up" ${i===0?"disabled":""}>\u2191</button><button class="ib" data-mv="1" data-id="${esc(id)}" aria-label="Move down" ${i===ids.length-1?"disabled":""}>\u2193</button></div>`:""}</td></tr>`}).join("")||`<tr><td colspan="9" class="note">No open cases in this view.</td></tr>`;
   $("saveorder").hidden=!(can&&orderDraft.dirty);$("reset").hidden=!(can&&orderDraft.dirty);
   $("prionote").textContent=can?"Move cases, then Save order. The saved order is the same for everyone on the team.":"The product owner, coach or staff set this order.";
 }
@@ -568,9 +586,9 @@ function renderFeatures(){
   $("stagelegend").innerHTML=STAGES.map(s=>`<span style="--c:${s.c}">${esc(s.n)}</span>`).join("");
   $("fgrid").innerHTML=fs.map(f=>{const fc=cs.filter(c=>c.featureId===f.id);
     const meter=fc.length?`<div class="meter">${STAGES.map(s=>{const n=fc.filter(c=>c.stage===s.k).length;return n?`<i style="width:${n/fc.length*100}%;background:${s.c}" title="${esc(s.n)}: ${n}"></i>`:""}).join("")}</div>`:"";
-    return `<article class="feat" id="card-${esc(f.id)}" tabindex="-1"><div class="hd"><div><div class="id">${esc(f.name)} · ${esc(f.status||"")}${f.size?" · "+esc(f.size):""}</div><h3>${esc(f.title||f.name)}</h3></div><span class="pill">${f.totalStories||0} stories</span></div>
+    return `<article class="feat" id="card-${esc(f.id)}" tabindex="-1"><div class="hd"><div><div class="id">${esc(f.name)} \u00b7 ${esc(f.status||"")}${f.size?" \u00b7 "+esc(f.size):""}</div><h3>${esc(f.title||f.name)}</h3></div><span class="pill">${f.totalStories||0} stories</span></div>
     ${f.description?`<p class="fsum">${esc(f.description)}</p>`:""}${f.definitionOfDone?`<div class="dod"><b>Definition of done</b>${esc(f.definitionOfDone)}</div>`:""}
-    ${meter}<ul class="cases">${fc.map(c=>`<li>${caseLink(c)}<span>${esc(c.subject)} <span class="note">· ${esc(stageName(c.stage))}</span></span></li>`).join("")||`<li class="note">No open cases.</li>`}</ul></article>`}).join("");
+    ${meter}<ul class="cases">${fc.map(c=>`<li>${caseLink(c)}<span>${esc(c.subject)} <span class="note">\u00b7 ${esc(stageName(c.stage))}</span></span></li>`).join("")||`<li class="note">No open cases.</li>`}</ul></article>`}).join("");
 }
 
 /* ---------- Team ---------- */
@@ -586,7 +604,7 @@ function renderTeam(){
     return `<div class="person"><div><div class="nm">${esc(m.name)}</div><div class="rl">${esc((m.roles||[]).join(" / "))}</div></div>
      <div class="load">${sb.length?`<span class="pill">${sb.length} building</span>`:""}${sq.length?`<span class="pill">${sq.length} QA</span>`:""}${ca.length?`<span class="pill stage">${ca.length} case${ca.length>1?"s":""}</span>`:""}${!load?`<span class="pill ok">Available</span>`:""}</div>
      <div class="bars" aria-label="Load">${Array.from({length:8},(_,i)=>`<i class="${i<load?"on":""}"></i>`).join("")}</div>
-     <ul class="work">${sb.map(s=>`<li>${storyLink(s)}<span>Build · ${esc(s.title)} <span class="note">(${esc(s.status)})</span></span></li>`).join("")}${sq.map(s=>`<li>${storyLink(s)}<span>QA · ${esc(s.title)}</span></li>`).join("")}${ca.map(c=>`<li>${caseLink(c)}<span>${esc(c.subject)}</span></li>`).join("")}</ul></div>`}).join("")||`<p class="note">No roster yet. Staff build team rosters on the Teams screen.</p>`;
+     <ul class="work">${sb.map(s=>`<li>${storyLink(s)}<span>Build \u00b7 ${esc(s.title)} <span class="note">(${esc(s.status)})</span></span></li>`).join("")}${sq.map(s=>`<li>${storyLink(s)}<span>QA \u00b7 ${esc(s.title)}</span></li>`).join("")}${ca.map(c=>`<li>${caseLink(c)}<span>${esc(c.subject)}</span></li>`).join("")}</ul></div>`}).join("")||`<p class="note">No roster yet. Staff build team rosters on the Teams screen.</p>`;
 }
 
 /* ---------- Discovery ---------- */
@@ -610,7 +628,7 @@ const acDots=a=>`<span class="acs" aria-label="${a[0]} passed, ${a[1]} failed, $
 function renderSprint(){
   const sp=D.sprint, all=$("allteams").checked;
   const upcoming=D.sprints.slice().sort((a,b)=>a.start.localeCompare(b.start)).filter(s=>s.end>=D.today||s===sp).slice(0,5);
-  $("cal").innerHTML=upcoming.map(s=>`<div class="spr ${s===sp?"now":s.start>D.today&&s===upcoming.find(x=>x.start>D.today)?"next":""}"><b>${esc(s.name)}</b><small>${esc(fmtDay(s.start))} – ${esc(fmtDay(s.end))}</small><small>${esc(s.status||"")}${s.goals?" · goal set":" · goals not set"}</small></div>`).join("")+D.releases.filter(r=>r.plannedDate>=D.today).slice(0,1).map(r=>`<div class="spr goal"><b>${esc(fmtDay(r.plannedDate))}</b><small>${esc(r.name)} to production</small><small>${esc(r.label||"")}</small></div>`).join("");
+  $("cal").innerHTML=upcoming.map(s=>`<div class="spr ${s===sp?"now":s.start>D.today&&s===upcoming.find(x=>x.start>D.today)?"next":""}"><b>${esc(s.name)}</b><small>${esc(fmtDay(s.start))} \u2013 ${esc(fmtDay(s.end))}</small><small>${esc(s.status||"")}${s.goals?" \u00b7 goal set":" \u00b7 goals not set"}</small></div>`).join("")+D.releases.filter(r=>r.plannedDate>=D.today).slice(0,1).map(r=>`<div class="spr goal"><b>${esc(fmtDay(r.plannedDate))}</b><small>${esc(r.name)} to production</small><small>${esc(r.label||"")}</small></div>`).join("");
   if(!sp){$("splede").textContent="No sprint covers today.";["spmeter","splegend","spkpis","spflags","kan"].forEach(id=>$(id).innerHTML="");return}
   const len=dnum(sp.end)-dnum(sp.start)+1, day=Math.min(len,Math.max(1,dnum(D.today)-dnum(sp.start)+1)), left=len-day;
   $("splede").textContent=`${sp.name} runs ${fmtDay(sp.start)} to ${fmtDay(sp.end)}. Day ${day} of ${len}, ${left} day${left===1?"":"s"} left.`;
@@ -618,8 +636,8 @@ function renderSprint(){
   const tot=mine.reduce((a,s)=>a+(s.points||0),0)||1, by=k=>mine.filter(s=>SCOL.find(c=>c[0]===k)[1].includes(s.status)).reduce((a,s)=>a+(s.points||0),0);
   $("sph").textContent=sp.name+" progress";$("spnote").textContent=`${mine.reduce((a,s)=>a+(s.points||0),0)} points across ${mine.length} stories${all?", all teams":""}`;
   $("spmeter").innerHTML=SCOL.map(([k])=>`<i style="width:${by(k)/tot*100}%;background:${SCOLOR[k]}" title="${k}: ${by(k)} points"></i>`).join("")+`<span class="tick" style="left:${(day-0.5)/len*100}%" title="Today"></span>`;
-  $("spstart").textContent=fmtDay(sp.start);$("spend").textContent=fmtDay(sp.end);$("sptoday").textContent=`Today, ${fmtDay(D.today)} · day ${day} of ${len}`;
-  $("splegend").innerHTML=SCOL.map(([k])=>`<span style="--c:${SCOLOR[k]}">${k} · ${by(k)} pts</span>`).join("");
+  $("spstart").textContent=fmtDay(sp.start);$("spend").textContent=fmtDay(sp.end);$("sptoday").textContent=`Today, ${fmtDay(D.today)} \u00b7 day ${day} of ${len}`;
+  $("splegend").innerHTML=SCOL.map(([k])=>`<span style="--c:${SCOLOR[k]}">${k} \u00b7 ${by(k)} pts</span>`).join("");
   const acs=mine.reduce((a,s)=>[a[0]+s.acs[0],a[1]+s.acs[1],a[2]+s.acs[2]],[0,0,0]), at=acs[0]+acs[1]+acs[2];
   $("spkpis").innerHTML=[[mine.length,"stories"],[mine.reduce((a,s)=>a+(s.points||0),0),"story points"],[`${acs[0]}<small style="font-size:16px;color:var(--muted)">/${at}</small>`,"acceptance criteria passed"],[mine.filter(s=>s.status==="All ACs Passed").length,"ready to deploy"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
   const ins=insightsFor("sprint",team), F=ins||[];
@@ -632,10 +650,10 @@ function renderSprint(){
     const docs=mine.filter(s=>s.docStatus==="Not Started").length;if(docs)F.push(["","Docs",`${docs} of ${mine.length} stories show documentation Not Started.`]);
   }
   $("spflags").innerHTML=flags(F);
-  $("kanh").textContent=sp.name+" board";$("kanl").textContent="Builder → QA reviewer. A coloured edge needs attention.";
+  $("kanh").textContent=sp.name+" board";$("kanl").textContent="Builder \u2192 QA reviewer. A coloured edge needs attention.";
   $("kan").innerHTML=SCOL.map(([k,sts])=>{const ss=mine.filter(s=>sts.includes(s.status));
-    return `<div class="col"><h3>${k}<span>${ss.length} · ${ss.reduce((a,s)=>a+(s.points||0),0)} pts</span></h3>${ss.map(s=>{const [c,h]=storyHint(s);
-      return `<div class="card ${c}"><div class="meta">${storyLink(s)}<span>${s.points||0} pts${s.changeRequestId&&D.crBy[s.changeRequestId]?" · "+esc(D.crBy[s.changeRequestId].number.replace(/CHG-0+/,"CHG-")):""}</span></div><div class="t">${esc(s.title)}</div><div class="meta"><span>${esc(s.builder||"No builder")} → ${esc(s.qa||"No QA")}</span><span>${s.items.length?s.items.length+" build item"+(s.items.length>1?"s":""):"no build items"}</span></div>${acDots(s.acs)}${h?`<div class="hint">${h}</div>`:""}</div>`}).join("")||`<p class="note" style="margin:0">None</p>`}</div>`}).join("");
+    return `<div class="col"><h3>${k}<span>${ss.length} \u00b7 ${ss.reduce((a,s)=>a+(s.points||0),0)} pts</span></h3>${ss.map(s=>{const [c,h]=storyHint(s);
+      return `<div class="card ${c}"><div class="meta">${storyLink(s)}<span>${s.points||0} pts${s.changeRequestId&&D.crBy[s.changeRequestId]?" \u00b7 "+esc(D.crBy[s.changeRequestId].number.replace(/CHG-0+/,"CHG-")):""}</span></div><div class="t">${esc(s.title)}</div><div class="meta"><span>${esc(s.builder||"No builder")} \u2192 ${esc(s.qa||"No QA")}</span><span>${s.items.length?s.items.length+" build item"+(s.items.length>1?"s":""):"no build items"}</span></div>${acDots(s.acs)}${h?`<div class="hint">${h}</div>`:""}</div>`}).join("")||`<p class="note" style="margin:0">None</p>`}</div>`}).join("");
 }
 
 /* ---------- Pipeline ---------- */
@@ -667,11 +685,11 @@ function renderPipeline(){
   $("pflags").innerHTML=flags(F);
   const lab=`<div class="tlabels">${TL.map(x=>`<span>${x}</span>`).join("")}</div>`;
   $("crs").innerHTML=crs.map(cr=>{const r=crTrack(cr),sc={};r.ss.forEach(s=>sc[s.status]=(sc[s.status]||0)+1);const c=D.caseBy[cr.caseId],rel=D.relBy[cr.releaseId];
-    return `<tr class="crrow"><td>${rec("changeRequest",cr.id,cr.number.replace(/CHG-0+/,"CHG-"))}</td><td>${esc(cr.subject)}<div class="note">${esc(cr.priority||"")}${cr.size?" · "+esc(cr.size):" · no size"}${rel?" · "+esc(rel.name):""}</div></td><td>${c?caseLink(c):esc(cr.caseNumber||"")}</td><td><span class="pill ${cr.status==="New"&&r.ss.length?"cross":"stage"}">${esc(cr.status)}</span></td><td>${r.ss.length?`${r.ss.length}<div class="note">${Object.entries(sc).map(([k,v])=>v+" "+esc(k)).join(", ")} · build items on ${r.withB}</div>`:`<span class="note">None yet</span>`}</td><td class="num">${r.t?r.p+"/"+r.t:"–"}</td><td><div class="track">${r.st.map(x=>`<i class="${x}"></i>`).join("")}</div>${lab}</td></tr>`}).join("")||`<tr><td colspan="7" class="note">No change requests for this team yet. A case gets one when it reaches Ready for Tech Review.</td></tr>`;
+    return `<tr class="crrow"><td>${rec("changeRequest",cr.id,cr.number.replace(/CHG-0+/,"CHG-"))}</td><td>${esc(cr.subject)}<div class="note">${esc(cr.priority||"")}${cr.size?" \u00b7 "+esc(cr.size):" \u00b7 no size"}${rel?" \u00b7 "+esc(rel.name):""}</div></td><td>${c?caseLink(c):esc(cr.caseNumber||"")}</td><td><span class="pill ${cr.status==="New"&&r.ss.length?"cross":"stage"}">${esc(cr.status)}</span></td><td>${r.ss.length?`${r.ss.length}<div class="note">${Object.entries(sc).map(([k,v])=>v+" "+esc(k)).join(", ")} \u00b7 build items on ${r.withB}</div>`:`<span class="note">None yet</span>`}</td><td class="num">${r.t?r.p+"/"+r.t:"\u2013"}</td><td><div class="track">${r.st.map(x=>`<i class="${x}"></i>`).join("")}</div>${lab}</td></tr>`}).join("")||`<tr><td colspan="7" class="note">No change requests for this team yet. A case gets one when it reaches Ready for Tech Review.</td></tr>`;
   const withItems=ss.filter(s=>s.items.length);
   $("bil").textContent=withItems.length?"Build items by story, with their Trail OS status.":"No build items for this team yet. They appear once a story is being built.";
   $("bis").innerHTML=withItems.map(s=>{const cnt={};s.items.forEach(b=>{const k=b.status||"No status";cnt[k]=(cnt[k]||0)+1});
-    return `<details class="bi"><summary><span>${esc(s.name)} · ${esc(s.title)}</span><span class="load">${Object.entries(cnt).map(([k,v])=>`<span class="pill ${k==="No status"?"cross":k==="In Progress"?"w-next":""}">${v} ${esc(k.toLowerCase())}</span>`).join("")}</span></summary><ul>${s.items.map(b=>`<li>${esc(b.name)}${b.environment?` <span class="note">· ${esc(b.environment)}</span>`:""}</li>`).join("")}</ul></details>`}).join("");
+    return `<details class="bi"><summary><span>${esc(s.name)} \u00b7 ${esc(s.title)}</span><span class="load">${Object.entries(cnt).map(([k,v])=>`<span class="pill ${k==="No status"?"cross":k==="In Progress"?"w-next":""}">${v} ${esc(k.toLowerCase())}</span>`).join("")}</span></summary><ul>${s.items.map(b=>`<li>${esc(b.name)}${b.environment?` <span class="note">\u00b7 ${esc(b.environment)}</span>`:""}</li>`).join("")}</ul></details>`}).join("");
 }
 
 /* ---------- Release ---------- */
@@ -681,33 +699,33 @@ function renderRelease(){
   const rels=D.releases.filter(r=>r.status!=="Canceled").sort((a,b)=>String(a.plannedDate||"9").localeCompare(String(b.plannedDate||"9")));
   if(!rels.length){$("relpick").innerHTML="";$("relhead").innerHTML=`<p class="note">No releases yet. Staff create a TT Release and name its release manager.</p>`;["relkpis","runbook","cslist","recon","signs"].forEach(id=>$(id).innerHTML="");return}
   if(!relKey||!D.relBy[relKey]){const next=rels.find(r=>r.status!=="Deployed"&&(r.plannedDate||"")>=D.today)||rels[0];relKey=next.id}
-  $("relpick").innerHTML=rels.map(r=>`<option value="${esc(r.id)}" ${r.id===relKey?"selected":""}>${esc(r.name)} · ${esc(fmtDay(r.plannedDate)||"no date")}</option>`).join("");
+  $("relpick").innerHTML=rels.map(r=>`<option value="${esc(r.id)}" ${r.id===relKey?"selected":""}>${esc(r.name)} \u00b7 ${esc(fmtDay(r.plannedDate)||"no date")}</option>`).join("");
   const rel=D.relBy[relKey], can=viewerCan.manageRelease(rel), {crs,ss,items}=relScope(rel);
   const relCS=D.changeSets.filter(c=>c.releaseId===rel.id);
   const placed=items.filter(b=>(b.changeSetId&&D.csBy[b.changeSetId])||b.manualStep).length, verified=items.filter(b=>b.verifiedInProd).length;
   const noLog=ss.filter(s=>!s.items.length);
   const steps=(rel.steps||[]).slice().sort((a,b)=>(a.sequence||0)-(b.sequence||0)), nx=steps.find(s=>!s.done);
   const ins=insightsFor("release",rel.id);
-  $("relhead").innerHTML=`<div><span class="eyebrow" style="color:var(--muted)">${esc(rel.name)}${rel.label?" · "+esc(rel.label):""}</span><h3 style="margin:6px 0">Production ${esc(fmtDay(rel.plannedDate)||"date not set")}</h3>
-    <p style="margin:0 0 10px"><span class="rm">Release manager · ${esc(rel.manager&&rel.manager.name||"to be named")}</span></p>
-    <p class="note" style="margin:0">${nx?`Next: <b style="color:var(--fg)">${esc(nx.label)}</b> · ${esc(nx.owner||"")}${nx.due?" · due "+esc(fmtDay(nx.due)):""}`:steps.length?"Every runbook step is done.":"Runbook steps appear once Trail OS sets up this release."}</p>
+  $("relhead").innerHTML=`<div><span class="eyebrow" style="color:var(--muted)">${esc(rel.name)}${rel.label?" \u00b7 "+esc(rel.label):""}</span><h3 style="margin:6px 0">Production ${esc(fmtDay(rel.plannedDate)||"date not set")}</h3>
+    <p style="margin:0 0 10px"><span class="rm">Release manager \u00b7 ${esc(rel.manager&&rel.manager.name||"to be named")}</span></p>
+    <p class="note" style="margin:0">${nx?`Next: <b style="color:var(--fg)">${esc(nx.label)}</b> \u00b7 ${esc(nx.owner||"")}${nx.due?" \u00b7 due "+esc(fmtDay(nx.due)):""}`:steps.length?"Every runbook step is done.":"Runbook steps appear once Trail OS sets up this release."}</p>
     <div class="inline">${rel.slackChannelId?`<button type="button" class="btn ghost" data-open="slack" data-id="${esc(rel.slackChannelId)}">Open #${esc(rel.slackChannelName||"channel")}</button>`:""}${can&&rel.slackChannelId?`<button class="btn solid" id="relpost" type="button">Post status to Slack</button>`:""}<span class="toast" id="relpostmsg" role="status" style="${relPost.bad?"color:var(--crit)":""}">${relPost.id===rel.id?esc(relPost.text):""}</span></div>
     ${ins&&ins.length?`<ul class="flags" style="margin-top:10px">${flags(ins)}</ul>`:""}</div>
    <div class="relmeta"><div><span>Change requests</span><b>${crs.length?crs.map(c=>esc(c.number.replace(/CHG-0+/,"CHG-"))).join(", "):"None linked yet"}</b></div><div><span>Stories</span><b>${ss.length}</b></div><div><span>Build items</span><b>${items.length}</b></div><div><span>TT Release status</span><b>${esc(rel.status||"")}</b></div><div><span>Your access</span><b>${can?"Can manage this release":"View only"}</b></div></div>`;
   $("relkpis").innerHTML=[[`${placed}<small style="font-size:16px;color:var(--muted)">/${items.length}</small>`,"build items in a change set or manual step"],[relCS.length,"change sets"],[noLog.length,"stories with no build items"],[`${verified}<small style="font-size:16px;color:var(--muted)">/${items.length}</small>`,"verified in production"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
   const dis=can?"":"disabled";
   $("rbnote").textContent=can?"Tick each step as it finishes.":"View only. The release manager and staff tick steps.";
-  $("runbook").innerHTML=steps.map(s=>`<li class="${s.done?"done":nx&&nx.key===s.key?"next":""}"><input type="checkbox" data-step="${esc(s.key)}" ${s.done?"checked":""} ${dis} aria-label="${esc(s.label)}"><span><span class="rt">${esc(s.label)}</span><br><span class="who">${esc(s.owner||"")}${s.done&&s.doneAt?" · done "+esc(fmtWhen(s.doneAt))+(s.doneBy?" by "+esc(s.doneBy):""):""}</span></span><span class="when">${esc(s.due?fmtDay(s.due):"")}</span></li>`).join("")||`<li><span></span><span class="note">No runbook steps yet.</span><span></span></li>`;
-  $("cslist").innerHTML=relCS.length?relCS.map(c=>{const n=items.filter(b=>b.changeSetId===c.id).length;return `<div class="cs"><div><b>${esc(c.name)}</b><small>${esc(c.crew||"")}${c.owner?" · "+esc(c.owner):""} · ${n} build item${n===1?"":"s"}</small></div><select data-csst="${esc(c.id)}" ${dis} aria-label="Status of ${esc(c.name)}">${CS_ST.map(x=>`<option ${x===c.status?"selected":""}>${x}</option>`).join("")}</select><span></span></div>`}).join(""):`<p class="note" style="margin:0">No change sets recorded yet.</p>`;
+  $("runbook").innerHTML=steps.map(s=>`<li class="${s.done?"done":nx&&nx.key===s.key?"next":""}"><input type="checkbox" data-step="${esc(s.key)}" ${s.done?"checked":""} ${dis} aria-label="${esc(s.label)}"><span><span class="rt">${esc(s.label)}</span><br><span class="who">${esc(s.owner||"")}${s.done&&s.doneAt?" \u00b7 done "+esc(fmtWhen(s.doneAt))+(s.doneBy?" by "+esc(s.doneBy):""):""}</span></span><span class="when">${esc(s.due?fmtDay(s.due):"")}</span></li>`).join("")||`<li><span></span><span class="note">No runbook steps yet.</span><span></span></li>`;
+  $("cslist").innerHTML=relCS.length?relCS.map(c=>{const n=items.filter(b=>b.changeSetId===c.id).length;return `<div class="cs"><div><b>${esc(c.name)}</b><small>${esc(c.crew||"")}${c.owner?" \u00b7 "+esc(c.owner):""} \u00b7 ${n} build item${n===1?"":"s"}</small></div><select data-csst="${esc(c.id)}" ${dis} aria-label="Status of ${esc(c.name)}">${CS_ST.map(x=>`<option ${x===c.status?"selected":""}>${x}</option>`).join("")}</select><span></span></div>`}).join(""):`<p class="note" style="margin:0">No change sets recorded yet.</p>`;
   $("csadd").hidden=!can;
   let rows="";
   ss.forEach(st=>{const its=st.items;
-    rows+=`<tr class="story"><td colspan="5">${storyLink(st)} · ${esc(st.title)} <span class="note">· ${esc(st.status)}</span></td></tr>`;
+    rows+=`<tr class="story"><td colspan="5">${storyLink(st)} \u00b7 ${esc(st.title)} <span class="note">\u00b7 ${esc(st.status)}</span></td></tr>`;
     if(!its.length){rows+=`<tr class="miss"><td colspan="5">No build items logged. ${esc(st.builder||"The builder")} logs them before change sets are final.</td></tr>`;return}
     rows+=its.map(b=>{const ok=(b.changeSetId&&D.csBy[b.changeSetId])||b.manualStep, ca=viewerCan.assignItem(rel,b)?"":"disabled";
       return `<tr class="${ok?"":"cp"}"><td>${esc(b.name)}</td><td>${b.status?`<span class="pill">${esc(b.status)}</span>`:`<span class="pill cross">No status</span>`}</td><td><select data-itcs="${esc(b.id)}" ${ca} aria-label="Change set for ${esc(b.name)}"><option value="">Not in a change set</option>${relCS.map(c=>`<option value="${esc(c.id)}" ${c.id===b.changeSetId?"selected":""}>${esc(c.name)}</option>`).join("")}</select></td><td><input type="checkbox" data-itman="${esc(b.id)}" ${b.manualStep?"checked":""} ${ca} aria-label="Manual step: ${esc(b.name)}"></td><td><input type="checkbox" data-itver="${esc(b.id)}" ${b.verifiedInProd?"checked":""} ${dis} aria-label="Verified in production: ${esc(b.name)}"></td></tr>`}).join("")});
   $("recon").innerHTML=rows||`<tr><td colspan="5" class="note">No stories in this release yet. Link change requests to the TT Release.</td></tr>`;
-  $("signs").innerHTML=(rel.signoffs||[]).slice().sort((a,b)=>(a.sequence||0)-(b.sequence||0)).map(x=>`<li><span class="pill ${x.status==="Approved"?"ok":x.status==="Rejected"?"high":""}">${esc(x.status)}</span><span><b>${esc(x.approver||"")}</b> · ${esc(x.role||"")}</span></li>`).join("")||`<li><span class="pill">None</span><span>No sign-offs on this release yet.</span></li>`;
+  $("signs").innerHTML=(rel.signoffs||[]).slice().sort((a,b)=>(a.sequence||0)-(b.sequence||0)).map(x=>`<li><span class="pill ${x.status==="Approved"?"ok":x.status==="Rejected"?"high":""}">${esc(x.status)}</span><span><b>${esc(x.approver||"")}</b> \u00b7 ${esc(x.role||"")}</span></li>`).join("")||`<li><span class="pill">None</span><span>No sign-offs on this release yet.</span></li>`;
 }
 
 /* ---------- events ---------- */
@@ -718,8 +736,8 @@ document.addEventListener("click",async e=>{
   const fl=e.target.closest("[data-feat]");if(fl){view="features";show();const c=document.getElementById("card-"+fl.dataset.feat);if(c){c.scrollIntoView({block:"start"});c.classList.add("flash");c.focus({preventScroll:true});setTimeout(()=>c.classList.remove("flash"),2500)}return}
   const mv=e.target.closest("[data-mv]");if(mv){const ids=orderDraft.ids,i=ids.indexOf(mv.dataset.id),j=i+Number(mv.dataset.mv);if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];orderDraft.dirty=true;drawPrio();return}
   if(e.target.id==="reset"){orderDraft=null;renderPrio();return}
-  if(e.target.id==="saveorder"){const b=e.target;b.disabled=true;$("toast").textContent="Saving…";const r=await act("saveOrder",{team,caseIds:orderDraft.ids});b.disabled=false;$("toast").textContent=r.ok?"Order saved for the team.":(r.message||"Not saved.");if(r.ok)orderDraft.dirty=false;drawPrio();setTimeout(()=>$("toast").textContent="",3000);return}
-  if(e.target.id==="relpost"){const b=e.target;b.disabled=true;$("relpostmsg").textContent="Posting…";const r=await act("postReleaseStatus",{releaseId:relKey});relPost={id:relKey,text:r.ok?"Posted to the release channel.":(r.message||"Not posted."),bad:!r.ok};const m=$("relpostmsg");if(m){m.textContent=relPost.text;m.style.color=r.ok?"":"var(--crit)"}const nb=$("relpost");if(nb)nb.disabled=false;setTimeout(()=>{relPost.text="";const m2=$("relpostmsg");if(m2)m2.textContent=""},6000);return}
+  if(e.target.id==="saveorder"){const b=e.target;b.disabled=true;$("toast").textContent="Saving\u2026";const r=await act("saveOrder",{team,caseIds:orderDraft.ids});b.disabled=false;$("toast").textContent=r.ok?"Order saved for the team.":(r.message||"Not saved.");if(r.ok)orderDraft.dirty=false;drawPrio();setTimeout(()=>$("toast").textContent="",3000);return}
+  if(e.target.id==="relpost"){const b=e.target;b.disabled=true;$("relpostmsg").textContent="Posting\u2026";const r=await act("postReleaseStatus",{releaseId:relKey});relPost={id:relKey,text:r.ok?"Posted to the release channel.":(r.message||"Not posted."),bad:!r.ok};const m=$("relpostmsg");if(m){m.textContent=relPost.text;m.style.color=r.ok?"":"var(--crit)"}const nb=$("relpost");if(nb)nb.disabled=false;setTimeout(()=>{relPost.text="";const m2=$("relpostmsg");if(m2)m2.textContent=""},6000);return}
 });
 $("fscope").addEventListener("change",drawPrio);
 $("allteams").addEventListener("change",renderSprint);
