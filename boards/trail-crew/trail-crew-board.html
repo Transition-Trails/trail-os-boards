@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trail Crew Boards</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Trail Crew Boards v1: team header, eight views; renders only from Trail OS BoardData */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --sunk:#e8ece6; --line:#d3dacf; --fg:#17251d; --muted:#5a6a60;
+  --accent:#1f5a40; --accent-ink:#ffffff; --accent-soft:#dcebe2;
+  --t-devops:#1f6b62; --t-academy:#2b4f7a; --t-penny:#a3412e; --t-marketing:#6b4a8a;
+  --launch:#2d6b8a; --launch-soft:#dceaf2; --road:#7a6a9c; --road-soft:#e9e4f2;
+  --ok:#2f7a4a; --ok-soft:#dcefe2; --warn:#a8650c; --warn-soft:#fbecd3; --crit:#b23b3b; --crit-soft:#f7dede;
+  --display:"Bricolage Grotesque",Georgia,serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111814; --surface:#18221c; --sunk:#0d130f; --line:#2c3a31; --fg:#e4ece6; --muted:#9aaba0;
+  --accent:#7cc9a0; --accent-ink:#0d1a12; --accent-soft:#1f3529;
+  --t-devops:#173f3a; --t-academy:#1c2f49; --t-penny:#4f2219; --t-marketing:#33244a;
+  --launch:#8cc3dd; --launch-soft:#1b2d38; --road:#bcaee0; --road-soft:#2a2438;
+  --ok:#7cc9a0; --ok-soft:#1d3527; --warn:#e7b05e; --warn-soft:#3a2b14; --crit:#ec8f8f; --crit-soft:#3c1d1d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111814; --surface:#18221c; --sunk:#0d130f; --line:#2c3a31; --fg:#e4ece6; --muted:#9aaba0;
+  --accent:#7cc9a0; --accent-ink:#0d1a12; --accent-soft:#1f3529;
+  --t-devops:#173f3a; --t-academy:#1c2f49; --t-penny:#4f2219; --t-marketing:#33244a;
+  --launch:#8cc3dd; --launch-soft:#1b2d38; --road:#bcaee0; --road-soft:#2a2438;
+  --ok:#7cc9a0; --ok-soft:#1d3527; --warn:#e7b05e; --warn-soft:#3a2b14; --crit:#ec8f8f; --crit-soft:#3c1d1d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--team)}
+body[data-team="devops"]{--team:var(--t-devops)} body[data-team="academy"]{--team:var(--t-academy)} body[data-team="penny"]{--team:var(--t-penny)} body[data-team="marketing"]{--team:var(--t-marketing)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--team);color:#fff;transition:background .2s}
+header.top .wrap{padding-block:20px 0}
+.toprow{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font:600 12px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+h1{font:700 clamp(28px,4vw,40px)/1.1 var(--display);margin:8px 0 6px;text-wrap:balance}
+.sub{margin:0;opacity:.9;max-width:70ch}
+.teams{display:flex;gap:4px;background:rgba(0,0,0,.18);padding:4px;border-radius:10px;flex-wrap:wrap}
+.teams button{border:0;background:transparent;color:#fff;padding:8px 12px;border-radius:7px;font-weight:600;opacity:.85}
+.teams button[aria-pressed="true"]{background:#fff;color:#17251d;opacity:1}
+.teams button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+nav.tabs{display:flex;gap:4px;margin-top:18px;overflow-x:auto}
+nav.tabs a{color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px 8px 0 0;font-weight:600;white-space:nowrap;opacity:.8}
+nav.tabs a[aria-current="page"]{background:var(--bg);color:var(--fg);opacity:1}
+nav.tabs a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid var(--launch);outline-offset:2px}
+main .wrap{padding-block:24px 48px;display:flex;flex-direction:column;gap:28px}
+.view{display:flex;flex-direction:column;gap:20px}
+.view[hidden]{display:none}
+h2{font:700 22px/1.2 var(--display);margin:0;text-wrap:balance}
+h3{font:700 17px/1.3 var(--display);margin:0}
+.lede{color:var(--muted);margin:4px 0 0;max-width:72ch}
+.snap{font:500 12px var(--mono);color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.kpi b{display:block;font:700 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:14px}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.flags{display:flex;flex-direction:column;gap:10px;margin:12px 0 0;padding:0;list-style:none}
+.flags li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--warn-soft)}
+.flags li.crit{background:var(--crit-soft)}
+.flags .tag{font:600 11px/1.6 var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--warn);white-space:nowrap;min-width:92px}
+.flags li.crit .tag{color:var(--crit)}
+.flags.slack li{background:var(--sunk)}
+.flags.slack .tag{min-width:auto}
+.mission{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:820px){.mission{grid-template-columns:minmax(0,1fr)}}
+.mission p{margin:6px 0 0}
+.leads{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.leads div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.leads span{color:var(--muted)}
+.open{color:var(--crit);font-weight:700}
+/* roadmap */
+.road{overflow-x:auto}
+.road-grid{min-width:760px;display:grid;grid-template-columns:220px repeat(7,1fr);font-size:14px}
+.road-grid .mh{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 4px;border-bottom:1px solid var(--line)}
+.lane{display:contents}
+.lane .ln{padding:12px 8px 12px 0;border-bottom:1px solid var(--line);font-weight:600;line-height:1.25}
+.lane .ln small{display:block;font:500 11px var(--mono);color:var(--muted)}
+.lane .cell{border-bottom:1px solid var(--line);border-left:1px dashed var(--line);position:relative;min-height:56px}
+.bar{position:absolute;top:12px;bottom:12px;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;display:flex;align-items:center;white-space:nowrap;overflow:hidden}
+.bar.launch{background:var(--launch-soft);color:var(--launch);border:1px solid var(--launch)}
+.bar.road{background:var(--road-soft);color:var(--road);border:1px dashed var(--road)}
+.bar.unplanned{background:var(--sunk);color:var(--muted);border:1px dashed var(--line)}
+.milestones{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:14px;color:var(--muted)}
+.milestones b{color:var(--fg)}
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:980px}
+table.narrow{min-width:640px}
+th{font:600 11px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:10px 12px;background:var(--sunk)}
+td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:top}
+td.num,.mono{font:500 13px var(--mono);font-variant-numeric:tabular-nums}
+tr.cp td:first-child{box-shadow:inset 3px 0 0 var(--crit)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.pill.high{background:var(--crit-soft);color:var(--crit)}
+.pill.launchp{background:var(--launch-soft);color:var(--launch)}
+.pill.roadp{background:var(--road-soft);color:var(--road)}
+.pill.cp{background:var(--crit-soft);color:var(--crit)}
+.pill.stage{background:var(--accent-soft);color:var(--accent)}
+.pill.w-now{background:var(--crit-soft);color:var(--crit)}
+.pill.w-next{background:var(--warn-soft);color:var(--warn)}
+.pill.w-later{background:var(--road-soft);color:var(--road)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.cross{background:var(--warn-soft);color:var(--warn)}
+.ctrls{display:flex;gap:4px}
+button{font:inherit;cursor:pointer}
+.ib{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;width:30px;height:30px;line-height:1}
+.ib:hover{border-color:var(--accent)}
+.ib:disabled{opacity:.35;cursor:default}
+.btn.ghost{border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:8px 14px;font-weight:600}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.toolbar .left{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+select{font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.note{font-size:13px;color:var(--muted)}
+.toast{font-size:13px;color:var(--ok);min-height:1em}
+.na{min-width:250px}
+.nx{font-size:13px}
+/* features */
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:820px){.fgrid{grid-template-columns:minmax(0,1fr)}}
+.feat{scroll-margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.feat .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.feat .id{font:500 12px var(--mono);color:var(--muted)}
+.feat.flash{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.flink{color:var(--fg);text-decoration:none;border-bottom:1px solid var(--line)}
+.flink:hover{color:var(--accent);border-color:var(--accent)}
+.flink:focus-visible{outline:3px solid var(--launch);outline-offset:2px;border-radius:3px}
+.fsum{margin:0;font-size:15px;max-width:65ch}
+.dod{background:var(--sunk);border-radius:8px;padding:10px 12px;font-size:14px}
+.dod b{display:block;font:600 11px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.draft{font-size:12px;font-weight:600;color:var(--warn)}
+.meter{height:8px;border-radius:4px;background:var(--sunk);display:flex;overflow:hidden}
+.meter i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.cases{margin:0;padding:0;list-style:none;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.cases li{display:flex;gap:8px}
+.clink{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-weight:600;flex:none}
+.clink:hover{text-decoration-thickness:2px}
+.clink:focus-visible{outline:3px solid var(--launch);outline-offset:2px;border-radius:3px}
+/* team */
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.person{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.person.vacant{border-style:dashed;background:transparent}
+.person .nm{font-weight:700;font-size:16px}
+.person .rl{color:var(--muted);font-size:13px}
+.load{display:flex;gap:6px;flex-wrap:wrap}
+.work{margin:0;padding:0;list-style:none;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.work li{display:flex;gap:6px;align-items:baseline}
+.work .mono{color:var(--muted);flex:none;font-size:12px}
+.bars{display:flex;gap:2px;height:6px}
+.bars i{flex:1;border-radius:2px;background:var(--sunk)}
+.bars i.on{background:var(--team)}
+/* blockers */
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}
+.chain .arrow{color:var(--muted)}
+.chain .node{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.chain .node.ext{border-style:dashed}
+.blk{display:flex;flex-direction:column;gap:12px}
+.blk .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+@media (max-width:760px){.blk .row{grid-template-columns:minmax(0,1fr)}}
+/* discovery */
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+@media (max-width:820px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stagebox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.stagebox.focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.stagebox b{font:700 26px var(--display);display:block;font-variant-numeric:tabular-nums}
+.stagebox small{color:var(--muted);font-size:13px;display:block}
+.empty{border:2px dashed var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px}
+/* sprint */
+.cal{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:820px){.cal{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.spr{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);min-width:0}
+.spr.now{border-color:var(--team);box-shadow:inset 0 4px 0 var(--team)}
+.spr.next{border-style:dashed;border-color:var(--accent)}
+.spr.goal{background:var(--launch-soft);border-color:var(--launch);color:var(--launch)}
+.spr b{display:block;font:700 15px var(--display)}
+.spr small{display:block;color:var(--muted);font-size:12px}
+.spr.goal small{color:inherit}
+.burn{display:flex;flex-direction:column;gap:6px}
+.burn .meter{height:14px;position:relative;overflow:visible}
+.burn .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--fg)}
+.burn .scale{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.kan{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;overflow-x:auto;padding-bottom:4px}
+.col{background:var(--sunk);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.col h3{font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.col h3 span{font:500 12px var(--mono);color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.card.warn{box-shadow:inset 3px 0 0 var(--warn)}
+.card.bad{box-shadow:inset 3px 0 0 var(--crit)}
+.card .t{font-weight:600;font-size:14px;line-height:1.3}
+.card .meta{display:flex;justify-content:space-between;gap:6px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.acs{display:flex;gap:2px;flex-wrap:wrap}
+.acs i{width:10px;height:10px;border-radius:2px;background:var(--line)}
+.acs i.p{background:var(--ok)} .acs i.f{background:var(--crit)}
+.card .hint{font-size:12px;color:var(--warn)}
+.card.bad .hint{color:var(--crit)}
+.sched{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+@media (max-width:900px){.sched{grid-template-columns:minmax(0,1fr)}}
+.sched li{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--surface)}
+.sched li b{display:block;font:600 12px var(--mono);color:var(--muted)}
+.sched li.done{background:var(--sunk);color:var(--muted)}
+.sched li.now{border-color:var(--team);box-shadow:inset 0 3px 0 var(--team)}
+.sched li.now b::after{content:" · now";color:var(--fg)}
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+@media (max-width:900px){.pipe{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pstage{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0;position:relative}
+.pstage b{font:700 24px var(--display);display:block;font-variant-numeric:tabular-nums}
+.pstage small{color:var(--muted);font-size:12px;display:block;line-height:1.3}
+.pstage.zero b{color:var(--muted)}
+.pstage.stuck{border-color:var(--warn);background:var(--warn-soft)}
+.track i.now{background:var(--warn-soft);border-color:var(--team);box-shadow:0 0 0 2px var(--accent-soft)}
+.track{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;align-items:center;min-width:300px}
+.track i{height:8px;border-radius:4px;background:var(--sunk);border:1px solid var(--line)}
+.track i.done{background:var(--ok);border-color:var(--ok)}
+.track i.part{background:repeating-linear-gradient(90deg,var(--ok) 0 4px,var(--ok-soft) 4px 8px);border-color:var(--ok)}
+.track i.stop{background:var(--warn-soft);border-color:var(--warn)}
+.tlabels{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;min-width:300px}
+.crrow td{vertical-align:middle}
+details.bi{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 14px}
+details.bi summary{cursor:pointer;font-weight:600;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+details.bi ul{margin:8px 0 0;padding-left:18px;font-size:13px;columns:2;column-gap:24px}
+@media (max-width:760px){details.bi ul{columns:1}}
+/* release */
+.relhead{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px}
+@media (max-width:820px){.relhead{grid-template-columns:minmax(0,1fr)}}
+.relhead h3{font-size:22px}
+.relmeta{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.relmeta div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.relmeta span{color:var(--muted)}
+.rm{display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 12px;font-weight:700}
+.btn.solid{border:0;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:8px 14px;font-weight:600}
+.btn:disabled{opacity:.5;cursor:default}
+.runbook{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.runbook li{display:grid;grid-template-columns:28px minmax(0,1fr) 120px;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:14px}
+.runbook li.done{background:var(--sunk);color:var(--muted)}
+.runbook li.done .rt{text-decoration:line-through}
+.runbook li.next{border-color:var(--team);box-shadow:inset 3px 0 0 var(--team)}
+.runbook .who{font-size:12px;color:var(--muted)}
+.runbook .when{font:500 12px var(--mono);color:var(--muted);text-align:right}
+@media (max-width:600px){.runbook li{grid-template-columns:28px minmax(0,1fr)}.runbook .when{grid-column:2;text-align:left}}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+input[type=text],input[type=date]{font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0}
+.inline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.inline input[type=text]{flex:1 1 180px}
+.fgrid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:700px){.fgrid2{grid-template-columns:minmax(0,1fr)}}
+.fgrid2 label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.cs{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.cs:first-child{border-top:0}
+.cs b{display:block}
+.cs small{color:var(--muted)}
+.recon td select{min-width:150px}
+.recon tr.story td{background:var(--sunk);font-weight:600}
+.recon tr.miss td{color:var(--muted)}
+.banner{padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--fg);font-size:14px}
+footer{color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){header.top{transition:none}}
+
+body{--team:var(--accent)}
+[hidden]{display:none!important}
+select{max-width:100%}
+.toolbar .left{min-width:0;max-width:100%}
+#fscope{max-width:calc(100vw - 48px)}
+.linkbtn{background:none;border:0;padding:0;font:inherit;cursor:pointer;text-align:left}
+.clink.linkbtn{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-weight:600}
+.flink.linkbtn{color:var(--fg);border-bottom:1px solid var(--line)}
+.flags li.ok-li{background:var(--ok-soft)}
+#waiting{margin-top:8px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="toprow">
+      <div>
+        <div class="eyebrow">Trail Crew Boards</div>
+        <h1 id="tname">Trail Crew Boards</h1>
+        <p class="sub" id="tmission">Loading from Trail OS…</p>
+      </div>
+      <div class="teams" role="group" aria-label="Team" id="teambtns"></div>
+    </div>
+    <nav class="tabs" aria-label="Views" id="tabs">
+      <a href="#overview" data-view="overview">Overview</a>
+      <a href="#prioritize" data-view="prioritize">Prioritize</a>
+      <a href="#features" data-view="features">Features</a>
+      <a href="#team" data-view="team">Team</a>
+      <a href="#discovery" data-view="discovery">Discovery</a>
+      <a href="#sprint" data-view="sprint">Sprint</a>
+      <a href="#pipeline" data-view="pipeline">Build pipeline</a>
+      <a href="#release" data-view="release">Release</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+<div class="panel" id="waiting">
+  <h3>Waiting for Trail OS</h3>
+  <p class="lede" id="waitmsg">The board is asking Trail OS for data.</p>
+</div>
+
+<section id="v-overview" class="view" hidden>
+  <div class="toolbar"><h2>Overview</h2><span class="snap asof"></span></div>
+  <div class="panel mission">
+    <div><h3 id="tgoal"></h3><p id="tdesc"></p></div>
+    <div class="leads" id="tleads"></div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="panel road"><div class="road-grid" id="roadgrid"></div><div class="milestones" id="miles"></div></div>
+  <div class="panel"><div class="toolbar"><h3>Needs attention</h3><span class="note" id="insas"></span></div><ul class="flags" id="flags"></ul></div>
+</section>
+
+<section id="v-prioritize" class="view" hidden>
+  <div><h2>Prioritize</h2><p class="lede">Order the team's open cases top to bottom. The rank is the order work goes to refinement.</p></div>
+  <div class="toolbar">
+    <div class="left">
+      <label for="fscope" class="note">Show</label>
+      <select id="fscope"></select>
+      <button class="btn ghost" id="reset" type="button">Undo my changes</button>
+      <button class="btn solid" id="saveorder" type="button" hidden>Save order</button>
+    </div>
+    <span class="toast" id="toast" role="status"></span>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Rank</th><th>Case</th><th>Work</th><th>Feature</th><th>Priority</th><th>Stage</th><th>Status</th><th>Assigned</th><th>Move</th></tr></thead>
+    <tbody id="prio"></tbody></table></div>
+  <p class="note" id="prionote"></p>
+</section>
+
+<section id="v-features" class="view" hidden>
+  <div><h2>Features</h2><p class="lede" id="flede"></p></div>
+  <div class="legend" id="stagelegend"></div>
+  <div class="fgrid" id="fgrid"></div>
+</section>
+
+<section id="v-team" class="view" hidden>
+  <div><h2>Team</h2><p class="lede">Who is on the team, their roles, and what each person is carrying in the current sprint.</p></div>
+  <div class="kpis" id="tkpis"></div>
+  <div class="people" id="people"></div>
+</section>
+
+<section id="v-discovery" class="view" hidden>
+  <div><h2>Discovery</h2><p class="lede">Where the team's cases sit before they become change requests and stories.</p></div>
+  <div class="flow" id="flow"></div>
+  <div class="tbl-wrap"><table class="narrow" style="min-width:760px">
+    <thead><tr><th>Case</th><th>Work</th><th>Feature</th><th>Status</th><th>Assigned</th></tr></thead>
+    <tbody id="ba"></tbody></table></div>
+</section>
+
+<section id="v-sprint" class="view" hidden>
+  <div class="toolbar"><div><h2>Sprint</h2><p class="lede" id="splede"></p></div><span class="snap asof"></span></div>
+  <div class="cal" id="cal"></div>
+  <div class="panel burn">
+    <div class="toolbar"><h3 id="sph"></h3><span class="note" id="spnote"></span></div>
+    <div class="meter" id="spmeter"></div>
+    <div class="scale"><span id="spstart"></span><span id="sptoday"></span><span id="spend"></span></div>
+    <div class="legend" id="splegend"></div>
+  </div>
+  <div class="kpis" id="spkpis"></div>
+  <div class="panel"><h3>Sprint checks</h3><ul class="flags" id="spflags"></ul></div>
+  <div class="toolbar"><div><h3 id="kanh">Sprint board</h3><p class="lede" id="kanl"></p></div><label class="note"><input type="checkbox" id="allteams"> All teams</label></div>
+  <div class="kan" id="kan"></div>
+  <div class="legend"><span style="--c:var(--ok)">AC passed</span><span style="--c:var(--crit)">AC failed</span><span style="--c:var(--line)">AC not tested</span></div>
+</section>
+
+<section id="v-pipeline" class="view" hidden>
+  <div class="toolbar"><div><h2>Build pipeline</h2><p class="lede">Case → Change Request → Story → build items in Dev01 → change set to staging → QA → UAT → production.</p></div><span class="snap asof"></span></div>
+  <div class="pipe" id="pipe"></div>
+  <div class="panel"><h3>Pipeline checks</h3><ul class="flags" id="pflags"></ul></div>
+  <div><h3>Change requests</h3><p class="lede">Each row is one change request. The track shows how far its work has moved.</p></div>
+  <div class="tbl-wrap"><table style="min-width:1040px">
+    <thead><tr><th>CR</th><th>Change</th><th>Case</th><th>CR status</th><th>Stories</th><th>ACs passed</th><th style="min-width:320px">Progress</th></tr></thead>
+    <tbody id="crs"></tbody></table></div>
+  <div><h3>Build items</h3><p class="lede" id="bil"></p></div>
+  <div id="bis" style="display:flex;flex-direction:column;gap:8px"></div>
+</section>
+
+<section id="v-release" class="view" hidden>
+  <div class="toolbar">
+    <div><h2>Release</h2><p class="lede">Everything targeted for a release, the change sets that carry it, and the runbook from staging to production. The release manager rotates each release.</p></div>
+    <div class="left"><label for="relpick" class="note">Release</label><select id="relpick"></select></div>
+  </div>
+  <p class="banner" id="relbanner" hidden></p>
+  <div class="panel relhead" id="relhead"></div>
+  <div class="kpis" id="relkpis"></div>
+  <div class="panel"><div class="toolbar"><h3>Runbook</h3><span class="note" id="rbnote"></span></div><ol class="runbook" id="runbook"></ol></div>
+  <div class="panel"><div class="toolbar"><h3>Change sets</h3><span class="note">Outbound change sets from Dev01, one row each.</span></div><div id="cslist" style="margin-top:8px"></div>
+    <div id="csadd" class="inline" hidden><input type="text" name="name" id="csname" placeholder="Change set name, e.g. AM-Case-Cleanup-v1" required aria-label="Change set name"><select name="crew" id="cscrew" aria-label="Crew"><option>Morning Crew</option><option>Afternoon Crew</option><option>Release Manager</option></select><button class="btn solid" type="button" id="csaddbtn">Add change set</button></div></div>
+  <div><h3>Build items to change sets</h3><p class="lede">Every build item for the stories in this release. Each must be in a change set or marked as a manual step before production.</p></div>
+  <div class="tbl-wrap"><table class="recon" style="min-width:860px"><thead><tr><th>Build item</th><th>Trail OS status</th><th>Change set</th><th>Manual step</th><th>Verified in prod</th></tr></thead><tbody id="recon"></tbody></table></div>
+  <div class="panel"><h3>Sign-offs</h3><ul class="flags slack" id="signs"></ul></div>
+</section>
+
+<footer id="foot"></footer>
+</div>
+</main>
+
+<script>
+/* Trail Crew Boards, board version 1, data contract 1.
+   Renders only from the BoardData Trail OS sends over postMessage. Never calls the network.
+   Every save is a named action that Trail OS checks on the server. */
+(function(){
+"use strict";
+const BOARD_VERSION=1, CONTRACT=1;
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const TZ="America/Chicago";
+const dayOf=iso=>{try{return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(iso))}catch(e){return String(iso).slice(0,10)}};
+const fmtDay=d=>{if(!d)return "";const [y,m,dd]=String(d).slice(0,10).split("-").map(Number);return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]+" "+dd};
+const fmtWhen=iso=>{try{return new Date(iso).toLocaleString("en-US",{timeZone:TZ,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})+" CDT"}catch(e){return ""}};
+const dnum=d=>Date.parse(String(d).slice(0,10)+"T12:00:00Z")/864e5;
+
+/* ---------- bridge ---------- */
+let D=null, pending={}, seq=0;
+function send(m){try{window.parent.postMessage(m,"*")}catch(e){}}
+function act(name,payload){return new Promise(res=>{const id="a"+(++seq);pending[id]=res;send({type:"action",id,name,payload});setTimeout(()=>{if(pending[id]){delete pending[id];res({ok:false,code:"timeout",message:"Trail OS did not answer. Your change may not have saved; refresh before trying again."})}},20000)})}
+window.addEventListener("message",e=>{
+  if(e.source!==window.parent)return;
+  const m=e.data||{};
+  if(m.type==="data"&&m.data){
+    if(!(Number(m.data.contractVersion)>=CONTRACT)){showWait("Trail OS sent data this board version can't read. Ask staff to check the active board version.");return}
+    D=index(m.data);render();
+  } else if(m.type==="result"&&pending[m.id]){const r=pending[m.id];delete pending[m.id];r(m)}
+});
+send({type:"ready",board:"trail-crew",boardVersion:BOARD_VERSION,contractVersion:CONTRACT});
+setTimeout(()=>{if(!D)showWait("Trail OS hasn't sent board data yet. If this stays, the hourly refresh may not have run since the last deploy.")},6000);
+function showWait(msg){$("waitmsg").textContent=msg;$("waiting").hidden=false}
+
+/* ---------- indexing ---------- */
+function index(raw){
+  const d=Object.assign({teams:[],features:[],cases:[],changeRequests:[],sprints:[],stories:[],acceptanceCriteria:[],buildItems:[],releases:[],changeSets:[]},raw);
+  d.today=dayOf(d.asOf||new Date().toISOString());
+  d.viewer=d.viewer||{};
+  d.teamBy=Object.fromEntries(d.teams.map(t=>[t.key,t]));
+  d.featBy=Object.fromEntries(d.features.map(f=>[f.id,f]));
+  d.caseBy=Object.fromEntries(d.cases.map(c=>[c.id,c]));
+  d.crBy=Object.fromEntries(d.changeRequests.map(c=>[c.id,c]));
+  d.storyBy=Object.fromEntries(d.stories.map(s=>[s.id,s]));
+  d.relBy=Object.fromEntries(d.releases.map(r=>[r.id,r]));
+  d.csBy=Object.fromEntries(d.changeSets.map(c=>[c.id,c]));
+  d.ac={};d.acceptanceCriteria.forEach(a=>{const x=d.ac[a.storyId]||(d.ac[a.storyId]=[0,0,0]);x[a.status==="Passed"?0:a.status==="Failed"?1:2]++});
+  d.bi={};d.buildItems.forEach(b=>{(d.bi[b.storyId]||(d.bi[b.storyId]=[])).push(b)});
+  const memberTeams={};d.teams.forEach(t=>(t.members||[]).forEach(m=>{if(m.contactId)(memberTeams[m.contactId]||(memberTeams[m.contactId]=[])).push(t.key)}));
+  d.memberTeams=memberTeams;
+  d.stories.forEach(s=>{
+    const f=d.featBy[s.featureId], cr=d.crBy[s.changeRequestId], cs=cr&&d.caseBy[cr.caseId];
+    s.team=(f&&f.team)||(cs&&cs.team)||((memberTeams[s.builderId]||[])[0])||null;
+    s.acs=d.ac[s.id]||[0,0,0];s.items=d.bi[s.id]||[];
+  });
+  const act=d.sprints.filter(s=>s.start<=d.today&&d.today<=s.end).sort((a,b)=>b.start.localeCompare(a.start));
+  d.sprint=act[0]||null;
+  return d;
+}
+const viewerCan={
+  staff:()=>!!D.viewer.isStaff,
+  prioritize:t=>D.viewer.isStaff||(t.members||[]).some(m=>m.contactId&&m.contactId===D.viewer.contactId&&(m.roles||[]).some(r=>/Product Owner|Product Manager|Coach/.test(r))),
+  manageRelease:r=>D.viewer.isStaff||(D.viewer.isReleaseManagerFor||[]).includes(r.id),
+  assignItem:(r,b)=>{if(viewerCan.manageRelease(r))return true;const s=D.storyBy[b.storyId];return !!(s&&s.builderId&&s.builderId===D.viewer.contactId)}
+};
+
+/* ---------- shared bits ---------- */
+const STAGES=[{k:"intake",n:"Intake",d:"General Cases queue",c:"var(--muted)"},{k:"discovery",n:"BA discovery",d:"Ready for BA Review",c:"var(--accent)"},{k:"dependency",n:"Dependencies",d:"DepPriority queue",c:"var(--warn)"},{k:"tech",n:"Tech review",d:"Ready for Tech Review",c:"var(--launch)"},{k:"staff",n:"With staff",d:"Staff queue or a staff member",c:"var(--road)"}];
+const stageName=k=>(STAGES.find(s=>s.k===k)||{n:k||"Unknown"}).n;
+const rec=(type,id,label)=>id?`<button type="button" class="clink linkbtn mono" data-open="${esc(type)}" data-id="${esc(id)}">${esc(label)}</button>`:`<span class="mono">${esc(label)}</span>`;
+const caseLink=c=>rec("case",c.id,String(c.number||"").replace(/^0+/,""));
+const storyLink=s=>rec("story",s.id,s.name);
+const fpill=c=>{const f=D.featBy[c.featureId];return f?`<span class="pill ${f.status==="In Progress"?"launchp":"roadp"}">${esc(f.name.replace("Feature-","F-"))}</span>`:`<span class="pill">No Feature yet</span>`};
+const flags=(arr)=>arr.length?arr.map(([c,t,x])=>`<li class="${c||""}"><span class="tag">${esc(t)}</span><span>${x}</span></li>`).join(""):`<li class="ok-li"><span class="tag" style="color:var(--ok)">Clear</span><span>Nothing to flag right now.</span></li>`;
+function insightsFor(kind,key){const ins=D.insights;if(!ins)return null;const box=kind==="release"?(ins.byRelease||{})[key]:((ins.byTeam||{})[key]||{})[kind];return Array.isArray(box)?box.map(i=>[i.severity==="crit"?"crit":i.severity==="warn"?"":"",i.tag,esc(i.text)]):null}
+function msg(text,bad){const b=$("relbanner");b.hidden=!text;b.textContent=text||"";b.style.background=bad?"var(--crit-soft)":"var(--warn-soft)"}
+
+/* ---------- state ---------- */
+let team=null, view="overview", relKey=ls.get("tcb-rel"), orderDraft=null, relPost={id:null,text:"",bad:false};
+function render(){
+  $("waiting").hidden=true;
+  const keys=D.teams.map(t=>t.key);
+  if(!team||!keys.includes(team)){const saved=ls.get("tcb-team");team=keys.includes(saved)?saved:((D.viewer.teams||[]).find(k=>keys.includes(k))||keys[0]||null)}
+  $("teambtns").innerHTML=D.teams.map(t=>`<button type="button" data-team="${esc(t.key)}" aria-pressed="${t.key===team}">${esc(t.name.replace(/^Transition Trails /,""))}</button>`).join("");
+  document.body.dataset.team=team||"";
+  const T=D.teamBy[team]||{name:"No team",members:[]};
+  $("tname").textContent=T.name+" board";
+  $("tmission").textContent=[T.goal,T.description].filter(Boolean).join(". ")||"";
+  document.querySelectorAll(".asof").forEach(e=>e.textContent="Data as of "+fmtWhen(D.asOf));
+  $("foot").textContent=`Data as of ${fmtWhen(D.asOf)}. ${D.insights&&D.insights.generatedAt?"Insights as of "+fmtWhen(D.insights.generatedAt)+(D.insights.stale?" (stale)":"")+".":"Checks are computed from the data; Claude insights arrive in a later phase."} Board version ${BOARD_VERSION}. Refreshes on the hour, 6 AM to 9 PM Central.`;
+  [renderOverview,renderPrio,renderFeatures,renderTeam,renderDiscovery,renderSprint,renderPipeline,renderRelease].forEach(f=>{try{f()}catch(e){console.error(f.name,e)}});
+  show();
+}
+function show(){
+  document.querySelectorAll(".view").forEach(el=>el.hidden=el.id!=="v-"+view);
+  document.querySelectorAll("#tabs a").forEach(a=>a.dataset.view===view?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
+}
+const teamCases=()=>D.cases.filter(c=>c.team===team);
+const teamFeatures=()=>D.features.filter(f=>f.team===team);
+
+/* ---------- Overview ---------- */
+function renderOverview(){
+  const T=D.teamBy[team]||{members:[]}, cs=teamCases(), mem=T.members||[];
+  $("tgoal").textContent=T.goal||"";$("tdesc").textContent=T.description||"";
+  const leadRoles=["Product Manager","Product Owner","Coach","Assistant Coach"];
+  const leads=[];leadRoles.forEach(r=>mem.filter(m=>(m.roles||[]).includes(r)).forEach(m=>leads.push([r,m.openSeat?"OPEN":m.name])));
+  $("tleads").innerHTML=leads.map(([r,n])=>`<div><span>${esc(r)}</span><b class="${n==="OPEN"?"open":""}">${esc(n==="OPEN"?"Open seat":n)}</b></div>`).join("")||`<div><span>Roles</span><b>Not set yet</b></div>`;
+  const filled=mem.filter(m=>!m.openSeat).length, open=mem.length-filled;
+  $("kpis").innerHTML=[[cs.length,"open cases"],[cs.filter(c=>c.priority==="High"||c.priority==="Critical").length,"High priority"],[cs.filter(c=>!c.featureId).length,"cases with no Feature"],[`${filled}<small style="font-size:16px;color:var(--muted)"> +${open} open</small>`,"people on the team"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
+  // roadmap: 7 months from this month
+  const t0=new Date(D.today+"T12:00:00Z");const months=[];for(let i=0;i<7;i++){const d=new Date(Date.UTC(t0.getUTCFullYear(),t0.getUTCMonth()+i,1));months.push(d)}
+  const span0=dnum(months[0].toISOString()), span1=dnum(new Date(Date.UTC(t0.getUTCFullYear(),t0.getUTCMonth()+7,1)).toISOString());
+  const pos=d=>Math.max(0,Math.min(1,(dnum(d)-span0)/(span1-span0)))*100;
+  let g=`<div class="mh">Feature</div>`+months.map(m=>`<div class="mh">${m.toLocaleString("en-US",{month:"short",timeZone:"UTC"})}</div>`).join("");
+  teamFeatures().forEach(f=>{const n=cs.filter(c=>c.featureId===f.id).length;
+    const bar=f.start&&f.end?`<div class="bar launch" style="left:${pos(f.start)}%;width:${Math.max(3,pos(f.end)-pos(f.start))}%">${esc(fmtDay(f.start))} to ${esc(fmtDay(f.end))}</div>`:`<div class="bar unplanned" style="left:0;width:100%">No dates yet</div>`;
+    g+=`<div class="lane"><div class="ln"><button type="button" class="flink linkbtn" data-feat="${esc(f.id)}">${esc(f.title||f.name)}</button><small>${esc(f.name)} · ${n} case${n===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7">${bar}</div></div>`});
+  const nf=cs.filter(c=>!c.featureId).length;
+  if(nf)g+=`<div class="lane"><div class="ln">No Feature yet<small>${nf} case${nf===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7"><div class="bar unplanned" style="left:0;width:100%">Product owner groups these into Features</div></div></div>`;
+  $("roadgrid").innerHTML=g;
+  const sp=D.sprints.filter(s=>s.end>=D.today).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,3);
+  const rels=D.releases.filter(r=>r.plannedDate&&r.plannedDate>=D.today);
+  $("miles").innerHTML=sp.map(s=>[s.start,`${esc(s.name)} starts`]).concat(rels.map(r=>[r.plannedDate,`${esc(r.name)} to production`])).sort((x,y)=>x[0].localeCompare(y[0])).map(([d,t])=>`<span><b>${esc(fmtDay(d))}</b> · ${t}</span>`).join("");
+  const ins=insightsFor("overview",team);
+  $("insas").textContent=ins?"From Claude, "+fmtWhen(D.insights.generatedAt):"Computed from the data";
+  const F=ins||[];
+  if(!ins){
+    const seats=mem.filter(m=>m.openSeat).map(m=>m.primaryRole||((m.roles||[])[0]));
+    if(seats.length)F.push(["crit","Open seats",esc(seats.join(", "))+" "+(seats.length>1?"are":"is")+" open on this team."]);
+    if(nf)F.push(["","Features",`${nf} of ${cs.length} open cases have no Feature. The product owner groups them into Features with a definition of done.`]);
+    const intake=cs.filter(c=>c.stage==="intake").length;if(intake)F.push(["","Intake",`${intake} case${intake===1?" sits":"s sit"} in the general Cases queue with no owner yet.`]);
+    const st=D.stories.filter(s=>s.team===team&&D.sprint&&s.sprintId===D.sprint.id);const failed=st.filter(s=>s.acs[1]);
+    if(failed.length)F.push(["crit","Failed tests",failed.map(storyLink).join(", ")+` ${failed.length>1?"have":"has"} a failed acceptance criterion.`]);
+  }
+  $("flags").innerHTML=flags(F);
+}
+
+/* ---------- Prioritize ---------- */
+function defaultOrder(){
+  const T=D.teamBy[team]||{}, ids=teamCases().map(c=>c.id), saved=(T.priorityOrder||[]).filter(id=>ids.includes(id));
+  const rank={Critical:0,High:1,Medium:2,Low:3};
+  const rest=ids.filter(id=>!saved.includes(id)).sort((a,b)=>{const x=D.caseBy[a],y=D.caseBy[b];return (rank[x.priority]??4)-(rank[y.priority]??4)||String(x.number).localeCompare(String(y.number))});
+  return saved.concat(rest);
+}
+function renderPrio(){
+  const sel=$("fscope"), prev=sel.value;
+  const opts=[["all","All open cases"],["none","No Feature yet"]].concat(teamFeatures().map(f=>[f.id,f.name+": "+(f.title||"")]));
+  sel.innerHTML=opts.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");
+  sel.value=opts.some(o=>o[0]===prev)?prev:"all";
+  if(!orderDraft||orderDraft.team!==team||!sameSet(orderDraft.ids,teamCases().map(c=>c.id)))orderDraft={team,ids:defaultOrder(),dirty:false};
+  drawPrio();
+}
+const sameSet=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
+function drawPrio(){
+  const s=$("fscope").value, T=D.teamBy[team]||{}, can=viewerCan.prioritize(T);
+  const ids=orderDraft.ids.filter(id=>{const c=D.caseBy[id];return s==="all"||(s==="none"?!c.featureId:c.featureId===s)});
+  $("prio").innerHTML=ids.map((id,i)=>{const c=D.caseBy[id];return `<tr><td class="num">${orderDraft.ids.indexOf(id)+1}</td><td>${caseLink(c)}</td><td>${esc(c.subject)}</td><td>${fpill(c)}</td><td><span class="pill ${/High|Critical/.test(c.priority)?"high":""}">${esc(c.priority||"")}</span></td><td><span class="pill stage">${esc(stageName(c.stage))}</span></td><td>${esc(c.status||"")}</td><td>${esc(c.assignee||"Not assigned")}</td><td>${can?`<div class="ctrls"><button class="ib" data-mv="-1" data-id="${esc(id)}" aria-label="Move up" ${i===0?"disabled":""}>↑</button><button class="ib" data-mv="1" data-id="${esc(id)}" aria-label="Move down" ${i===ids.length-1?"disabled":""}>↓</button></div>`:""}</td></tr>`}).join("")||`<tr><td colspan="9" class="note">No open cases in this view.</td></tr>`;
+  $("saveorder").hidden=!(can&&orderDraft.dirty);$("reset").hidden=!(can&&orderDraft.dirty);
+  $("prionote").textContent=can?"Move cases, then Save order. The saved order is the same for everyone on the team.":"The product owner, coach or staff set this order.";
+}
+
+/* ---------- Features ---------- */
+function renderFeatures(){
+  const fs=teamFeatures(), cs=teamCases();
+  $("flede").textContent=fs.length?"Each Feature groups the team's cases under one outcome and a definition of done.":"This team has no Features yet. The product owner creates them in Trail OS.";
+  $("stagelegend").innerHTML=STAGES.map(s=>`<span style="--c:${s.c}">${esc(s.n)}</span>`).join("");
+  $("fgrid").innerHTML=fs.map(f=>{const fc=cs.filter(c=>c.featureId===f.id);
+    const meter=fc.length?`<div class="meter">${STAGES.map(s=>{const n=fc.filter(c=>c.stage===s.k).length;return n?`<i style="width:${n/fc.length*100}%;background:${s.c}" title="${esc(s.n)}: ${n}"></i>`:""}).join("")}</div>`:"";
+    return `<article class="feat" id="card-${esc(f.id)}" tabindex="-1"><div class="hd"><div><div class="id">${esc(f.name)} · ${esc(f.status||"")}${f.size?" · "+esc(f.size):""}</div><h3>${esc(f.title||f.name)}</h3></div><span class="pill">${f.totalStories||0} stories</span></div>
+    ${f.description?`<p class="fsum">${esc(f.description)}</p>`:""}${f.definitionOfDone?`<div class="dod"><b>Definition of done</b>${esc(f.definitionOfDone)}</div>`:""}
+    ${meter}<ul class="cases">${fc.map(c=>`<li>${caseLink(c)}<span>${esc(c.subject)} <span class="note">· ${esc(stageName(c.stage))}</span></span></li>`).join("")||`<li class="note">No open cases.</li>`}</ul></article>`}).join("");
+}
+
+/* ---------- Team ---------- */
+function renderTeam(){
+  const T=D.teamBy[team]||{members:[]}, mem=T.members||[];
+  const st=D.sprint?D.stories.filter(s=>s.sprintId===D.sprint.id):[];
+  const casesOf=m=>D.cases.filter(c=>(c.assigneeId&&c.assigneeId===m.contactId)||(!c.assigneeId&&c.assignee&&c.assignee===m.name));
+  $("tkpis").innerHTML=[[mem.filter(m=>!m.openSeat).length,"people"],[mem.filter(m=>m.openSeat).length,"open seats"],[st.filter(s=>s.team===team).length,`${D.sprint?esc(D.sprint.name):"Sprint"} stories`],[teamCases().filter(c=>c.assignee).length,"cases assigned to someone"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
+  $("people").innerHTML=mem.map(m=>{
+    if(m.openSeat)return `<div class="person vacant"><div class="nm open">Open seat</div><div class="rl">${esc((m.roles||[]).join(" / "))}</div></div>`;
+    const sb=st.filter(s=>s.builderId===m.contactId), sq=st.filter(s=>s.qaId===m.contactId), ca=casesOf(m);
+    const load=sb.length*2+sq.length+ca.length;
+    return `<div class="person"><div><div class="nm">${esc(m.name)}</div><div class="rl">${esc((m.roles||[]).join(" / "))}</div></div>
+     <div class="load">${sb.length?`<span class="pill">${sb.length} building</span>`:""}${sq.length?`<span class="pill">${sq.length} QA</span>`:""}${ca.length?`<span class="pill stage">${ca.length} case${ca.length>1?"s":""}</span>`:""}${!load?`<span class="pill ok">Available</span>`:""}</div>
+     <div class="bars" aria-label="Load">${Array.from({length:8},(_,i)=>`<i class="${i<load?"on":""}"></i>`).join("")}</div>
+     <ul class="work">${sb.map(s=>`<li>${storyLink(s)}<span>Build · ${esc(s.title)} <span class="note">(${esc(s.status)})</span></span></li>`).join("")}${sq.map(s=>`<li>${storyLink(s)}<span>QA · ${esc(s.title)}</span></li>`).join("")}${ca.map(c=>`<li>${caseLink(c)}<span>${esc(c.subject)}</span></li>`).join("")}</ul></div>`}).join("")||`<p class="note">No roster yet. Staff build team rosters on the Teams screen.</p>`;
+}
+
+/* ---------- Discovery ---------- */
+function renderDiscovery(){
+  const cs=teamCases();
+  $("flow").innerHTML=STAGES.map(s=>`<div class="stagebox ${s.k==="discovery"?"focus":""}"><small>${esc(s.n)}</small><b>${cs.filter(c=>c.stage===s.k).length}</b><small>${esc(s.d)}</small></div>`).join("");
+  $("ba").innerHTML=cs.filter(c=>c.stage==="discovery").map(c=>`<tr><td>${caseLink(c)}</td><td>${esc(c.subject)}</td><td>${fpill(c)}</td><td>${esc(c.status||"")}</td><td>${esc(c.assignee||"Not assigned")}</td></tr>`).join("")||`<tr><td colspan="5" class="note">No cases in BA discovery.</td></tr>`;
+}
+
+/* ---------- Sprint ---------- */
+const SCOL=[["Not started",["Backlog","Ready"]],["In Progress",["In Progress"]],["In Review",["In Review"]],["All ACs Passed",["All ACs Passed"]]];
+const SCOLOR={"Not started":"var(--line)","In Progress":"var(--warn)","In Review":"var(--launch)","All ACs Passed":"var(--ok)"};
+function storyHint(s){const [p,f,n]=s.acs,t=p+f+n;
+  if(f)return ["bad",`${f} AC${f>1?"s":""} failed. Fix and retest before review.`];
+  if(s.status==="In Review"&&t&&p===t)return ["warn","All ACs passed. Move to All ACs Passed."];
+  if(/Backlog|Ready/.test(s.status)&&t&&p===t)return ["warn","ACs already passed. Status looks out of date."];
+  if(s.status==="In Review"&&p===0&&t)return ["warn","In review, but no AC tested yet."];
+  if(/In Review|All ACs Passed/.test(s.status)&&!s.items.length)return ["warn","No build items logged yet."];
+  return ["",""]}
+const acDots=a=>`<span class="acs" aria-label="${a[0]} passed, ${a[1]} failed, ${a[2]} not tested">${"<i class='p'></i>".repeat(a[0])}${"<i class='f'></i>".repeat(a[1])}${"<i></i>".repeat(a[2])}</span>`;
+function renderSprint(){
+  const sp=D.sprint, all=$("allteams").checked;
+  const upcoming=D.sprints.slice().sort((a,b)=>a.start.localeCompare(b.start)).filter(s=>s.end>=D.today||s===sp).slice(0,5);
+  $("cal").innerHTML=upcoming.map(s=>`<div class="spr ${s===sp?"now":s.start>D.today&&s===upcoming.find(x=>x.start>D.today)?"next":""}"><b>${esc(s.name)}</b><small>${esc(fmtDay(s.start))} – ${esc(fmtDay(s.end))}</small><small>${esc(s.status||"")}${s.goals?" · goal set":" · goals not set"}</small></div>`).join("")+D.releases.filter(r=>r.plannedDate>=D.today).slice(0,1).map(r=>`<div class="spr goal"><b>${esc(fmtDay(r.plannedDate))}</b><small>${esc(r.name)} to production</small><small>${esc(r.label||"")}</small></div>`).join("");
+  if(!sp){$("splede").textContent="No sprint covers today.";["spmeter","splegend","spkpis","spflags","kan"].forEach(id=>$(id).innerHTML="");return}
+  const len=dnum(sp.end)-dnum(sp.start)+1, day=Math.min(len,Math.max(1,dnum(D.today)-dnum(sp.start)+1)), left=len-day;
+  $("splede").textContent=`${sp.name} runs ${fmtDay(sp.start)} to ${fmtDay(sp.end)}. Day ${day} of ${len}, ${left} day${left===1?"":"s"} left.`;
+  const inSprint=D.stories.filter(s=>s.sprintId===sp.id), mine=all?inSprint:inSprint.filter(s=>s.team===team);
+  const tot=mine.reduce((a,s)=>a+(s.points||0),0)||1, by=k=>mine.filter(s=>SCOL.find(c=>c[0]===k)[1].includes(s.status)).reduce((a,s)=>a+(s.points||0),0);
+  $("sph").textContent=sp.name+" progress";$("spnote").textContent=`${mine.reduce((a,s)=>a+(s.points||0),0)} points across ${mine.length} stories${all?", all teams":""}`;
+  $("spmeter").innerHTML=SCOL.map(([k])=>`<i style="width:${by(k)/tot*100}%;background:${SCOLOR[k]}" title="${k}: ${by(k)} points"></i>`).join("")+`<span class="tick" style="left:${(day-0.5)/len*100}%" title="Today"></span>`;
+  $("spstart").textContent=fmtDay(sp.start);$("spend").textContent=fmtDay(sp.end);$("sptoday").textContent=`Today, ${fmtDay(D.today)} · day ${day} of ${len}`;
+  $("splegend").innerHTML=SCOL.map(([k])=>`<span style="--c:${SCOLOR[k]}">${k} · ${by(k)} pts</span>`).join("");
+  const acs=mine.reduce((a,s)=>[a[0]+s.acs[0],a[1]+s.acs[1],a[2]+s.acs[2]],[0,0,0]), at=acs[0]+acs[1]+acs[2];
+  $("spkpis").innerHTML=[[mine.length,"stories"],[mine.reduce((a,s)=>a+(s.points||0),0),"story points"],[`${acs[0]}<small style="font-size:16px;color:var(--muted)">/${at}</small>`,"acceptance criteria passed"],[mine.filter(s=>s.status==="All ACs Passed").length,"ready to deploy"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
+  const ins=insightsFor("sprint",team), F=ins||[];
+  if(!ins){
+    const failed=mine.filter(s=>s.acs[1]);if(failed.length)F.push(["crit","Failed tests",`${failed.reduce((a,s)=>a+s.acs[1],0)} ACs failed on ${failed.map(storyLink).join(", ")}. Builders retest before review.`]);
+    const stale=mine.filter(s=>{const t=s.acs[0]+s.acs[1]+s.acs[2];return t&&s.acs[0]===t&&!/All ACs Passed|Completed/.test(s.status)});if(stale.length)F.push(["","Out of date",`${stale.map(storyLink).join(", ")} ${stale.length>1?"have":"has"} every AC passed but an earlier status.`]);
+    const untested=mine.filter(s=>s.status==="In Review"&&s.acs[0]===0&&s.acs[1]===0&&s.acs[2]);if(untested.length)F.push(["","Untested",`${untested.map(storyLink).join(", ")} ${untested.length>1?"are":"is"} in review with no AC tested.`]);
+    const notStarted=mine.filter(s=>/Backlog|Ready/.test(s.status));if(notStarted.length&&left<=10)F.push(["","Not started",`${notStarted.length} stor${notStarted.length>1?"ies":"y"} (${notStarted.reduce((a,s)=>a+(s.points||0),0)} points) not started with ${left} days left.`]);
+    if(!sp.goals)F.push(["","Goal",`${esc(sp.name)} has no goal written yet.`]);
+    const docs=mine.filter(s=>s.docStatus==="Not Started").length;if(docs)F.push(["","Docs",`${docs} of ${mine.length} stories show documentation Not Started.`]);
+  }
+  $("spflags").innerHTML=flags(F);
+  $("kanh").textContent=sp.name+" board";$("kanl").textContent="Builder → QA reviewer. A coloured edge needs attention.";
+  $("kan").innerHTML=SCOL.map(([k,sts])=>{const ss=mine.filter(s=>sts.includes(s.status));
+    return `<div class="col"><h3>${k}<span>${ss.length} · ${ss.reduce((a,s)=>a+(s.points||0),0)} pts</span></h3>${ss.map(s=>{const [c,h]=storyHint(s);
+      return `<div class="card ${c}"><div class="meta">${storyLink(s)}<span>${s.points||0} pts${s.changeRequestId&&D.crBy[s.changeRequestId]?" · "+esc(D.crBy[s.changeRequestId].number.replace(/CHG-0+/,"CHG-")):""}</span></div><div class="t">${esc(s.title)}</div><div class="meta"><span>${esc(s.builder||"No builder")} → ${esc(s.qa||"No QA")}</span><span>${s.items.length?s.items.length+" build item"+(s.items.length>1?"s":""):"no build items"}</span></div>${acDots(s.acs)}${h?`<div class="hint">${h}</div>`:""}</div>`}).join("")||`<p class="note" style="margin:0">None</p>`}</div>`}).join("");
+}
+
+/* ---------- Pipeline ---------- */
+const PST=["Case","Change request","Stories","Build items in Dev01","Staging","QA (ACs passed)","UAT","Production"];
+const TL=["Case","CR","Story","Dev01","Staging","QA","UAT","Prod"];
+const inStaging=b=>b.environment==="Staging"||b.status==="Deployed to Staging";
+const inProd=b=>b.environment==="Production"||b.status==="Deployed to Prod"||b.status==="Verified";
+function teamCRs(){return D.changeRequests.filter(cr=>{const c=D.caseBy[cr.caseId];return (c&&c.team===team)||D.stories.some(s=>s.changeRequestId===cr.id&&s.team===team)})}
+function crTrack(cr){
+  const ss=D.stories.filter(s=>s.changeRequestId===cr.id), items=ss.flatMap(s=>s.items);
+  const p=ss.reduce((a,s)=>a+s.acs[0],0), t=ss.reduce((a,s)=>a+s.acs[0]+s.acs[1]+s.acs[2],0), withB=ss.filter(s=>s.items.length).length;
+  const rel=D.relBy[cr.releaseId], uat=rel&&(rel.signoffs||[]).some(x=>x.role==="Business Owner"&&x.status==="Approved");
+  const lvl=(n,of)=>!of?"":n===of?"done":n?"part":"stop";
+  const st=["done","done",ss.length?"done":"stop",ss.length?lvl(withB,ss.length):"",items.length?lvl(items.filter(inStaging).length+items.filter(inProd).length,items.length):"",t?lvl(p,t):"",uat?"done":"",items.length?lvl(items.filter(inProd).length,items.length):""];
+  return {ss,items,p,t,withB,st};
+}
+function renderPipeline(){
+  const crs=teamCRs(), cs=teamCases(), ss=D.stories.filter(s=>s.team===team), items=ss.flatMap(s=>s.items);
+  const acp=ss.reduce((a,s)=>a+s.acs[0],0), act=ss.reduce((a,s)=>a+s.acs[0]+s.acs[1]+s.acs[2],0);
+  const counts=[[cs.length,"open cases"],[crs.length,"open change requests"],[ss.length,"stories"],[items.filter(b=>!inStaging(b)&&!inProd(b)).length,`on ${ss.filter(s=>s.items.length).length} of ${ss.length} stories`],[items.filter(inStaging).length,"logged in staging"],[act?`${acp}<small style="font-size:14px;color:var(--muted)">/${act}</small>`:0,"acceptance criteria passed"],[crs.filter(cr=>crTrack(cr).st[6]==="done").length,"CRs through UAT"],[items.filter(inProd).length,"in production"]];
+  $("pipe").innerHTML=counts.map(([n,l],i)=>`<div class="pstage ${n===0?"zero":""}"><small>${PST[i]}</small><b>${n}</b><small>${l}</small></div>`).join("");
+  const ins=insightsFor("pipeline",team), F=ins||[];
+  if(!ins){
+    const blank=items.filter(b=>!b.status).length;if(blank)F.push(["crit","No status",`${blank} of ${items.length} build items have a blank status. Builders set one so the pipeline can be read.`]);
+    const nolog=ss.filter(s=>!s.items.length&&!/Backlog|Ready/.test(s.status));if(nolog.length)F.push(["crit","Build log",`${nolog.map(storyLink).join(", ")} ${nolog.length>1?"have":"has"} started with no build items logged.`]);
+    const lag=crs.filter(cr=>cr.status==="New"&&D.stories.some(s=>s.changeRequestId===cr.id&&/In Progress|In Review|All ACs Passed/.test(s.status)));if(lag.length)F.push(["","CR status",`${lag.map(c=>esc(c.number.replace(/CHG-0+/,"CHG-"))).join(", ")} still say New while their stories are moving. Set them to Implementing.`]);
+    const nosize=crs.filter(cr=>!cr.size).length;if(nosize)F.push(["","Size",`${nosize} change request${nosize>1?"s have":" has"} no size.`]);
+  }
+  $("pflags").innerHTML=flags(F);
+  const lab=`<div class="tlabels">${TL.map(x=>`<span>${x}</span>`).join("")}</div>`;
+  $("crs").innerHTML=crs.map(cr=>{const r=crTrack(cr),sc={};r.ss.forEach(s=>sc[s.status]=(sc[s.status]||0)+1);const c=D.caseBy[cr.caseId],rel=D.relBy[cr.releaseId];
+    return `<tr class="crrow"><td>${rec("changeRequest",cr.id,cr.number.replace(/CHG-0+/,"CHG-"))}</td><td>${esc(cr.subject)}<div class="note">${esc(cr.priority||"")}${cr.size?" · "+esc(cr.size):" · no size"}${rel?" · "+esc(rel.name):""}</div></td><td>${c?caseLink(c):esc(cr.caseNumber||"")}</td><td><span class="pill ${cr.status==="New"&&r.ss.length?"cross":"stage"}">${esc(cr.status)}</span></td><td>${r.ss.length?`${r.ss.length}<div class="note">${Object.entries(sc).map(([k,v])=>v+" "+esc(k)).join(", ")} · build items on ${r.withB}</div>`:`<span class="note">None yet</span>`}</td><td class="num">${r.t?r.p+"/"+r.t:"–"}</td><td><div class="track">${r.st.map(x=>`<i class="${x}"></i>`).join("")}</div>${lab}</td></tr>`}).join("")||`<tr><td colspan="7" class="note">No change requests for this team yet. A case gets one when it reaches Ready for Tech Review.</td></tr>`;
+  const withItems=ss.filter(s=>s.items.length);
+  $("bil").textContent=withItems.length?"Build items by story, with their Trail OS status.":"No build items for this team yet. They appear once a story is being built.";
+  $("bis").innerHTML=withItems.map(s=>{const cnt={};s.items.forEach(b=>{const k=b.status||"No status";cnt[k]=(cnt[k]||0)+1});
+    return `<details class="bi"><summary><span>${esc(s.name)} · ${esc(s.title)}</span><span class="load">${Object.entries(cnt).map(([k,v])=>`<span class="pill ${k==="No status"?"cross":k==="In Progress"?"w-next":""}">${v} ${esc(k.toLowerCase())}</span>`).join("")}</span></summary><ul>${s.items.map(b=>`<li>${esc(b.name)}${b.environment?` <span class="note">· ${esc(b.environment)}</span>`:""}</li>`).join("")}</ul></details>`}).join("");
+}
+
+/* ---------- Release ---------- */
+const CS_ST=["Planned","Uploaded to Staging","Validated in Staging","Deployed to Staging","Validated in Production","Deployed to Production","Failed"];
+function relScope(rel){const crs=D.changeRequests.filter(c=>c.releaseId===rel.id);const ss=D.stories.filter(s=>crs.some(c=>c.id===s.changeRequestId));return {crs,ss,items:ss.flatMap(s=>s.items)}}
+function renderRelease(){
+  const rels=D.releases.filter(r=>r.status!=="Canceled").sort((a,b)=>String(a.plannedDate||"9").localeCompare(String(b.plannedDate||"9")));
+  if(!rels.length){$("relpick").innerHTML="";$("relhead").innerHTML=`<p class="note">No releases yet. Staff create a TT Release and name its release manager.</p>`;["relkpis","runbook","cslist","recon","signs"].forEach(id=>$(id).innerHTML="");return}
+  if(!relKey||!D.relBy[relKey]){const next=rels.find(r=>r.status!=="Deployed"&&(r.plannedDate||"")>=D.today)||rels[0];relKey=next.id}
+  $("relpick").innerHTML=rels.map(r=>`<option value="${esc(r.id)}" ${r.id===relKey?"selected":""}>${esc(r.name)} · ${esc(fmtDay(r.plannedDate)||"no date")}</option>`).join("");
+  const rel=D.relBy[relKey], can=viewerCan.manageRelease(rel), {crs,ss,items}=relScope(rel);
+  const relCS=D.changeSets.filter(c=>c.releaseId===rel.id);
+  const placed=items.filter(b=>(b.changeSetId&&D.csBy[b.changeSetId])||b.manualStep).length, verified=items.filter(b=>b.verifiedInProd).length;
+  const noLog=ss.filter(s=>!s.items.length);
+  const steps=(rel.steps||[]).slice().sort((a,b)=>(a.sequence||0)-(b.sequence||0)), nx=steps.find(s=>!s.done);
+  const ins=insightsFor("release",rel.id);
+  $("relhead").innerHTML=`<div><span class="eyebrow" style="color:var(--muted)">${esc(rel.name)}${rel.label?" · "+esc(rel.label):""}</span><h3 style="margin:6px 0">Production ${esc(fmtDay(rel.plannedDate)||"date not set")}</h3>
+    <p style="margin:0 0 10px"><span class="rm">Release manager · ${esc(rel.manager&&rel.manager.name||"to be named")}</span></p>
+    <p class="note" style="margin:0">${nx?`Next: <b style="color:var(--fg)">${esc(nx.label)}</b> · ${esc(nx.owner||"")}${nx.due?" · due "+esc(fmtDay(nx.due)):""}`:steps.length?"Every runbook step is done.":"Runbook steps appear once Trail OS sets up this release."}</p>
+    <div class="inline">${rel.slackChannelId?`<button type="button" class="btn ghost" data-open="slack" data-id="${esc(rel.slackChannelId)}">Open #${esc(rel.slackChannelName||"channel")}</button>`:""}${can&&rel.slackChannelId?`<button class="btn solid" id="relpost" type="button">Post status to Slack</button>`:""}<span class="toast" id="relpostmsg" role="status" style="${relPost.bad?"color:var(--crit)":""}">${relPost.id===rel.id?esc(relPost.text):""}</span></div>
+    ${ins&&ins.length?`<ul class="flags" style="margin-top:10px">${flags(ins)}</ul>`:""}</div>
+   <div class="relmeta"><div><span>Change requests</span><b>${crs.length?crs.map(c=>esc(c.number.replace(/CHG-0+/,"CHG-"))).join(", "):"None linked yet"}</b></div><div><span>Stories</span><b>${ss.length}</b></div><div><span>Build items</span><b>${items.length}</b></div><div><span>TT Release status</span><b>${esc(rel.status||"")}</b></div><div><span>Your access</span><b>${can?"Can manage this release":"View only"}</b></div></div>`;
+  $("relkpis").innerHTML=[[`${placed}<small style="font-size:16px;color:var(--muted)">/${items.length}</small>`,"build items in a change set or manual step"],[relCS.length,"change sets"],[noLog.length,"stories with no build items"],[`${verified}<small style="font-size:16px;color:var(--muted)">/${items.length}</small>`,"verified in production"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
+  const dis=can?"":"disabled";
+  $("rbnote").textContent=can?"Tick each step as it finishes.":"View only. The release manager and staff tick steps.";
+  $("runbook").innerHTML=steps.map(s=>`<li class="${s.done?"done":nx&&nx.key===s.key?"next":""}"><input type="checkbox" data-step="${esc(s.key)}" ${s.done?"checked":""} ${dis} aria-label="${esc(s.label)}"><span><span class="rt">${esc(s.label)}</span><br><span class="who">${esc(s.owner||"")}${s.done&&s.doneAt?" · done "+esc(fmtWhen(s.doneAt))+(s.doneBy?" by "+esc(s.doneBy):""):""}</span></span><span class="when">${esc(s.due?fmtDay(s.due):"")}</span></li>`).join("")||`<li><span></span><span class="note">No runbook steps yet.</span><span></span></li>`;
+  $("cslist").innerHTML=relCS.length?relCS.map(c=>{const n=items.filter(b=>b.changeSetId===c.id).length;return `<div class="cs"><div><b>${esc(c.name)}</b><small>${esc(c.crew||"")}${c.owner?" · "+esc(c.owner):""} · ${n} build item${n===1?"":"s"}</small></div><select data-csst="${esc(c.id)}" ${dis} aria-label="Status of ${esc(c.name)}">${CS_ST.map(x=>`<option ${x===c.status?"selected":""}>${x}</option>`).join("")}</select><span></span></div>`}).join(""):`<p class="note" style="margin:0">No change sets recorded yet.</p>`;
+  $("csadd").hidden=!can;
+  let rows="";
+  ss.forEach(st=>{const its=st.items;
+    rows+=`<tr class="story"><td colspan="5">${storyLink(st)} · ${esc(st.title)} <span class="note">· ${esc(st.status)}</span></td></tr>`;
+    if(!its.length){rows+=`<tr class="miss"><td colspan="5">No build items logged. ${esc(st.builder||"The builder")} logs them before change sets are final.</td></tr>`;return}
+    rows+=its.map(b=>{const ok=(b.changeSetId&&D.csBy[b.changeSetId])||b.manualStep, ca=viewerCan.assignItem(rel,b)?"":"disabled";
+      return `<tr class="${ok?"":"cp"}"><td>${esc(b.name)}</td><td>${b.status?`<span class="pill">${esc(b.status)}</span>`:`<span class="pill cross">No status</span>`}</td><td><select data-itcs="${esc(b.id)}" ${ca} aria-label="Change set for ${esc(b.name)}"><option value="">Not in a change set</option>${relCS.map(c=>`<option value="${esc(c.id)}" ${c.id===b.changeSetId?"selected":""}>${esc(c.name)}</option>`).join("")}</select></td><td><input type="checkbox" data-itman="${esc(b.id)}" ${b.manualStep?"checked":""} ${ca} aria-label="Manual step: ${esc(b.name)}"></td><td><input type="checkbox" data-itver="${esc(b.id)}" ${b.verifiedInProd?"checked":""} ${dis} aria-label="Verified in production: ${esc(b.name)}"></td></tr>`}).join("")});
+  $("recon").innerHTML=rows||`<tr><td colspan="5" class="note">No stories in this release yet. Link change requests to the TT Release.</td></tr>`;
+  $("signs").innerHTML=(rel.signoffs||[]).slice().sort((a,b)=>(a.sequence||0)-(b.sequence||0)).map(x=>`<li><span class="pill ${x.status==="Approved"?"ok":x.status==="Rejected"?"high":""}">${esc(x.status)}</span><span><b>${esc(x.approver||"")}</b> · ${esc(x.role||"")}</span></li>`).join("")||`<li><span class="pill">None</span><span>No sign-offs on this release yet.</span></li>`;
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",async e=>{
+  const tb=e.target.closest("#teambtns button[data-team]");if(tb){team=tb.dataset.team;ls.set("tcb-team",team);orderDraft=null;render();return}
+  const tab=e.target.closest("#tabs a[data-view]");if(tab){e.preventDefault();view=tab.dataset.view;show();window.scrollTo(0,0);return}
+  const op=e.target.closest("[data-open]");if(op){const r=await act("openRecord",{type:op.dataset.open,id:op.dataset.id});if(!r.ok&&view==="release")msg(r.message||"Couldn't open that record.",true);return}
+  const fl=e.target.closest("[data-feat]");if(fl){view="features";show();const c=document.getElementById("card-"+fl.dataset.feat);if(c){c.scrollIntoView({block:"start"});c.classList.add("flash");c.focus({preventScroll:true});setTimeout(()=>c.classList.remove("flash"),2500)}return}
+  const mv=e.target.closest("[data-mv]");if(mv){const ids=orderDraft.ids,i=ids.indexOf(mv.dataset.id),j=i+Number(mv.dataset.mv);if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];orderDraft.dirty=true;drawPrio();return}
+  if(e.target.id==="reset"){orderDraft=null;renderPrio();return}
+  if(e.target.id==="saveorder"){const b=e.target;b.disabled=true;$("toast").textContent="Saving…";const r=await act("saveOrder",{team,caseIds:orderDraft.ids});b.disabled=false;$("toast").textContent=r.ok?"Order saved for the team.":(r.message||"Not saved.");if(r.ok)orderDraft.dirty=false;drawPrio();setTimeout(()=>$("toast").textContent="",3000);return}
+  if(e.target.id==="relpost"){const b=e.target;b.disabled=true;$("relpostmsg").textContent="Posting…";const r=await act("postReleaseStatus",{releaseId:relKey});relPost={id:relKey,text:r.ok?"Posted to the release channel.":(r.message||"Not posted."),bad:!r.ok};const m=$("relpostmsg");if(m){m.textContent=relPost.text;m.style.color=r.ok?"":"var(--crit)"}const nb=$("relpost");if(nb)nb.disabled=false;setTimeout(()=>{relPost.text="";const m2=$("relpostmsg");if(m2)m2.textContent=""},6000);return}
+});
+$("fscope").addEventListener("change",drawPrio);
+$("allteams").addEventListener("change",renderSprint);
+$("relpick").addEventListener("change",e=>{relKey=e.target.value;ls.set("tcb-rel",relKey);msg("");renderRelease()});
+async function addCS(){const inp=$("csname"),name=inp.value.trim();if(!name){inp.focus();return}const b=$("csaddbtn");b.disabled=true;const r=await act("addChangeSet",{releaseId:relKey,name,crew:$("cscrew").value});b.disabled=false;if(r.ok){inp.value="";msg("")}else msg(r.message||"The change set wasn't added.",true)}
+$("csaddbtn").addEventListener("click",addCS);
+$("csname").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addCS()}});
+$("v-release").addEventListener("change",async e=>{
+  const t=e.target;let name,payload;
+  if(t.dataset.step){name="setStep";payload={releaseId:relKey,stepKey:t.dataset.step,done:t.checked}}
+  else if(t.dataset.csst){name="setChangeSetStatus";payload={changeSetId:t.dataset.csst,status:t.value}}
+  else if(t.dataset.itcs){name="assignBuildItem";payload={releaseId:relKey,buildItemId:t.dataset.itcs,changeSetId:t.value||null}}
+  else if(t.dataset.itman){name="assignBuildItem";payload={releaseId:relKey,buildItemId:t.dataset.itman,manualStep:t.checked}}
+  else if(t.dataset.itver){name="verifyBuildItem";payload={releaseId:relKey,buildItemId:t.dataset.itver,verified:t.checked}}
+  else return;
+  t.disabled=true;const r=await act(name,payload);t.disabled=false;
+  if(!r.ok){msg((r.message||"That change didn't save.")+(r.code?" ("+r.code+")":""),true);renderRelease()}else msg("");
+});
+})();
+
+</script>
+</body>
+</html>
