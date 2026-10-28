@@ -335,6 +335,8 @@ details.rstory .tbl-wrap{border-radius:10px}
 
 <section id="v-overview" class="view" hidden>
   <div class="toolbar"><h2>Overview</h2><span class="snap asof"></span></div>
+  <div class="panel" id="rollup" hidden><div class="toolbar"><h3 id="rolluph">Team progress</h3><span class="note">Click a team to open its board.</span></div>
+    <div class="tbl-wrap" style="margin-top:8px"><table style="min-width:820px"><thead><tr><th>Team</th><th>Open cases</th><th>High priority</th><th>No Feature</th><th>Sprint stories</th><th>Points done</th><th>ACs passed</th><th>Build items</th><th>Open seats</th></tr></thead><tbody id="rollrows"></tbody></table></div></div>
   <div class="panel mission">
     <div><h3 id="tgoal"></h3><p id="tdesc"></p></div>
     <div class="leads" id="tleads"></div>
@@ -392,7 +394,7 @@ details.rstory .tbl-wrap{border-radius:10px}
   </div>
   <div class="kpis" id="spkpis"></div>
   <div class="panel"><h3>Sprint checks</h3><ul class="flags" id="spflags"></ul></div>
-  <div class="toolbar"><div><h3 id="kanh">Sprint board</h3><p class="lede" id="kanl"></p></div><label class="note"><input type="checkbox" id="allteams"> All teams</label></div>
+  <div class="toolbar"><div><h3 id="kanh">Sprint board</h3><p class="lede" id="kanl"></p></div><label class="note" id="allteamswrap"><input type="checkbox" id="allteams"> All teams</label></div>
   <div class="kan" id="kan"></div>
   <div class="legend"><span style="--c:var(--ok)">AC passed</span><span style="--c:var(--crit)">AC failed</span><span style="--c:var(--line)">AC not tested</span></div>
 </section>
@@ -478,6 +480,10 @@ function index(raw){
   d.bi={};d.buildItems.forEach(b=>{(d.bi[b.storyId]||(d.bi[b.storyId]=[])).push(b)});
   const memberTeams={};d.teams.forEach(t=>(t.members||[]).forEach(m=>{if(m.contactId)(memberTeams[m.contactId]||(memberTeams[m.contactId]=[])).push(t.key)}));
   d.memberTeams=memberTeams;
+  // Case team: sent by Trail OS, else the Feature's team, else the assigned volunteer's team.
+  d.cases.forEach(c=>{const f=d.featBy[c.featureId];
+    c.teamSource=c.team?"trailos":(f&&f.team)?"feature":((memberTeams[c.assigneeId]||[]).length===1)?"assignee":null;
+    if(!c.team)c.team=(f&&f.team)||((memberTeams[c.assigneeId]||[]).length===1?memberTeams[c.assigneeId][0]:null)});
   d.stories.forEach(s=>{
     const f=d.featBy[s.featureId], cr=d.crBy[s.changeRequestId], cs=cr&&d.caseBy[cr.caseId];
     s.team=(f&&f.team)||(cs&&cs.team)||((memberTeams[s.builderId]||[])[0])||null;
@@ -511,11 +517,11 @@ let team=null, view="overview", relKey=ls.get("tcb-rel"), orderDraft=null, relPo
 function render(){
   $("waiting").hidden=true;
   const keys=D.teams.map(t=>t.key);
-  if(!team||!keys.includes(team)){const saved=ls.get("tcb-team");team=keys.includes(saved)?saved:((D.viewer.teams||[]).find(k=>keys.includes(k))||keys[0]||null)}
-  $("teambtns").innerHTML=D.teams.map(t=>`<button type="button" data-team="${esc(t.key)}" aria-pressed="${t.key===team}">${esc(t.name.replace(/^Transition Trails /,""))}</button>`).join("");
+  if(!team||(team!==ALL&&!keys.includes(team))){const saved=ls.get("tcb-team");team=(saved===ALL||keys.includes(saved))?saved:((D.viewer.teams||[]).find(k=>keys.includes(k))||keys[0]||null)}
+  $("teambtns").innerHTML=`<button type="button" data-team="${ALL}" aria-pressed="${team===ALL}">All teams</button>`+D.teams.map(t=>`<button type="button" data-team="${esc(t.key)}" aria-pressed="${t.key===team}">${esc(t.name.replace(/^Transition Trails /,""))}</button>`).join("");
   document.body.dataset.team=team||"";
-  const T=D.teamBy[team]||{name:"No team",members:[]};
-  $("tname").textContent=T.name+" board";
+  const T=curT();
+  $("tname").textContent=isAll()?"All Trail Crew teams":T.name+" board";
   $("tmission").textContent=[T.goal,T.description].filter(Boolean).join(". ")||"";
   document.querySelectorAll(".asof").forEach(e=>e.textContent="Data as of "+fmtWhen(D.asOf));
   $("foot").textContent=`Data as of ${fmtWhen(D.asOf)}. ${D.insights&&D.insights.generatedAt?"Insights as of "+fmtWhen(D.insights.generatedAt)+(D.insights.stale?" (stale)":"")+".":"Checks are computed from the data; Claude insights arrive in a later phase."} Board version ${BOARD_VERSION}. Refreshes on the hour, 6 AM to 9 PM Central.`;
@@ -526,18 +532,25 @@ function show(){
   document.querySelectorAll(".view").forEach(el=>el.hidden=el.id!=="v-"+view);
   document.querySelectorAll("#tabs a").forEach(a=>a.dataset.view===view?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
 }
-const teamCases=()=>D.cases.filter(c=>c.team===team);
-const teamFeatures=()=>D.features.filter(f=>f.team===team);
+const ALL="all", isAll=()=>team===ALL;
+const inTeam=x=>isAll()||x.team===team;
+const teamName=k=>k&&D.teamBy[k]?D.teamBy[k].name.replace(/^Transition Trails /,""):"No team";
+const teamCases=()=>D.cases.filter(inTeam);
+const teamFeatures=()=>D.features.filter(inTeam);
+function allTeamT(){const seen=new Set(),members=[];D.teams.forEach(t=>(t.members||[]).forEach(m=>{const k=m.openSeat?t.key+":"+(m.roles||[]).join("/"):m.contactId||m.name;if(!seen.has(k)){seen.add(k);members.push(m)}}));
+  return {key:ALL,name:"All Trail Crew teams",goal:"Every team's work in one view",description:"Cases, sprint stories and build progress across all teams. Pick a team to prioritize or change its work.",members}}
+const curT=()=>isAll()?allTeamT():(D.teamBy[team]||{name:"No team",members:[]});
 
 /* ---------- Overview ---------- */
 function renderOverview(){
-  const T=D.teamBy[team]||{members:[]}, cs=teamCases(), mem=T.members||[];
+  const T=curT(), cs=teamCases(), mem=T.members||[];
+  renderRollup();document.querySelector("#v-overview .mission").hidden=isAll();
   $("tgoal").textContent=T.goal||"";$("tdesc").textContent=T.description||"";
   const leadRoles=["Product Manager","Product Owner","Coach","Assistant Coach"];
   const leads=[];leadRoles.forEach(r=>mem.filter(m=>(m.roles||[]).includes(r)).forEach(m=>leads.push([r,m.openSeat?"OPEN":m.name])));
   $("tleads").innerHTML=leads.map(([r,n])=>`<div><span>${esc(r)}</span><b class="${n==="OPEN"?"open":""}">${esc(n==="OPEN"?"Open seat":n)}</b></div>`).join("")||`<div><span>Roles</span><b>Not set yet</b></div>`;
   const filled=mem.filter(m=>!m.openSeat).length, open=mem.length-filled;
-  $("kpis").innerHTML=[[cs.length,"open cases"],[cs.filter(c=>c.priority==="High"||c.priority==="Critical").length,"High priority"],[cs.filter(c=>!c.featureId).length,"cases with no Feature"],[`${filled}<small style="font-size:16px;color:var(--muted)"> +${open} open</small>`,"people on the team"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
+  $("kpis").innerHTML=[[cs.length,"open cases"],[cs.filter(c=>c.priority==="High"||c.priority==="Critical").length,"High priority"],[cs.filter(c=>!c.featureId).length,"cases with no Feature"],[`${filled}<small style="font-size:16px;color:var(--muted)"> +${open} open</small>`,isAll()?"people across teams":"people on the team"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
   // roadmap: 7 months from this month
   const t0=new Date(D.today+"T12:00:00Z");const months=[];for(let i=0;i<7;i++){const d=new Date(Date.UTC(t0.getUTCFullYear(),t0.getUTCMonth()+i,1));months.push(d)}
   const span0=dnum(months[0].toISOString()), span1=dnum(new Date(Date.UTC(t0.getUTCFullYear(),t0.getUTCMonth()+7,1)).toISOString());
@@ -545,7 +558,7 @@ function renderOverview(){
   let g=`<div class="mh">Feature</div>`+months.map(m=>`<div class="mh">${m.toLocaleString("en-US",{month:"short",timeZone:"UTC"})}</div>`).join("");
   teamFeatures().forEach(f=>{const n=cs.filter(c=>c.featureId===f.id).length;
     const bar=f.start&&f.end?`<div class="bar launch" style="left:${pos(f.start)}%;width:${Math.max(3,pos(f.end)-pos(f.start))}%">${esc(fmtDay(f.start))} to ${esc(fmtDay(f.end))}</div>`:`<div class="bar unplanned" style="left:0;width:100%">No dates yet</div>`;
-    g+=`<div class="lane"><div class="ln"><button type="button" class="flink linkbtn" data-feat="${esc(f.id)}">${esc(f.title||f.name)}</button><small>${esc(f.name)} \u00b7 ${n} case${n===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7">${bar}</div></div>`});
+    g+=`<div class="lane"><div class="ln"><button type="button" class="flink linkbtn" data-feat="${esc(f.id)}">${esc(f.title||f.name)}</button><small>${esc(f.name)}${isAll()?" \u00b7 "+esc(teamName(f.team)):""} \u00b7 ${n} case${n===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7">${bar}</div></div>`});
   const nf=cs.filter(c=>!c.featureId).length;
   if(nf)g+=`<div class="lane"><div class="ln">No Feature yet<small>${nf} case${nf===1?"":"s"}</small></div><div class="cell" style="grid-column:span 7"><div class="bar unplanned" style="left:0;width:100%">Product owner groups these into Features</div></div></div>`;
   $("roadgrid").innerHTML=g;
@@ -560,19 +573,35 @@ function renderOverview(){
     if(seats.length)F.push(["crit","Open seats",esc(seats.join(", "))+" "+(seats.length>1?"are":"is")+" open on this team."]);
     if(nf)F.push(["","Features",`${nf} of ${cs.length} open cases have no Feature. The product owner groups them into Features with a definition of done.`]);
     const intake=cs.filter(c=>c.stage==="intake").length;if(intake)F.push(["","Intake",`${intake} case${intake===1?" sits":"s sit"} in the general Cases queue with no owner yet.`]);
-    const st=D.stories.filter(s=>s.team===team&&D.sprint&&s.sprintId===D.sprint.id);const failed=st.filter(s=>s.acs[1]);
+    const noTeam=D.cases.filter(c=>!c.team);if(isAll()&&noTeam.length)F.push(["crit","No team",`${noTeam.length} open case${noTeam.length>1?"s have":" has"} no team, so ${noTeam.length>1?"they show":"it shows"} only here. Link each to a Feature that has a team, or Trail OS sends the team with the case.`]);
+    const st=D.stories.filter(s=>inTeam(s)&&D.sprint&&s.sprintId===D.sprint.id);const failed=st.filter(s=>s.acs[1]);
     if(failed.length)F.push(["crit","Failed tests",failed.map(storyLink).join(", ")+` ${failed.length>1?"have":"has"} a failed acceptance criterion.`]);
   }
   $("flags").innerHTML=flags(F);
 }
 
+function renderRollup(){
+  const box=$("rollup");box.hidden=!isAll();if(!isAll())return;
+  const sp=D.sprint, rows=D.teams.map(t=>({key:t.key,name:teamName(t.key),t})).concat([{key:null,name:"No team",t:null}]);
+  const line=r=>{const cs=D.cases.filter(c=>(c.team||null)===r.key), st=D.stories.filter(s=>(s.team||null)===r.key&&sp&&s.sprintId===sp.id);
+    const pts=st.reduce((a,s)=>a+(s.points||0),0), done=st.filter(s=>/All ACs Passed|Completed/.test(s.status)).reduce((a,s)=>a+(s.points||0),0);
+    const ac=st.reduce((a,s)=>[a[0]+s.acs[0],a[1]+s.acs[1],a[2]+s.acs[2]],[0,0,0]), at=ac[0]+ac[1]+ac[2], items=st.flatMap(s=>s.items);
+    const seats=r.t?(r.t.members||[]).filter(m=>m.openSeat).length:0;
+    if(!r.t&&!cs.length&&!st.length)return "";
+    const btn=r.key?`<button type="button" class="flink linkbtn" style="font-weight:600;text-decoration:underline" data-team="${esc(r.key)}">${esc(r.name)}</button>`:`<span class="pill cross">No team</span>`;
+    return `<tr><td>${btn}</td><td class="num">${cs.length}</td><td class="num">${cs.filter(c=>/High|Critical/.test(c.priority)).length}</td><td class="num">${cs.filter(c=>!c.featureId).length}</td><td class="num">${st.length}</td><td style="min-width:150px"><div class="meter" title="${done} of ${pts} points at All ACs Passed">${pts?`<i style="width:${done/pts*100}%;background:var(--ok)"></i>`:""}</div><div class="note">${done}/${pts} pts</div></td><td class="num">${at?ac[0]+"/"+at:"\u2013"}${ac[1]?` <span class="pill cross">${ac[1]} failed</span>`:""}</td><td class="num">${items.length}${items.filter(b=>!b.status).length?` <span class="note">(${items.filter(b=>!b.status).length} no status)</span>`:""}</td><td class="num">${seats||""}</td></tr>`};
+  $("rolluph").textContent=sp?`Team progress \u00b7 ${sp.name}`:"Team progress";
+  $("rollrows").innerHTML=rows.map(line).join("");
+}
+
 /* ---------- Prioritize ---------- */
-function defaultOrder(){
-  const T=D.teamBy[team]||{}, ids=teamCases().map(c=>c.id), saved=(T.priorityOrder||[]).filter(id=>ids.includes(id));
+function orderFor(key){
+  const T=D.teamBy[key]||{}, ids=D.cases.filter(c=>(c.team||null)===key).map(c=>c.id), saved=(T.priorityOrder||[]).filter(id=>ids.includes(id));
   const rank={Critical:0,High:1,Medium:2,Low:3};
   const rest=ids.filter(id=>!saved.includes(id)).sort((a,b)=>{const x=D.caseBy[a],y=D.caseBy[b];return (rank[x.priority]??4)-(rank[y.priority]??4)||String(x.number).localeCompare(String(y.number))});
   return saved.concat(rest);
 }
+function defaultOrder(){return isAll()?D.teams.map(t=>t.key).concat([null]).flatMap(orderFor):orderFor(team)}
 function renderPrio(){
   const sel=$("fscope"), prev=sel.value;
   const opts=[["all","All open cases"],["none","No Feature yet"]].concat(teamFeatures().map(f=>[f.id,f.name+": "+(f.title||"")]));
@@ -583,11 +612,11 @@ function renderPrio(){
 }
 const sameSet=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
 function drawPrio(){
-  const s=$("fscope").value, T=D.teamBy[team]||{}, can=viewerCan.prioritize(T);
+  const s=$("fscope").value, T=D.teamBy[team]||{}, can=!isAll()&&viewerCan.prioritize(T);
   const ids=orderDraft.ids.filter(id=>{const c=D.caseBy[id];return s==="all"||(s==="none"?!c.featureId:c.featureId===s)});
-  $("prio").innerHTML=ids.map((id,i)=>{const c=D.caseBy[id];return `<tr><td class="num">${orderDraft.ids.indexOf(id)+1}</td><td>${caseLink(c)}</td><td>${esc(c.subject)}</td><td>${fpill(c)}</td><td><span class="pill ${/High|Critical/.test(c.priority)?"high":""}">${esc(c.priority||"")}</span></td><td><span class="pill stage">${esc(stageName(c.stage))}</span></td><td>${esc(c.status||"")}</td><td>${esc(c.assignee||"Not assigned")}</td><td>${can?`<div class="ctrls"><button class="ib" data-mv="-1" data-id="${esc(id)}" aria-label="Move up" ${i===0?"disabled":""}>\u2191</button><button class="ib" data-mv="1" data-id="${esc(id)}" aria-label="Move down" ${i===ids.length-1?"disabled":""}>\u2193</button></div>`:""}</td></tr>`}).join("")||`<tr><td colspan="9" class="note">No open cases in this view.</td></tr>`;
+  $("prio").innerHTML=ids.map((id,i)=>{const c=D.caseBy[id];const rk=isAll()?orderFor(c.team||null).indexOf(id)+1:orderDraft.ids.indexOf(id)+1;return `<tr><td class="num">${rk}</td><td>${caseLink(c)}</td><td>${esc(c.subject)}${isAll()?`<div class="note">${esc(teamName(c.team))}</div>`:""}</td><td>${fpill(c)}</td><td><span class="pill ${/High|Critical/.test(c.priority)?"high":""}">${esc(c.priority||"")}</span></td><td><span class="pill stage">${esc(stageName(c.stage))}</span></td><td>${esc(c.status||"")}</td><td>${esc(c.assignee||"Not assigned")}</td><td>${can?`<div class="ctrls"><button class="ib" data-mv="-1" data-id="${esc(id)}" aria-label="Move up" ${i===0?"disabled":""}>\u2191</button><button class="ib" data-mv="1" data-id="${esc(id)}" aria-label="Move down" ${i===ids.length-1?"disabled":""}>\u2193</button></div>`:""}</td></tr>`}).join("")||`<tr><td colspan="9" class="note">No open cases in this view.</td></tr>`;
   $("saveorder").hidden=!(can&&orderDraft.dirty);$("reset").hidden=!(can&&orderDraft.dirty);
-  $("prionote").textContent=can?"Move cases, then Save order. The saved order is the same for everyone on the team.":"The product owner, coach or staff set this order.";
+  $("prionote").textContent=isAll()?"Each team keeps its own order; the rank shown is the case's place on its own team. Pick a team above to change its order.":can?"Move cases, then Save order. The saved order is the same for everyone on the team.":"The product owner, coach or staff set this order.";
 }
 
 /* ---------- Features ---------- */
@@ -597,17 +626,17 @@ function renderFeatures(){
   $("stagelegend").innerHTML=STAGES.map(s=>`<span style="--c:${s.c}">${esc(s.n)}</span>`).join("");
   $("fgrid").innerHTML=fs.map(f=>{const fc=cs.filter(c=>c.featureId===f.id);
     const meter=fc.length?`<div class="meter">${STAGES.map(s=>{const n=fc.filter(c=>c.stage===s.k).length;return n?`<i style="width:${n/fc.length*100}%;background:${s.c}" title="${esc(s.n)}: ${n}"></i>`:""}).join("")}</div>`:"";
-    return `<article class="feat" id="card-${esc(f.id)}" tabindex="-1"><div class="hd"><div><div class="id">${esc(f.name)} \u00b7 ${esc(f.status||"")}${f.size?" \u00b7 "+esc(f.size):""}</div><h3>${esc(f.title||f.name)}</h3></div><span class="pill">${f.totalStories||0} stories</span></div>
+    return `<article class="feat" id="card-${esc(f.id)}" tabindex="-1"><div class="hd"><div><div class="id">${esc(f.name)}${isAll()?" \u00b7 "+esc(teamName(f.team)):""} \u00b7 ${esc(f.status||"")}${f.size?" \u00b7 "+esc(f.size):""}</div><h3>${esc(f.title||f.name)}</h3></div><span class="pill">${f.totalStories||0} stories</span></div>
     ${f.description?`<p class="fsum">${esc(f.description)}</p>`:""}${f.definitionOfDone?`<div class="dod"><b>Definition of done</b>${esc(f.definitionOfDone)}</div>`:""}
     ${meter}<ul class="cases">${fc.map(c=>`<li>${caseLink(c)}<span>${esc(c.subject)} <span class="note">\u00b7 ${esc(stageName(c.stage))}</span></span></li>`).join("")||`<li class="note">No open cases.</li>`}</ul></article>`}).join("");
 }
 
 /* ---------- Team ---------- */
 function renderTeam(){
-  const T=D.teamBy[team]||{members:[]}, mem=T.members||[];
+  const T=curT(), mem=T.members||[];
   const st=D.sprint?D.stories.filter(s=>s.sprintId===D.sprint.id):[];
   const casesOf=m=>D.cases.filter(c=>(c.assigneeId&&c.assigneeId===m.contactId)||(!c.assigneeId&&c.assignee&&c.assignee===m.name));
-  $("tkpis").innerHTML=[[mem.filter(m=>!m.openSeat).length,"people"],[mem.filter(m=>m.openSeat).length,"open seats"],[st.filter(s=>s.team===team).length,`${D.sprint?esc(D.sprint.name):"Sprint"} stories`],[teamCases().filter(c=>c.assignee).length,"cases assigned to someone"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
+  $("tkpis").innerHTML=[[mem.filter(m=>!m.openSeat).length,"people"],[mem.filter(m=>m.openSeat).length,"open seats"],[st.filter(inTeam).length,`${D.sprint?esc(D.sprint.name):"Sprint"} stories`],[teamCases().filter(c=>c.assignee).length,"cases assigned to someone"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
   $("people").innerHTML=mem.map(m=>{
     if(m.openSeat)return `<div class="person vacant"><div class="nm open">Open seat</div><div class="rl">${esc((m.roles||[]).join(" / "))}</div></div>`;
     const sb=st.filter(s=>s.builderId===m.contactId), sq=st.filter(s=>s.qaId===m.contactId), ca=casesOf(m);
@@ -637,13 +666,14 @@ function storyHint(s){const [p,f,n]=s.acs,t=p+f+n;
   return ["",""]}
 const acDots=a=>`<span class="acs" aria-label="${a[0]} passed, ${a[1]} failed, ${a[2]} not tested">${"<i class='p'></i>".repeat(a[0])}${"<i class='f'></i>".repeat(a[1])}${"<i></i>".repeat(a[2])}</span>`;
 function renderSprint(){
-  const sp=D.sprint, all=$("allteams").checked;
+  $("allteamswrap").hidden=isAll();
+  const sp=D.sprint, all=isAll()||$("allteams").checked;
   const upcoming=D.sprints.slice().sort((a,b)=>a.start.localeCompare(b.start)).filter(s=>s.end>=D.today||s===sp).slice(0,5);
   $("cal").innerHTML=upcoming.map(s=>`<div class="spr ${s===sp?"now":s.start>D.today&&s===upcoming.find(x=>x.start>D.today)?"next":""}"><b>${esc(s.name)}</b><small>${esc(fmtDay(s.start))} \u2013 ${esc(fmtDay(s.end))}</small><small>${esc(s.status||"")}${s.goals?" \u00b7 goal set":" \u00b7 goals not set"}</small></div>`).join("")+D.releases.filter(r=>r.plannedDate>=D.today).slice(0,1).map(r=>`<div class="spr goal"><b>${esc(fmtDay(r.plannedDate))}</b><small>${esc(r.name)} to production</small><small>${esc(r.label||"")}</small></div>`).join("");
   if(!sp){$("splede").textContent="No sprint covers today.";["spmeter","splegend","spkpis","spflags","kan"].forEach(id=>$(id).innerHTML="");return}
   const len=dnum(sp.end)-dnum(sp.start)+1, day=Math.min(len,Math.max(1,dnum(D.today)-dnum(sp.start)+1)), left=len-day;
   $("splede").textContent=`${sp.name} runs ${fmtDay(sp.start)} to ${fmtDay(sp.end)}. Day ${day} of ${len}, ${left} day${left===1?"":"s"} left.`;
-  const inSprint=D.stories.filter(s=>s.sprintId===sp.id), mine=all?inSprint:inSprint.filter(s=>s.team===team);
+  const inSprint=D.stories.filter(s=>s.sprintId===sp.id), mine=all?inSprint:inSprint.filter(inTeam);
   const tot=mine.reduce((a,s)=>a+(s.points||0),0)||1, by=k=>mine.filter(s=>SCOL.find(c=>c[0]===k)[1].includes(s.status)).reduce((a,s)=>a+(s.points||0),0);
   $("sph").textContent=sp.name+" progress";$("spnote").textContent=`${mine.reduce((a,s)=>a+(s.points||0),0)} points across ${mine.length} stories${all?", all teams":""}`;
   $("spmeter").innerHTML=SCOL.map(([k])=>`<i style="width:${by(k)/tot*100}%;background:${SCOLOR[k]}" title="${k}: ${by(k)} points"></i>`).join("")+`<span class="tick" style="left:${(day-0.5)/len*100}%" title="Today"></span>`;
@@ -672,7 +702,7 @@ const PST=["Case","Change request","Stories","Build items in Dev01","Staging","Q
 const TL=["Case","CR","Story","Dev01","Staging","QA","UAT","Prod"];
 const inStaging=b=>b.environment==="Staging"||b.status==="Deployed to Staging";
 const inProd=b=>b.environment==="Production"||b.status==="Deployed to Prod"||b.status==="Verified";
-function teamCRs(){return D.changeRequests.filter(cr=>{const c=D.caseBy[cr.caseId];return (c&&c.team===team)||D.stories.some(s=>s.changeRequestId===cr.id&&s.team===team)})}
+function teamCRs(){return isAll()?D.changeRequests.slice():D.changeRequests.filter(cr=>{const c=D.caseBy[cr.caseId];return (c&&c.team===team)||D.stories.some(s=>s.changeRequestId===cr.id&&s.team===team)})}
 function crTrack(cr){
   const ss=D.stories.filter(s=>s.changeRequestId===cr.id), items=ss.flatMap(s=>s.items);
   const p=ss.reduce((a,s)=>a+s.acs[0],0), t=ss.reduce((a,s)=>a+s.acs[0]+s.acs[1]+s.acs[2],0), withB=ss.filter(s=>s.items.length).length;
@@ -682,7 +712,7 @@ function crTrack(cr){
   return {ss,items,p,t,withB,st};
 }
 function renderPipeline(){
-  const crs=teamCRs(), cs=teamCases(), ss=D.stories.filter(s=>s.team===team), items=ss.flatMap(s=>s.items);
+  const crs=teamCRs(), cs=teamCases(), ss=D.stories.filter(inTeam), items=ss.flatMap(s=>s.items);
   const acp=ss.reduce((a,s)=>a+s.acs[0],0), act=ss.reduce((a,s)=>a+s.acs[0]+s.acs[1]+s.acs[2],0);
   const counts=[[cs.length,"open cases"],[crs.length,"open change requests"],[ss.length,"stories"],[items.filter(b=>!inStaging(b)&&!inProd(b)).length,`on ${ss.filter(s=>s.items.length).length} of ${ss.length} stories`],[items.filter(inStaging).length,"logged in staging"],[act?`${acp}<small style="font-size:14px;color:var(--muted)">/${act}</small>`:0,"acceptance criteria passed"],[crs.filter(cr=>crTrack(cr).st[6]==="done").length,"CRs through UAT"],[items.filter(inProd).length,"in production"]];
   $("pipe").innerHTML=counts.map(([n,l],i)=>`<div class="pstage ${n===0?"zero":""}"><small>${PST[i]}</small><b>${n}</b><small>${l}</small></div>`).join("");
@@ -744,7 +774,7 @@ function renderRelease(){
 
 /* ---------- events ---------- */
 document.addEventListener("click",async e=>{
-  const tb=e.target.closest("#teambtns button[data-team]");if(tb){team=tb.dataset.team;ls.set("tcb-team",team);orderDraft=null;render();return}
+  const tb=e.target.closest("#teambtns button[data-team], #rollup button[data-team]");if(tb){team=tb.dataset.team;ls.set("tcb-team",team);orderDraft=null;render();return}
   const tab=e.target.closest("#tabs a[data-view]");if(tab){e.preventDefault();view=tab.dataset.view;show();window.scrollTo(0,0);return}
   const op=e.target.closest("[data-open]");if(op){const r=await act("openRecord",{type:op.dataset.open,id:op.dataset.id});if(!r.ok&&view==="release")msg(r.message||"Couldn't open that record.",true);return}
   const fl=e.target.closest("[data-feat]");if(fl){view="features";show();const c=document.getElementById("card-"+fl.dataset.feat);if(c){c.scrollIntoView({block:"start"});c.classList.add("flash");c.focus({preventScroll:true});setTimeout(()=>c.classList.remove("flash"),2500)}return}
