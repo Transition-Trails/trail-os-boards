@@ -291,6 +291,13 @@ body::before{display:none}
 select,input[type=text]{border-radius:999px;padding:7px 12px}
 th{background:var(--sunk)}
 .recon-list{display:flex;flex-direction:column;gap:8px}
+details.sec>summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;list-style:none}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary h3{margin:0;display:flex;align-items:center;gap:8px}
+details.sec>summary h3::before{content:"";width:0;height:0;border-style:solid;border-width:5px 0 5px 7px;border-color:transparent transparent transparent var(--muted);transition:transform .15s}
+details.sec[open]>summary h3::before{transform:rotate(90deg)}
+details.sec[open]>summary{margin-bottom:12px}
+details.sec>summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px;border-radius:6px}
 details.rstory{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
 details.rstory.need{box-shadow:inset 4px 0 0 var(--crit)}
 details.rstory>summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;list-style-position:outside}
@@ -419,13 +426,16 @@ details.rstory .tbl-wrap{border-radius:10px}
   <p class="banner" id="relbanner" hidden></p>
   <div class="panel relhead" id="relhead"></div>
   <div class="kpis" id="relkpis"></div>
-  <div class="panel"><div class="toolbar"><h3>Runbook</h3><span class="note" id="rbnote"></span></div><ol class="runbook" id="runbook"></ol></div>
-  <div class="panel"><div class="toolbar"><h3>Change sets</h3><span class="note">Outbound change sets from Dev01, one row each.</span></div><div id="cslist" style="margin-top:8px"></div>
-    <div id="csadd" class="inline" hidden><input type="text" name="name" id="csname" placeholder="Change set name, e.g. AM-Case-Cleanup-v1" required aria-label="Change set name"><select name="crew" id="cscrew" aria-label="Crew"><option>Morning Crew</option><option>Afternoon Crew</option><option>Release Manager</option></select><button class="btn solid" type="button" id="csaddbtn">Add change set</button></div></div>
-  <div><h3>Build items to change sets</h3><p class="lede">Every build item for the stories in this release. Each must be in a change set or marked as a manual step before production.</p></div>
-  <div class="toolbar"><div class="left"><button class="btn ghost" type="button" id="recexpand">Expand all</button><button class="btn ghost" type="button" id="reccollapse">Collapse all</button><label class="note"><input type="checkbox" id="recattn"> Only stories that need attention</label></div><span class="note" id="recsum"></span></div>
-  <div class="recon-list" id="recon"></div>
-  <div class="panel"><h3>Sign-offs</h3><ul class="flags slack" id="signs"></ul></div>
+  <details class="panel sec" id="sec-runbook"><summary><h3>Runbook</h3><span class="note" id="rbsum"></span></summary>
+    <p class="note" id="rbnote" style="margin:0 0 8px"></p><ol class="runbook" id="runbook"></ol></details>
+  <details class="panel sec" id="sec-cs"><summary><h3>Change sets</h3><span class="note" id="cssum"></span></summary>
+    <p class="note" style="margin:0 0 8px">Outbound change sets from Dev01, one row each.</p><div id="cslist"></div>
+    <div id="csadd" class="inline" hidden><input type="text" name="name" id="csname" placeholder="Change set name, e.g. AM-Case-Cleanup-v1" required aria-label="Change set name"><select name="crew" id="cscrew" aria-label="Crew"><option>Morning Crew</option><option>Afternoon Crew</option><option>Release Manager</option></select><button class="btn solid" type="button" id="csaddbtn">Add change set</button></div></details>
+  <details class="panel sec" id="sec-recon"><summary><h3>Build items to change sets</h3><span class="note" id="recsum"></span></summary>
+    <p class="lede" style="margin:0 0 8px">Every build item for the stories in this release. Each must be in a change set or marked as a manual step before production.</p>
+    <div class="toolbar"><div class="left"><button class="btn ghost" type="button" id="recexpand">Expand all</button><button class="btn ghost" type="button" id="reccollapse">Collapse all</button><label class="note"><input type="checkbox" id="recattn"> Only stories that need attention</label></div></div>
+    <div class="recon-list" id="recon" style="margin-top:8px"></div></details>
+  <details class="panel sec" id="sec-signs"><summary><h3>Sign-offs</h3><span class="note" id="signsum"></span></summary><ul class="flags slack" id="signs"></ul></details>
 </section>
 
 <footer id="foot"></footer>
@@ -738,7 +748,7 @@ const CS_ST=["Planned","Uploaded to Staging","Validated in Staging","Deployed to
 function relScope(rel){const crs=D.changeRequests.filter(c=>c.releaseId===rel.id);const ss=D.stories.filter(s=>crs.some(c=>c.id===s.changeRequestId));return {crs,ss,items:ss.flatMap(s=>s.items)}}
 function renderRelease(){
   const rels=D.releases.filter(r=>r.status!=="Canceled").sort((a,b)=>String(a.plannedDate||"9").localeCompare(String(b.plannedDate||"9")));
-  if(!rels.length){$("relpick").innerHTML="";$("relhead").innerHTML=`<p class="note">No releases yet. Staff create a TT Release and name its release manager.</p>`;["relkpis","runbook","cslist","recon","signs"].forEach(id=>$(id).innerHTML="");return}
+  if(!rels.length){$("relpick").innerHTML="";$("relhead").innerHTML=`<p class="note">No releases yet. Staff create a TT Release and name its release manager.</p>`;["relkpis","runbook","cslist","recon","signs"].forEach(id=>$(id).innerHTML="");["rbsum","cssum","recsum","signsum"].forEach(id=>$(id).textContent="");return}
   if(!relKey||!D.relBy[relKey]){const next=rels.find(r=>r.status!=="Deployed"&&(r.plannedDate||"")>=D.today)||rels[0];relKey=next.id}
   $("relpick").innerHTML=rels.map(r=>`<option value="${esc(r.id)}" ${r.id===relKey?"selected":""}>${esc(r.name)} \u00b7 ${esc(fmtDay(r.plannedDate)||"no date")}</option>`).join("");
   const rel=D.relBy[relKey], can=viewerCan.manageRelease(rel), {crs,ss,items}=relScope(rel);
@@ -755,6 +765,9 @@ function renderRelease(){
    <div class="relmeta"><div><span>Change requests</span><b>${crs.length?crs.map(c=>esc(c.number.replace(/CHG-0+/,"CHG-"))).join(", "):"None linked yet"}</b></div><div><span>Stories</span><b>${ss.length}</b></div><div><span>Build items</span><b>${items.length}</b></div><div><span>TT Release status</span><b>${esc(rel.status||"")}</b></div><div><span>Your access</span><b>${can?"Can manage this release":"View only"}</b></div></div>`;
   $("relkpis").innerHTML=[[`${placed}<small style="font-size:16px;color:var(--muted)">/${items.length}</small>`,"build items in a change set or manual step"],[relCS.length,"change sets"],[noLog.length,"stories with no build items"],[`${verified}<small style="font-size:16px;color:var(--muted)">/${items.length}</small>`,"verified in production"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
   const dis=can?"":"disabled";
+  {const dn=steps.filter(s=>s.done).length;$("rbsum").textContent=steps.length?`${dn} of ${steps.length} done${nx?" \u00b7 Next: "+nx.label:""}`:"Not set up yet"}
+  $("cssum").textContent=`${relCS.length} change set${relCS.length===1?"":"s"} \u00b7 ${placed} of ${items.length} build items placed`;
+  {const so=rel.signoffs||[];$("signsum").textContent=so.length?`${so.filter(x=>x.status==="Approved").length} of ${so.length} approved`:"None yet"}
   $("rbnote").textContent=can?"Tick each step as it finishes.":"View only. The release manager and staff tick steps.";
   $("runbook").innerHTML=steps.map(s=>`<li class="${s.done?"done":nx&&nx.key===s.key?"next":""}"><input type="checkbox" data-step="${esc(s.key)}" ${s.done?"checked":""} ${dis} aria-label="${esc(s.label)}"><span><span class="rt">${esc(s.label)}</span><br><span class="who">${esc(s.owner||"")}${s.done&&s.doneAt?" \u00b7 done "+esc(fmtWhen(s.doneAt))+(s.doneBy?" by "+esc(s.doneBy):""):""}</span></span><span class="when">${esc(s.due?fmtDay(s.due):"")}</span></li>`).join("")||`<li><span></span><span class="note">No runbook steps yet.</span><span></span></li>`;
   $("cslist").innerHTML=relCS.length?relCS.map(c=>{const n=items.filter(b=>b.changeSetId===c.id).length;return `<div class="cs"><div><b>${esc(c.name)}</b><small>${esc(c.crew||"")}${c.owner?" \u00b7 "+esc(c.owner):""} \u00b7 ${n} build item${n===1?"":"s"}</small></div><select data-csst="${esc(c.id)}" ${dis} aria-label="Status of ${esc(c.name)}">${CS_ST.map(x=>`<option ${x===c.status?"selected":""}>${x}</option>`).join("")}</select><span></span></div>`}).join(""):`<p class="note" style="margin:0">No change sets recorded yet.</p>`;
