@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600&amp;display=swap">
+<style>
+:root{--bg:#FAFAF7;--surface:#FFFFFF;--ink:#2A2E2C;--body:#4A4F4D;--line:#E2E4E1;--teal:#2F6F7E;--green:#2F6B3F;--tint:#EDF5F8;--warn:#FDF1DC;--amber:#F5A623;--sky:#7FAFC6;--off:#86918B;
+--head:Poppins,system-ui,sans-serif;--text:'Open Sans',Roboto,system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--body);font-family:var(--text);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(47,107,63,.35);outline-offset:2px}
+h1,h2,h3{font-family:var(--head);color:var(--ink);margin:0}
+.app{display:flex;flex-direction:column;height:100vh;min-height:620px}
+header.top{background:var(--teal);color:#fff;padding:10px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px}
+header.top h1{color:#fff;font-size:18px;font-weight:700}
+.search{flex:1 1 240px;max-width:420px;display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:0 10px}
+.search input{border:0;outline:0;width:100%;min-height:36px;background:transparent;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;padding:5px 12px;font-family:var(--head);font-size:13px;font-weight:500;min-height:34px}
+.chip b{font-weight:700}
+.chip[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.asof{font-size:12px;opacity:.9;margin-left:auto}
+.body{flex:1;display:flex;min-height:0}
+nav.rail{width:216px;flex-shrink:0;border-right:1px solid var(--line);background:var(--surface);overflow:auto;padding:12px 8px}
+.rail h4{margin:14px 10px 6px;font-family:var(--head);font-size:11px;letter-spacing:.06em;color:var(--teal);font-weight:600}
+.rail button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;text-align:left;border:0;background:transparent;border-radius:8px;padding:7px 10px;min-height:34px;font-size:13.5px;color:var(--ink)}
+.rail button:hover{background:var(--bg)}
+.rail button[aria-current="true"]{background:var(--tint);font-weight:600}
+.rail .n{font-size:12px;color:var(--body);font-weight:600}
+.rail .cat{padding-left:18px;font-size:13px}
+.rail .grp{font-weight:600}
+.rail .few .n{color:var(--ink)}
+main.main{flex:1;min-width:0;overflow:auto;padding:18px 20px 40px;display:flex;flex-direction:column;gap:14px}
+.mhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.mhead h2{font-size:22px;font-weight:600}
+.mhead .count{font-size:13.5px}
+.linkbtn{border:0;background:transparent;color:var(--green);font-weight:600;padding:0;text-decoration:underline;min-height:24px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.tablewrap{overflow:auto}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:13.5px}
+thead th{position:sticky;top:0;background:var(--tint);text-align:left;font-family:var(--head);font-weight:600;color:var(--ink);padding:9px 12px;font-size:12.5px;z-index:1}
+tbody td{border-top:1px solid var(--line);padding:9px 12px;vertical-align:top}
+tbody tr.sel{background:#F3F8F5;box-shadow:inset 3px 0 0 var(--green)}
+.art{border:0;background:transparent;padding:0;text-align:left;font-weight:600;color:var(--ink);min-height:24px}
+.art:hover{text-decoration:underline}
+.sub{display:block;font-size:12px;color:var(--body);font-weight:400}
+.dots{display:inline-flex;gap:3px;vertical-align:middle}
+.dots i{width:10px;height:10px;border-radius:3px;background:var(--line);display:inline-block}
+.dots i.d{background:var(--green)}.dots i.c{background:var(--sky)}.dots i.b{background:var(--amber)}
+.pill{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap;border:1px solid transparent}
+.p-write{background:var(--bg);color:var(--body);border-color:var(--line)}
+.p-review,.p-publish{background:var(--tint);color:var(--teal)}
+.p-syncBlocked,.p-notLinked{background:var(--warn);color:var(--ink);border-color:var(--amber)}
+.p-penny{background:#fff;color:var(--green);border-color:var(--green)}
+.p-ready{background:var(--green);color:#fff}
+.p-open{background:var(--warn);color:var(--ink);border-color:var(--amber)}
+.p-done{background:#fff;color:var(--green);border-color:var(--green)}
+.p-none{background:#fff;color:var(--ink);border:1px dashed var(--ink)}
+.p-thin{background:var(--warn);color:var(--ink);border-color:var(--amber)}
+.list{display:flex;flex-direction:column}
+.list button.item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;padding:12px 14px;min-height:44px;width:100%}
+.list button.item:first-child{border-top:0}
+.list button.item[aria-current="true"]{background:#F3F8F5;box-shadow:inset 3px 0 0 var(--green)}
+.list .k{font-size:12px;font-weight:600;color:var(--teal);display:block}
+.list .t{font-weight:600;color:var(--ink);display:block}
+aside.panel{width:440px;max-width:100%;flex-shrink:0;border-left:1px solid var(--line);background:var(--surface);overflow:auto;box-shadow:-8px 0 24px rgba(42,46,44,.08);display:flex;flex-direction:column}
+.ph{padding:16px 18px 10px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line)}
+.ph .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ph .kick{font-size:12px;font-weight:600;color:var(--teal)}
+.ph h3{font-size:18px;line-height:1.3}
+.x{border:0;background:transparent;font-size:22px;line-height:1;min-width:36px;min-height:36px;border-radius:8px;color:var(--ink)}
+.x:hover{background:var(--bg)}
+.stagebar{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:4px}
+.stagebar span{font-size:11.5px;border-top:4px solid var(--line);padding-top:4px}
+.stagebar .d{border-color:var(--green)}.stagebar .c{border-color:var(--sky);font-weight:600;color:var(--ink)}.stagebar .b{border-color:var(--amber);font-weight:600;color:var(--ink)}
+.tabs{display:flex;gap:4px;padding:8px 14px 0;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:transparent;padding:8px 10px;min-height:38px;font-family:var(--head);font-weight:500;font-size:13.5px;color:var(--body);border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--green);font-weight:600}
+.pb{padding:14px 18px 24px;display:flex;flex-direction:column;gap:12px}
+.issue{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.issue.block{border-color:var(--amber);background:var(--warn)}
+.issue.info{background:var(--bg)}
+.issue .meta{font-size:11.5px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.04em}
+.issue.done{opacity:.55}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink)}
+input[type=text],input[type=number],select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-height:38px;background:#fff;font-weight:400;font-size:14px}
+textarea{min-height:76px;resize:vertical}
+.checks{display:flex;flex-wrap:wrap;gap:6px 14px;font-weight:400;font-size:13.5px}
+.checks label{display:flex;gap:6px;align-items:center;min-height:30px}
+.btn{border:0;border-radius:8px;min-height:38px;padding:0 14px;font-family:var(--head);font-weight:600;font-size:13.5px}
+.btn.solid{background:var(--green);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{background:var(--off);color:#fff;border-color:var(--off);cursor:not-allowed}
+.btn.ghost:disabled{background:#fff;color:var(--off)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{font-size:12.5px;color:var(--body)}
+.ok{font-size:13px;color:var(--green);font-weight:600}
+.err{font-size:13px;color:#8A3B12;font-weight:600}
+.box{border-radius:12px;padding:12px 14px;background:var(--bg);font-size:13.5px}
+.box.warn{background:var(--warn)}
+blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);background:var(--tint);border-radius:0 10px 10px 0;color:var(--ink)}
+.ins{display:flex;flex-direction:column;gap:6px;padding:12px 14px}
+.ins h3{font-size:14px}
+.ins ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.ins li{display:flex;gap:8px;font-size:13.5px}
+.ins .tag{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--tint);color:var(--teal);white-space:nowrap;height:fit-content}
+.ins .crit .tag{background:var(--warn);color:var(--ink)}
+.seg{display:inline-flex;gap:3px;padding:3px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.seg button{border:0;border-radius:8px;min-height:32px;padding:0 10px;background:transparent;font-size:13px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--green);color:#fff}
+.chipset{display:flex;flex-wrap:wrap;gap:6px}
+.chipset button{border:1px solid var(--line);background:#fff;border-radius:999px;min-height:32px;padding:0 12px;font-size:13px}
+.chipset button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.preview{font-size:13px;display:flex;flex-direction:column;gap:3px}
+.waiting{margin:40px auto;max-width:520px;text-align:center;padding:28px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:9;max-width:90vw}
+.toast.bad{background:#8A3B12}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.more{align-self:flex-start}
+@media (max-width:1000px){
+ .body{flex-direction:column}
+ nav.rail{width:auto;border-right:0;border-bottom:1px solid var(--line);max-height:180px}
+ aside.panel{width:auto;border-left:0;border-top:1px solid var(--line);box-shadow:none}
+ .asof{margin-left:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+<h1>Knowledge Studio</h1>
+<div class="search"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A4F4D" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input id="q" type="search" placeholder="Search articles and questions" aria-label="Search articles and questions"></div>
+<div class="chips" id="chips"></div>
+<span class="asof" id="asof"></span>
+</header>
+<div class="waiting card" id="waiting"><h2>Waiting for Trail OS</h2><p id="waitmsg">The board is asking Trail OS for data.</p></div>
+<div class="body" id="body" hidden>
+<nav class="rail" id="rail" aria-label="Views"></nav>
+<main class="main" id="main"></main>
+<aside class="panel" id="panel" hidden></aside>
+</div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+(function(){
+"use strict";
+var BOARD="knowledge-studio",BOARD_VERSION=1,CONTRACT=1;
+var $=function(id){return document.getElementById(id)};
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})}
+var D=null,pending={},seq=0,busy={};
+function send(m){parent.postMessage(m,"*")}
+function act(name,payload,key){
+  var id="a"+(++seq);busy[key||id]=true;render();
+  return new Promise(function(res){
+    var t=setTimeout(function(){delete pending[id];delete busy[key||id];toast("Trail OS didn't answer in time. Check the record before trying again.",true);render();res({ok:false,code:"timeout"})},20000);
+    pending[id]=function(m){clearTimeout(t);delete busy[key||id];if(!m.ok)toast(m.message||"That didn't save.",true);render();res(m)};
+    send({type:"action",id:id,name:name,payload:payload});
+  });
+}
+window.addEventListener("message",function(e){
+  if(e.source!==parent)return;var m=e.data;if(!m||typeof m!=="object")return;
+  if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab="edit";V.pendingOpen=null}render()}
+  else if(m.type==="result"&&pending[m.id]){var r=pending[m.id];delete pending[m.id];r(m)}
+});
+send({type:"ready",board:BOARD,boardVersion:BOARD_VERSION,contractVersion:CONTRACT});
+setTimeout(function(){if(!D)showWait("Trail OS hasn't sent Knowledge data yet. Reload the page; if this stays, tell an admin.")},6000);
+function showWait(msg){$("waitmsg").textContent=msg;$("waiting").hidden=false;$("body").hidden=true}
+var tt=null;function toast(msg,bad){var t=$("toast");t.textContent=msg;t.className="toast"+(bad?" bad":"");t.hidden=false;clearTimeout(tt);tt=setTimeout(function(){t.hidden=true},4500)}
+
+/* ---------- data ---------- */
+var STAGES=["Write","Review","Publish","Penny"];
+var STEP={write:{i:0,l:"Draft"},review:{i:1,l:"In review"},syncBlocked:{i:2,l:"Sync blocked"},notLinked:{i:2,l:"Live, not linked"},publish:{i:2,l:"Ready to publish"},penny:{i:3,l:"Penny check"},ready:{i:4,l:"Ready for Penny"}};
+var FIELDS=[{k:"appliesTo",l:"Applies To",kind:"multi"},{k:"audience",l:"Audience",kind:"select",list:"audiences"},{k:"difficulty",l:"Difficulty",kind:"select",list:"difficulties"},{k:"reviewCycle",l:"Review cycle",kind:"select",list:"reviewCycles"},{k:"department",l:"Owner department",kind:"select",list:"departments"},{k:"estimatedMinutes",l:"Estimated time",kind:"number"},{k:"category",l:"Data category",kind:"category"}];
+function fieldDef(k){for(var i=0;i<FIELDS.length;i++)if(FIELDS[i].k===k)return FIELDS[i];return FIELDS[0]}
+function index(d){
+  d.lists=d.lists||{};["types","audiences","appliesTo","departments","difficulties","reviewCycles"].forEach(function(k){d.lists[k]=d.lists[k]||[]});
+  d.articles=d.articles||[];d.questions=d.questions||[];d.pages=d.pages||[];d.decisions=d.decisions||[];d.categories=(d.categories||[]).filter(function(c){return c.active!==false});
+  d.viewer=d.viewer||{};
+  d.by={};d.articles.forEach(function(a){d.by[a.id]=a;a.issues=a.issues||[];a.appliesTo=a.appliesTo||[];a.st=STEP[a.step]||STEP.write;a.live=a.issues.filter(function(x){return x.severity!=="info"&&!x.resolved})});
+  d.typeBy={};d.lists.types.forEach(function(t){d.typeBy[t.key]=t});
+  d.paths=d.categories.map(function(c){return c.path});
+  return d;
+}
+var V={view:"fix",cat:null,q:"",sel:null,tab:null,back:null,picked:{},limit:200,
+  bulk:{field:"appliesTo",mode:"add",vals:{},value:"",onlyBlank:true,skip:false},forms:{},checks:{},done:{}};
+function canEdit(a){return a&&a.perms?!!a.perms.edit:!!(D.viewer.isStaff||D.viewer.isManager)}
+function canPublish(a){return a&&a.perms?!!a.perms.publishHandoff:!!D.viewer.canPublish}
+function canValidate(a){return a&&a.perms?!!a.perms.validate:!!(D.viewer.isStaff||D.viewer.isManager)}
+function typeLabel(k){return (D.typeBy[k]&&D.typeBy[k].label)||"Unknown type"}
+function shortCat(p){if(!p)return "\u2014";var s=p.split(" \u203a ");return s.length>2?s[1]+" \u203a "+s[s.length-1]:(s[1]||s[0])}
+function fmtDate(iso){if(!iso)return "";var d=new Date(iso.length===10?iso+"T12:00:00Z":iso);return d.toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"America/Chicago"})}
+function fmtWhen(iso){if(!iso)return "";return new Date(iso).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZone:"America/Chicago"})+" CT"}
+function blank(a,k){var v=a[k];return v==null||v===""||(Array.isArray(v)&&!v.length)}
+function dueSoon(a){if(!a.reviewDue)return false;var t=Date.parse(a.reviewDue+"T12:00:00Z"),now=Date.parse(D.asOf||new Date().toISOString());return t-now<=30*864e5}
+function matchQ(a){if(!V.q)return true;var q=V.q.toLowerCase();return (a.title+" "+(a.summary||"")+" "+(a.category||"")).toLowerCase().indexOf(q)>=0}
+function inCat(a){return !V.cat||(a.category&&(a.category===V.cat||a.category.indexOf(V.cat+" \u203a ")===0))}
+var VIEWS={all:function(){return true},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
+  publish:function(a){return a.st.i===2},penny:function(a){return a.step==="penny"},due:dueSoon};
+function viewRows(view){
+  var f=VIEWS[view];if(!f&&view.indexOf("miss:")===0){var k=view.slice(5);f=function(a){return a.linked&&blank(a,k)}}
+  return D.articles.filter(function(a){return f(a)&&inCat(a)&&matchQ(a)});
+}
+function countView(v){var f=VIEWS[v];if(!f&&v.indexOf("miss:")===0){var k=v.slice(5);f=function(a){return a.linked&&blank(a,k)}}return D.articles.filter(f).length}
+function qStatus(q){var arts=(q.articleIds||[]).map(function(id){return D.by[id]}).filter(Boolean);if(!arts.length)return ["No article","p-none"];if(arts.some(function(a){return a.st.i>=4}))return ["Ready","p-done"];return ["Not ready","p-open"]}
+function pageArticles(p){if(!p.category)return [];return D.articles.filter(function(a){return a.st.i>=3&&a.category&&(a.category===p.category||a.category.indexOf(p.category+" \u203a ")===0)})}
+function pStatus(p){if(!p.category)return ["Needs a category","p-none"];var n=pageArticles(p).length;if(!n)return ["No help","p-none"];if(n<5)return ["Thin","p-thin"];return ["Covered","p-done"]}
+function decOpen(d){return d.status==="open"}
+
+/* ---------- render ---------- */
+function render(){
+  if(!D)return;$("waiting").hidden=true;$("body").hidden=false;
+  $("asof").textContent="Data as of "+fmtWhen(D.asOf);
+  renderChips();renderRail();renderMain();renderPanel();
+}
+function renderChips(){
+  var pub=D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(function(a){return a.st.i>=4}).length;
+  var c=[["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]];
+  $("chips").innerHTML=c.map(function(x){return '<button type="button" class="chip" data-view="'+x[0]+'" aria-pressed="'+(V.view===x[0])+'">'+x[1]+"</button>"}).join("");
+}
+function rb(view,label,n,extra){return '<button type="button" data-view="'+esc(view)+'" aria-current="'+(V.view===view&&!V.cat)+'"'+(extra||"")+'><span>'+esc(label)+'</span><span class="n">'+(n==null?"":n)+"</span></button>"}
+function renderRail(){
+  var h=rb("all","All articles",D.articles.length)+rb("fix","Fix",countView("fix"))+rb("review","Write and review",countView("review"))+rb("publish","Publish",countView("publish"))+rb("penny","Penny check",countView("penny"))+rb("decisions","Decisions",D.decisions.filter(decOpen).length);
+  h+="<h4>COVERAGE</h4>"+rb("questions","Reader questions",D.questions.filter(function(q){return qStatus(q)[0]==="No article"}).length)+rb("pages","Trail OS pages",D.pages.filter(function(p){return pStatus(p)[0]!=="Covered"}).length);
+  h+="<h4>KEEP CURRENT</h4>"+rb("due","Review due",countView("due"));
+  h+="<h4>MISSING IN SALESFORCE</h4>"+FIELDS.filter(function(f){return f.k!=="category"}).map(function(f){return rb("miss:"+f.k,f.l,countView("miss:"+f.k))}).join("");
+  var groups={};D.articles.forEach(function(a){if(!a.category)return;var s=a.category.split(" \u203a ");var g=s[0],c=s[1]?s[0]+" \u203a "+s[1]:null;groups[g]=groups[g]||{n:0,kids:{}};groups[g].n++;if(c)groups[g].kids[c]=(groups[g].kids[c]||0)+1});
+  h+="<h4>DATA CATEGORIES</h4>"+Object.keys(groups).sort().map(function(g){
+    var kids=groups[g].kids;return '<button type="button" class="grp" data-cat="'+esc(g)+'" aria-current="'+(V.cat===g)+'"><span>'+esc(g)+'</span><span class="n">'+groups[g].n+"</span></button>"+Object.keys(kids).sort().map(function(c){return '<button type="button" class="cat'+(kids[c]<5?" few":"")+'" data-cat="'+esc(c)+'" aria-current="'+(V.cat===c)+'"><span>'+esc(c.split(" \u203a ")[1])+'</span><span class="n">'+kids[c]+"</span></button>"}).join("")}).join("");
+  $("rail").innerHTML=h;
+}
+function viewTitle(){
+  if(V.cat)return V.cat.split(" \u203a ").slice(1).join(" \u203a ")||V.cat;
+  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
+  if(t)return t;if(V.view.indexOf("miss:")===0)return "Missing "+fieldDef(V.view.slice(5)).l;return "Articles";
+}
+function renderMain(){
+  var h='<div class="mhead"><h2>'+esc(viewTitle())+"</h2>",body="";
+  if(V.view==="decisions"){var open=D.decisions.filter(decOpen).length;h+='<span class="count">'+open+" open \u00b7 "+D.decisions.length+" total</span>";body=listDecisions()}
+  else if(V.view==="questions"){var qs=D.questions.filter(function(q){return !V.q||(q.text+" "+q.group).toLowerCase().indexOf(V.q.toLowerCase())>=0});h+='<span class="count">'+qs.filter(function(q){return qStatus(q)[0]==="No article"}).length+" with no article \u00b7 "+qs.length+" total</span>";body=listQuestions(qs)}
+  else if(V.view==="pages"){h+='<span class="count">'+D.pages.filter(function(p){return pStatus(p)[0]!=="Covered"}).length+" need help \u00b7 "+D.pages.length+" total</span>";body=listPages()}
+  else{var rows=viewRows(V.view);h+='<span class="count">'+rows.length+" article"+(rows.length===1?"":"s")+(rows.length>V.limit?" \u00b7 showing "+V.limit:"")+"</span>";body=insightsBox()+table(rows)}
+  if(V.cat||V.q)h+='<button type="button" class="linkbtn" id="clear">Clear filters</button>';
+  $("main").innerHTML=h+"</div>"+body;
+}
+function insightsBox(){
+  if(V.view!=="fix"||!D.insights||!(D.insights.items||[]).length)return "";
+  var i=D.insights;return '<section class="card ins" aria-label="Insights"><h3>From Claude, '+esc(fmtWhen(i.generatedAt))+(i.stale?" (stale: the last refresh failed)":"")+"</h3><ul>"+i.items.map(function(x){return '<li class="'+esc(x.severity||"")+'"><span class="tag">'+esc(x.tag||"Note")+"</span><span>"+esc(x.text)+(x.articleId&&D.by[x.articleId]?' <button type="button" class="linkbtn" data-open="'+esc(x.articleId)+'">Open</button>':"")+"</span></li>"}).join("")+"</ul></section>";
+}
+function fieldCell(a,k){
+  if(k==="reviewDue")return a.reviewDue?esc(fmtDate(a.reviewDue)):"\u2014";
+  var v=a[k];if(blank(a,k))return a.linked?'<span class="note">Blank</span>':'<span class="note">Not in Salesforce</span>';
+  if(k==="category")return esc(shortCat(v));if(Array.isArray(v))return esc(v.join(", "));return esc(v);
+}
+function dots(a){var i=a.st.i;return '<span class="dots" role="img" aria-label="'+(i>=4?"All steps done":"At "+STAGES[i])+'">'+STAGES.map(function(s,j){var c=j<i?"d":j===i?(a.step==="syncBlocked"?"b":"c"):"";return '<i class="'+c+'"></i>'}).join("")+"</span>"}
+function table(rows){
+  if(!rows.length)return '<div class="card" style="padding:18px">Nothing here'+(V.cat||V.q?" with these filters":"")+".</div>";
+  var fk=V.view==="due"?"reviewDue":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="reviewDue"?"Review due":fieldDef(fk).l;
+  var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]});
+  var h='<div class="card tablewrap"><table><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th><th>Category</th><th>'+esc(fl)+"</th><th>Stage</th><th>Next</th><th>Issues</th></tr></thead><tbody>";
+  h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
+    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button><span class="sub">'+esc(typeLabel(a.type))+"</span></td><td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td><td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span></td><td>"+(a.live.length||"")+"</td></tr>"}).join("");
+  h+="</tbody></table></div>";
+  if(rows.length>V.limit)h+='<button type="button" class="btn ghost more" id="more">Show '+Math.min(200,rows.length-V.limit)+" more</button>";
+  return h;
+}
+function listDecisions(){
+  return '<div class="card list">'+D.decisions.map(function(d){var cur=V.sel&&V.sel.kind==="decision"&&V.sel.id===d.id;var st=d.status==="open"?["Open","p-open"]:[d.kind==="Policy"?"Signed":"Answered","p-done"];
+    return '<button type="button" class="item" data-dec="'+esc(d.id)+'" aria-current="'+cur+'"><span><span class="k">'+esc(d.kind)+'</span><span class="t">'+esc(d.title)+'</span><span class="sub">'+esc(d.subtitle||"")+'</span></span><span class="pill '+st[1]+'">'+st[0]+"</span></button>"}).join("")+"</div>";
+}
+function listQuestions(qs){
+  if(!qs.length)return '<div class="card" style="padding:18px">No reader questions match.</div>';
+  return '<div class="card list">'+qs.map(function(q){var cur=V.sel&&V.sel.kind==="question"&&V.sel.id===q.id,st=qStatus(q),n=(q.articleIds||[]).length;
+    return '<button type="button" class="item" data-qn="'+esc(q.id)+'" aria-current="'+cur+'"><span><span class="k">'+esc(q.id)+" \u00b7 "+esc(String(q.audience||"").split(" ")[0])+'</span><span class="t">'+esc(q.text)+'</span><span class="sub">'+esc(q.group||"")+" \u00b7 "+n+" article"+(n===1?"":"s")+'</span></span><span class="pill '+st[1]+'">'+st[0]+"</span></button>"}).join("")+"</div>";
+}
+function listPages(){
+  return '<div class="card list">'+D.pages.map(function(p){var cur=V.sel&&V.sel.kind==="page"&&V.sel.id===p.id,st=pStatus(p);
+    return '<button type="button" class="item" data-pg="'+esc(p.id)+'" aria-current="'+cur+'"><span><span class="k">Page</span><span class="t">'+esc(p.title)+'</span><span class="sub">'+esc(p.path)+" \u00b7 "+pageArticles(p).length+' published</span></span><span class="pill '+st[1]+'">'+st[0]+"</span></button>"}).join("")+"</div>";
+}
+
+/* ---------- panel ---------- */
+function pickedIds(){return Object.keys(V.picked).filter(function(id){return V.picked[id]&&D.by[id]})}
+function renderPanel(){
+  var p=$("panel");
+  if(pickedIds().length&&canEdit()){p.hidden=false;p.innerHTML=bulkPanel();return}
+  if(!V.sel){p.hidden=true;p.innerHTML="";return}
+  var s=V.sel,h="";
+  if(s.kind==="article"&&D.by[s.id])h=articlePanel(D.by[s.id]);
+  else if(s.kind==="decision")h=decisionPanel(D.decisions.filter(function(d){return d.id===s.id})[0]);
+  else if(s.kind==="question")h=questionPanel(D.questions.filter(function(q){return q.id===s.id})[0]);
+  else if(s.kind==="page")h=pagePanel(D.pages.filter(function(x){return x.id===s.id})[0]);
+  if(!h){V.sel=null;p.hidden=true;return}
+  p.hidden=false;p.innerHTML=h;
+}
+function head(kick,title,sub){
+  return '<div class="ph">'+(V.back?'<button type="button" class="linkbtn" id="back" style="align-self:flex-start">\u2190 '+esc(V.back.label)+"</button>":"")+'<div class="row"><div><div class="kick">'+esc(kick)+"</div><h3>"+esc(title)+"</h3>"+(sub?'<div class="note">'+esc(sub)+"</div>":"")+'</div><button type="button" class="x" id="close" aria-label="Close panel">\u00d7</button></div>';
+}
+function defaultTab(a){if(a.live.length)return "fix";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
+function articlePanel(a){
+  var tab=V.tab||defaultTab(a);V.tab=tab;
+  var bar='<div class="stagebar" aria-label="Stage">'+STAGES.map(function(s,j){var c=j<a.st.i?"d":j===a.st.i?(a.step==="syncBlocked"?"b":"c"):"";return '<span class="'+c+'">'+s+"</span>"}).join("")+"</div>";
+  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title)+bar+"</div>";
+  var tabs=[["fix","Fix \u00b7 "+a.live.length],["edit","Edit"],["publish","Publish"],["penny","Penny"]];
+  h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+esc(t[1])+"</button>"}).join("")+"</div>";
+  h+='<div class="pb">'+({fix:fixTab,edit:editTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
+  return h;
+}
+function catOptions(sel,blankLabel){
+  var paths=D.paths.slice();if(sel&&paths.indexOf(sel)<0)paths.unshift(sel);
+  return '<option value="">'+esc(blankLabel||"Choose a data category")+"</option>"+paths.map(function(p){return '<option value="'+esc(p)+'"'+(p===sel?" selected":"")+">"+esc(p)+"</option>"}).join("");
+}
+function opts(list,sel,blankLabel){return (blankLabel!=null?'<option value="">'+esc(blankLabel)+"</option>":"")+list.map(function(v){return '<option'+(v===sel?" selected":"")+">"+esc(v)+"</option>"}).join("")}
+function applyChecks(name,cur){return '<div class="checks">'+D.lists.appliesTo.map(function(v){return '<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(v)+'"'+(cur.indexOf(v)>=0?" checked":"")+">"+esc(v)+"</label>"}).join("")+"</div>"}
+function fixTab(a){
+  if(!a.issues.length)return '<p class="ok">Nothing to fix.</p>';
+  var ed=canEdit(a);
+  return a.issues.map(function(x){
+    var key="fix:"+x.id,isBusy=busy[key],done=x.resolved,inp="",btn="Mark checked";
+    if(x.kind==="sync_rejected"){
+      var fd=fieldDef(x.field||"estimatedMinutes");btn="Save and re-sync";
+      if(fd.kind==="number")inp='<label class="f">'+esc(fd.l)+' in minutes<input type="number" min="1" step="1" data-fv="'+esc(x.id)+'" placeholder="Minutes, e.g. 15" value="'+esc(x.value&&/^\d+$/.test(x.value)?x.value:"")+'"></label>';
+      else if(fd.kind==="select")inp='<label class="f">'+esc(fd.l)+'<select data-fv="'+esc(x.id)+'">'+opts(D.lists[fd.list],a[fd.k],"Choose")+"</select></label>";
+      else if(fd.kind==="multi")inp='<label class="f">'+esc(fd.l)+"</label>"+applyChecks("fv-"+x.id,a.appliesTo);
+      else inp='<label class="f">'+esc(fd.l)+'<select data-fv="'+esc(x.id)+'">'+catOptions(a.category)+"</select></label>";
+      if(x.value)inp='<p class="note">Rejected value: \u201c'+esc(x.value)+'\u201d</p>'+inp;
+    }else if(x.kind==="not_linked"){btn="Link";inp='<label class="f">Salesforce article number<input type="text" inputmode="numeric" data-fv="'+esc(x.id)+'" placeholder="Article number, e.g. 000001148" value="'+esc(a.sfNumber||"")+'"></label>'}
+    else if(x.kind==="needs_category"){btn="Save";inp='<label class="f">Data category<select data-fv="'+esc(x.id)+'">'+catOptions(a.category)+"</select></label>"}
+    else if(x.kind==="applies_to_blank"){btn="Save";inp='<label class="f">Applies To</label>'+applyChecks("fv-"+x.id,a.appliesTo)}
+    return '<div class="issue '+esc(x.severity)+(done?" done":"")+'"><span class="meta">'+({block:"Blocks publishing",warn:"Needs fixing",info:"Check"}[x.severity]||"Check")+'</span><div style="color:var(--ink)">'+esc(x.text)+"</div>"+(done?'<span class="ok">Done</span>':(inp+'<div class="btnrow"><button type="button" class="btn '+(x.severity==="info"?"ghost":"solid")+'" data-fix="'+esc(x.id)+'"'+(!ed||isBusy?" disabled":"")+">"+(isBusy?"Saving\u2026":btn)+"</button>"+(ed?"":'<span class="note">Only authors and Knowledge staff can fix this.</span>')+"</div>"))+"</div>";
+  }).join("");
+}
+function editTab(a){
+  var ed=canEdit(a),f=V.forms[a.id]||{},v=function(k){return f[k]!==undefined?f[k]:a[k]};
+  var dis=ed?"":" disabled";
+  var h='<label class="f">Title<input type="text" id="e-title" value="'+esc(v("title"))+'"'+dis+'></label>'+
+  '<label class="f">Summary<textarea id="e-summary"'+dis+">"+esc(v("summary")||"")+"</textarea></label>"+
+  '<label class="f">Type<select id="e-type"'+dis+">"+D.lists.types.map(function(t){return '<option value="'+esc(t.key)+'"'+(t.key===v("type")?" selected":"")+">"+esc(t.label)+"</option>"}).join("")+(v("type")&&D.typeBy[v("type")]?"":'<option value="" selected>Choose a type</option>')+"</select></label>"+
+  '<label class="f">Audience<select id="e-audience"'+dis+">"+opts(D.lists.audiences,v("audience"),"Not set")+"</select></label>"+
+  '<label class="f">Applies To</label>'+applyChecks("e-applies",v("appliesTo")||[])+
+  '<label class="f">Owner department<select id="e-department"'+dis+">"+opts(D.lists.departments,v("department"),"Not set")+"</select></label>"+
+  '<label class="f">Difficulty<select id="e-difficulty"'+dis+">"+opts(D.lists.difficulties,v("difficulty"),"Not set")+"</select></label>"+
+  '<label class="f">Review cycle<select id="e-reviewCycle"'+dis+">"+opts(D.lists.reviewCycles,v("reviewCycle"),"Not set")+"</select></label>"+
+  '<label class="f">Estimated time in minutes<input type="number" min="1" step="1" id="e-estimatedMinutes" value="'+esc(v("estimatedMinutes")==null?"":v("estimatedMinutes"))+'"'+dis+"></label>"+
+  '<label class="f">Data category<select id="e-category"'+dis+">"+catOptions(v("category"),"Not set")+"</select></label>";
+  h+='<div class="btnrow"><button type="button" class="btn solid" id="savedraft"'+(!ed||busy["edit:"+a.id]?" disabled":"")+">"+(busy["edit:"+a.id]?"Saving\u2026":"Save draft")+'</button><button type="button" class="btn ghost" data-rec="article" data-id="'+esc(a.id)+'">Content and steps \u2197</button></div>';
+  h+='<p class="note">'+(a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving sends the article back to business review.")+"</p>";
+  if(V.done["edit:"+a.id])h+='<p class="ok">Saved. It goes back to business review.</p>';
+  return h;
+}
+function publishTab(a){
+  if(a.step==="syncBlocked")return '<div class="box warn">No Salesforce draft yet. Fix the field on the Fix tab, then re-sync.</div><div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(!canPublish(a)||busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry Salesforce sync")+"</button></div>";
+  if(a.st.i>=3)return '<p class="ok">Online in Salesforce.</p>'+(a.sfUrl||a.sfNumber?'<div class="btnrow"><button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce \u2197</button></div>':"");
+  if(a.st.i<2)return '<p class="note">This article reaches the publish step after business review passes.</p>';
+  var ck=V.checks[a.id]||{},items=a.publishChecks&&a.publishChecks.length?a.publishChecks:["Content in "+((D.typeBy[a.type]||{}).contentField||"Overview"),"Data category assigned","Published in Salesforce","Trail OS shows Published"];
+  var h='<div><div class="note" style="font-weight:600;color:var(--ink)">Data category to assign</div><div class="btnrow"><span class="mono">'+esc(a.category||"None yet: set it on the Edit tab")+"</span>"+(a.category?'<button type="button" class="btn ghost" id="copycat">Copy</button>':"")+"</div></div>";
+  h+='<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Your checklist in Salesforce</legend><div class="checks" style="flex-direction:column;gap:2px">'+items.map(function(t,i){return '<label><input type="checkbox" data-ck="'+i+'"'+(ck[i]?" checked":"")+">"+esc(t)+"</label>"}).join("")+"</div></fieldset>";
+  h+='<div class="btnrow"><button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce \u2197</button><button type="button" class="btn solid" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"I published it: check now")+"</button></div>";
+  h+='<p class="note">Publishing is done by a licensed Knowledge user in Salesforce. Trail OS confirms it from Salesforce; ticking the list only helps you keep track.</p>';
+  return h;
+}
+function pennyTab(a){
+  if(a.st.i<3)return '<p class="note">Unlocks when the article is published in Salesforce.</p>';
+  if(a.step==="ready")return '<p class="ok">Validated'+(a.validatedAt?" on "+esc(fmtDate(a.validatedAt)):"")+". Penny can answer from it.</p>";
+  var ok=canValidate(a),key="penny:"+a.id,f=V.forms["p:"+a.id]||{};
+  var h='<p class="note">Ask Penny a question this article answers, as one of its readers, and record whether she cited this article.</p>'+
+  '<label class="f">Ask Penny as<select id="p-aud">'+opts(["Learner","Coach","Staff"],f.aud||"Learner")+"</select></label>"+
+  '<label class="f">Question<input type="text" id="p-q" placeholder="A question this article answers" value="'+esc(f.q||"")+'"></label>'+
+  '<label class="f">What Penny answered (optional)<textarea id="p-ans">'+esc(f.ans||"")+"</textarea></label>"+
+  '<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Did Penny cite this article?</legend><div class="btnrow" style="margin-top:6px"><button type="button" class="btn solid" data-pc="passed"'+(!ok||busy[key]?" disabled":"")+'>Yes, validate</button><button type="button" class="btn ghost" data-pc="failed"'+(!ok||busy[key]?" disabled":"")+">No, record and fix</button></div></fieldset>";
+  if(!ok)h+='<p class="note">Only staff or the assigned validator can record the Penny check.</p>';
+  return h;
+}
+function bulkPanel(){
+  var ids=pickedIds(),b=V.bulk,fd=fieldDef(b.field);
+  var h='<div class="ph"><div class="row"><div><div class="kick">Bulk edit</div><h3>'+ids.length+' selected</h3></div><button type="button" class="btn ghost" id="bclear">Clear</button></div></div><div class="pb">';
+  h+='<label class="f">Field<select id="bfield">'+FIELDS.map(function(f){return '<option value="'+f.k+'"'+(f.k===b.field?" selected":"")+">"+esc(f.l)+"</option>"}).join("")+"</select></label>";
+  if(fd.kind==="multi"){
+    h+='<div class="seg" role="group" aria-label="How to change Applies To">'+["add","remove","replace"].map(function(m){return '<button type="button" data-bmode="'+m+'" aria-pressed="'+(b.mode===m)+'">'+m.charAt(0).toUpperCase()+m.slice(1)+"</button>"}).join("")+"</div>";
+    h+='<div class="chipset" role="group" aria-label="Applies To values">'+D.lists.appliesTo.map(function(v){return '<button type="button" data-bval="'+esc(v)+'" aria-pressed="'+!!b.vals[v]+'">'+esc(v)+"</button>"}).join("")+"</div>";
+  }else if(fd.kind==="number")h+='<label class="f">Minutes<input type="number" min="1" step="1" id="bvalue" value="'+esc(b.value)+'"></label>';
+  else if(fd.kind==="category")h+='<label class="f">New value<select id="bvalue">'+catOptions(b.value,"Choose")+"</select></label>";
+  else h+='<label class="f">New value<select id="bvalue">'+opts(D.lists[fd.list],b.value,"Choose")+"</select></label>";
+  h+='<div class="checks" style="flex-direction:column;gap:2px"><label><input type="checkbox" id="bblank"'+(b.onlyBlank?" checked":"")+">Only where blank</label>"+(D.viewer.canSkipReview?'<label><input type="checkbox" id="bskip"'+(b.skip?" checked":"")+">Skip business review (field-only fixes, during setup)</label>":"")+"</div>";
+  var pv=bulkPreview(ids);
+  h+='<div class="box preview">'+(pv.has?"<strong>"+pv.change.length+" will change \u00b7 "+pv.set+" already set \u00b7 "+pv.skipped+" skipped</strong>"+pv.change.slice(0,5).map(function(c){return "<span>"+esc(c.a.title)+": "+esc(c.from||"blank")+" \u2192 "+esc(c.to||"blank")+"</span>"}).join("")+(pv.change.length>5?"<span>and "+(pv.change.length-5)+" more</span>":""):"Pick a value to see what changes.")+"</div>";
+  if(pv.has&&pv.change.length){var live=pv.change.filter(function(c){return c.a.st.i>=3}).length;h+='<p class="note">'+(b.skip?"Sends "+pv.change.length+" straight to Publish, with no business review.":"Saves "+pv.change.length+" draft revision"+(pv.change.length===1?"":"s")+" for business review.")+(live?" "+live+" published article"+(live===1?" stays":"s stay")+" live until republished.":"")+"</p>"}
+  h+='<div class="btnrow"><button type="button" class="btn solid" id="bapply"'+(!pv.change.length||busy.bulk?" disabled":"")+">"+(busy.bulk?"Saving\u2026":"Apply to "+pv.change.length)+"</button></div>";
+  if(V.done.bulk)h+='<p class="ok">'+esc(V.done.bulk)+"</p>";
+  return h+"</div>";
+}
+function bulkTarget(a){
+  var b=V.bulk,fd=fieldDef(b.field),cur=a[b.field];
+  if(fd.kind==="multi"){var vals=Object.keys(b.vals).filter(function(k){return b.vals[k]});if(!vals.length)return null;var set=(cur||[]).slice();
+    if(b.mode==="add")vals.forEach(function(v){if(set.indexOf(v)<0)set.push(v)});else if(b.mode==="remove")set=set.filter(function(v){return vals.indexOf(v)<0});else set=vals.slice();return set}
+  if(b.value===""||b.value==null)return null;return fd.kind==="number"?Number(b.value):b.value;
+}
+function show(v){return Array.isArray(v)?v.join(", "):(v==null?"":String(v))}
+function bulkPreview(ids){
+  var r={has:false,change:[],set:0,skipped:0};
+  ids.forEach(function(id){var a=D.by[id],to=bulkTarget(a);if(to===null)return;r.has=true;
+    if(!canEdit(a)){r.skipped++;return}
+    if(V.bulk.onlyBlank&&!blank(a,V.bulk.field)){r.set++;return}
+    if(show(a[V.bulk.field])===show(to)){r.set++;return}
+    r.change.push({a:a,from:show(a[V.bulk.field]),to:show(to)})});
+  return r;
+}
+function decisionPanel(d){
+  if(!d)return "";var pol=d.kind==="Policy",open=d.status==="open",f=V.forms["d:"+d.id]||"";
+  var h=head(d.kind,d.title,d.subtitle)+'</div><div class="pb">';
+  if(d.rule)h+="<blockquote>"+esc(d.rule)+"</blockquote>";
+  if(d.articleId&&D.by[d.articleId])h+='<button type="button" class="linkbtn" data-open="'+esc(d.articleId)+'" style="align-self:flex-start">Open the article</button>';
+  if(!open){h+='<p class="ok">'+(pol?"Signed":"Answered")+(d.decidedBy?" by "+esc(d.decidedBy):"")+(d.decidedAt?" on "+esc(fmtDate(d.decidedAt)):"")+".</p>"+(d.note?'<div class="box">'+esc(d.note)+"</div>":"");return h+"</div>"}
+  var ok=pol?!!D.viewer.canSign:!!(D.viewer.isStaff||D.viewer.isManager);
+  h+='<label class="f">'+(pol?"Note (optional)":"Answer")+'<textarea id="d-note">'+esc(f)+"</textarea></label>";
+  h+='<div class="btnrow"><button type="button" class="btn solid" data-decide="'+esc(d.id)+'"'+(!ok||busy["dec:"+d.id]?" disabled":"")+">"+(pol?"Sign as written":"Save answer")+"</button></div>";
+  if(pol&&!d.rule)h+='<p class="note">This policy has no rule statement yet. Add one to the article before signing.</p>';
+  if(!ok)h+='<p class="note">'+(pol?"Only the policy's assigned signer can sign.":"Only staff and Knowledge Managers can answer.")+"</p>";
+  return h+"</div>";
+}
+function questionPanel(q){
+  if(!q)return "";var arts=(q.articleIds||[]).map(function(id){return D.by[id]}).filter(Boolean);
+  var h=head(q.id+" \u00b7 "+(q.audience||""),q.text,q.group)+'</div><div class="pb">';
+  if(q.note)h+='<div class="box">'+esc(q.note)+"</div>";
+  h+='<div class="note" style="font-weight:600;color:var(--ink)">Articles that answer it \u00b7 '+arts.length+"</div>";
+  if(arts.length)h+='<div class="list card">'+arts.map(function(a){var lab=a.st.i>=4?"Ready":a.st.i===3?"Live":a.st.l;return '<button type="button" class="item" data-open-from="'+esc(a.id)+'"><span class="t">'+esc(a.title)+'</span><span class="pill '+(a.st.i>=4?"p-done":"p-open")+'">'+esc(lab)+"</span></button>"}).join("")+"</div>";
+  else h+='<div class="btnrow"><button type="button" class="btn solid" data-start="'+esc(q.id)+'"'+(!canEdit()||busy["start:"+q.id]?" disabled":"")+">Start an article</button></div>";
+  return h+"</div>";
+}
+function pagePanel(p){
+  if(!p)return "";var arts=pageArticles(p),cur=V.forms["pg:"+p.id]!==undefined?V.forms["pg:"+p.id]:(p.category||"");
+  var h=head("Trail OS page",p.title)+'<div class="mono">'+esc(p.path)+'</div></div><div class="pb">';
+  h+='<label class="f">Help shows this data category<select id="pg-cat"'+(D.viewer.canMapPages?"":" disabled")+">"+catOptions(cur,"No category")+"</select></label>";
+  h+='<div class="btnrow"><button type="button" class="btn solid" data-map="'+esc(p.id)+'"'+(!D.viewer.canMapPages||busy["map:"+p.id]||cur===(p.category||"")?" disabled":"")+">Save mapping</button></div>";
+  h+='<div class="note" style="font-weight:600;color:var(--ink)">Published help \u00b7 '+arts.length+"</div>";
+  h+=arts.length?'<div class="list card">'+arts.slice(0,10).map(function(a){return '<button type="button" class="item" data-open-from="'+esc(a.id)+'"><span class="t">'+esc(a.title)+"</span></button>"}).join("")+"</div>"+(arts.length>10?'<p class="note">and '+(arts.length-10)+" more</p>":""):'<p class="note">No published help for this page.</p>';
+  return h+"</div>";
+}
+
+/* ---------- events ---------- */
+function setView(v){V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
+function openArticle(id,back){V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
+function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
+document.addEventListener("click",function(e){
+  var t=e.target.closest("button,input[type=checkbox]");if(!t||!D)return;
+  if(t.dataset.view){setView(t.dataset.view);return}
+  if(t.dataset.cat){V.cat=V.cat===t.dataset.cat?null:t.dataset.cat;if(["decisions","questions","pages"].indexOf(V.view)>=0)V.view="all";V.limit=200;render();return}
+  if(t.id==="clear"){V.cat=null;V.q="";$("q").value="";render();return}
+  if(t.id==="more"){V.limit+=200;render();return}
+  if(t.dataset.open){openArticle(t.dataset.open);return}
+  if(t.dataset.openFrom){var back=V.sel&&V.sel.kind==="question"?{label:"Question "+V.sel.id,sel:V.sel}:V.sel&&V.sel.kind==="page"?{label:"Page",sel:V.sel}:null;openArticle(t.dataset.openFrom,back);return}
+  if(t.id==="back"&&V.back){V.sel=V.back.sel;V.back=null;V.tab=null;render();return}
+  if(t.id==="close"){V.sel=null;V.back=null;V.tab=null;render();return}
+  if(t.dataset.dec){V.sel={kind:"decision",id:t.dataset.dec};V.back=null;render();return}
+  if(t.dataset.qn){V.sel={kind:"question",id:t.dataset.qn};V.back=null;render();return}
+  if(t.dataset.pg){V.sel={kind:"page",id:t.dataset.pg};V.back=null;render();return}
+  if(t.dataset.tab){V.tab=t.dataset.tab;render();return}
+  if(t.dataset.pick){V.picked[t.dataset.pick]=t.checked;V.done.bulk=null;render();return}
+  if(t.id==="pickall"){var rows=viewRows(V.view).slice(0,V.limit);rows.forEach(function(a){if(canEdit(a))V.picked[a.id]=t.checked});V.done.bulk=null;render();return}
+  if(t.id==="bclear"){V.picked={};V.done.bulk=null;render();return}
+  if(t.dataset.bmode){V.bulk.mode=t.dataset.bmode;render();return}
+  if(t.dataset.bval){V.bulk.vals[t.dataset.bval]=!V.bulk.vals[t.dataset.bval];render();return}
+  if(t.id==="bblank"){V.bulk.onlyBlank=t.checked;render();return}
+  if(t.id==="bskip"){V.bulk.skip=t.checked;render();return}
+  if(t.dataset.ck!==undefined){var a0=V.sel&&D.by[V.sel.id];if(a0){V.checks[a0.id]=V.checks[a0.id]||{};V.checks[a0.id][t.dataset.ck]=t.checked}return}
+  if(t.id==="copycat"){var a1=D.by[V.sel.id];try{navigator.clipboard.writeText(a1.category).then(function(){toast("Category path copied.")},function(){toast("Couldn't copy. Select the path and copy it.",true)})}catch(err){toast("Couldn't copy. Select the path and copy it.",true)}return}
+  if(t.dataset.rec){act("openRecord",{type:t.dataset.rec,id:t.dataset.id});return}
+  if(t.dataset.fix){doFix(t.dataset.fix);return}
+  if(t.id==="savedraft"){doSave();return}
+  if(t.dataset.sync){var sid=t.dataset.sync;act("retrySync",{articleId:sid},"sync:"+sid).then(function(r){if(r.ok)toast(r.message||"Sent to Salesforce again.")});return}
+  if(t.dataset.pubcheck){var pid=t.dataset.pubcheck;act("checkPublication",{articleId:pid},"pub:"+pid).then(function(r){if(r.ok)toast(r.message||"Checked Salesforce.")});return}
+  if(t.dataset.pc){doPenny(t.dataset.pc);return}
+  if(t.id==="bapply"){doBulk();return}
+  if(t.dataset.decide){doDecide(t.dataset.decide);return}
+  if(t.dataset.start){var qid=t.dataset.start;act("startArticle",{questionId:qid},"start:"+qid).then(function(r){if(r.ok){toast("Draft article started.");if(r.data&&r.data.articleId)V.pendingOpen=r.data.articleId}});return}
+  if(t.dataset.map){var pgid=t.dataset.map,val=$("pg-cat").value||null;act("mapPage",{pageId:pgid,category:val},"map:"+pgid).then(function(r){if(r.ok){delete V.forms["pg:"+pgid];toast("Mapping saved.")}});return}
+});
+document.addEventListener("input",function(e){
+  var t=e.target;if(!D)return;
+  if(t.id==="q"){V.q=t.value.trim();V.limit=200;renderChips();renderRail();renderMain();return}
+  if(t.id==="bvalue"){V.bulk.value=t.value;keepFocus("bvalue",renderPanel);return}
+  if(t.id==="d-note"&&V.sel){V.forms["d:"+V.sel.id]=t.value;return}
+  if((t.id==="p-q"||t.id==="p-ans")&&V.sel){var f=V.forms["p:"+V.sel.id]=V.forms["p:"+V.sel.id]||{};f[t.id==="p-q"?"q":"ans"]=t.value;return}
+  if(t.id&&t.id.indexOf("e-")===0&&V.sel){var g=V.forms[V.sel.id]=V.forms[V.sel.id]||{};g[t.id.slice(2)]=t.value;return}
+});
+document.addEventListener("change",function(e){
+  var t=e.target;if(!D)return;
+  if(t.id==="bfield"){V.bulk.field=t.value;V.bulk.value="";V.bulk.vals={};render();return}
+  if(t.id==="bvalue"){V.bulk.value=t.value;renderPanel();return}
+  if(t.id==="p-aud"&&V.sel){var f=V.forms["p:"+V.sel.id]=V.forms["p:"+V.sel.id]||{};f.aud=t.value;return}
+  if(t.id==="pg-cat"&&V.sel){V.forms["pg:"+V.sel.id]=t.value;renderPanel();return}
+  if(t.name==="e-applies"&&V.sel){var g=V.forms[V.sel.id]=V.forms[V.sel.id]||{};g.appliesTo=checkedVals("e-applies");return}
+  if(t.id&&t.id.indexOf("e-")===0&&V.sel){var h=V.forms[V.sel.id]=V.forms[V.sel.id]||{};h[t.id.slice(2)]=t.value;return}
+});
+function keepFocus(id,fn){var el=$(id),pos=el&&el.selectionStart;fn();var n=$(id);if(n){n.focus();try{if(pos!=null)n.setSelectionRange(pos,pos)}catch(err){}}}
+function doFix(issueId){
+  var a=D.by[V.sel.id],x=a.issues.filter(function(i){return i.id===issueId})[0];if(!x)return;
+  var p={articleId:a.id,issueId:x.id,kind:x.kind,editVersion:a.editVersion},el=document.querySelector('[data-fv="'+issueId+'"]');
+  if(x.kind==="sync_rejected"){var fd=fieldDef(x.field||"estimatedMinutes");p.field=fd.k;p.value=fd.kind==="multi"?checkedVals("fv-"+issueId):(el?el.value:"");
+    if(fd.kind==="number"&&!/^\d+$/.test(String(p.value))){toast("Enter a whole number of minutes.",true);return}
+    if((fd.kind!=="multi"&&!p.value)||(fd.kind==="multi"&&!p.value.length)){toast("Choose a value first.",true);return}
+    if(fd.kind==="number")p.value=Number(p.value)}
+  else if(x.kind==="not_linked"){p.sfNumber=(el&&el.value||"").trim();if(!/^\d{6,10}$/.test(p.sfNumber)){toast("Enter the Salesforce article number, digits only.",true);return}}
+  else if(x.kind==="needs_category"){p.category=el&&el.value;if(!p.category){toast("Choose a data category.",true);return}}
+  else if(x.kind==="applies_to_blank"){p.appliesTo=checkedVals("fv-"+issueId);if(!p.appliesTo.length){toast("Tick at least one Applies To value.",true);return}}
+  act("fixIssue",p,"fix:"+issueId).then(function(r){if(r.ok)toast(r.message||"Saved.")});
+}
+function doSave(){
+  var a=D.by[V.sel.id],f=V.forms[a.id]||{},fields={};
+  ["title","summary","type","audience","department","difficulty","reviewCycle","category"].forEach(function(k){if(f[k]!==undefined&&f[k]!==(a[k]==null?"":a[k]))fields[k]=f[k]===""?null:f[k]});
+  if(f.estimatedMinutes!==undefined&&String(f.estimatedMinutes)!==String(a.estimatedMinutes==null?"":a.estimatedMinutes)){if(f.estimatedMinutes!==""&&!/^\d+$/.test(f.estimatedMinutes)){toast("Estimated time must be a whole number of minutes.",true);return}fields.estimatedMinutes=f.estimatedMinutes===""?null:Number(f.estimatedMinutes)}
+  if(f.appliesTo&&show(f.appliesTo)!==show(a.appliesTo))fields.appliesTo=f.appliesTo;
+  if(fields.title!==undefined&&!String(fields.title||"").trim()){toast("The title can't be blank.",true);return}
+  if(!Object.keys(fields).length){toast("Nothing has changed.");return}
+  act("saveDraft",{articleId:a.id,editVersion:a.editVersion,fields:fields},"edit:"+a.id).then(function(r){if(r.ok){delete V.forms[a.id];V.done["edit:"+a.id]=true;render()}});
+}
+function doPenny(outcome){
+  var a=D.by[V.sel.id],f=V.forms["p:"+a.id]||{},aud=($("p-aud")||{}).value||f.aud||"Learner",q=(($("p-q")||{}).value||"").trim();
+  if(q.length<8){toast("Write the question you asked Penny.",true);return}
+  act("recordPennyCheck",{articleId:a.id,contentVersion:a.contentVersion,audience:aud.toLowerCase(),question:q,answer:(($("p-ans")||{}).value||"").trim()||null,outcome:outcome},"penny:"+a.id).then(function(r){if(r.ok){delete V.forms["p:"+a.id];toast(outcome==="passed"?"Validated. Penny can answer from it.":"Recorded. Fix the article, then check again.");if(outcome==="failed"){V.tab="fix";render()}}});
+}
+function doBulk(){
+  var ids=pickedIds(),pv=bulkPreview(ids);if(!pv.change.length)return;
+  var b=V.bulk,fd=fieldDef(b.field),p={articleIds:pv.change.map(function(c){return c.a.id}),versions:{},field:b.field,onlyBlank:b.onlyBlank,skipReview:!!(b.skip&&D.viewer.canSkipReview)};
+  pv.change.forEach(function(c){p.versions[c.a.id]=c.a.editVersion});
+  if(fd.kind==="multi"){p.mode=b.mode;p.values=Object.keys(b.vals).filter(function(k){return b.vals[k]})}else p.value=fd.kind==="number"?Number(b.value):b.value;
+  act("bulkUpdate",p,"bulk").then(function(r){if(r.ok){var n=r.data&&r.data.saved!=null?r.data.saved:p.articleIds.length,failed=r.data&&r.data.failed||0;V.done.bulk=(p.skipReview?"Sent "+n+" revision"+(n===1?"":"s")+" to Publish.":"Saved "+n+" draft revision"+(n===1?"":"s")+" for business review.")+(failed?" "+failed+" couldn't be saved; they stay selected.":"");
+    var keep={};(r.data&&r.data.failedIds||[]).forEach(function(id){keep[id]=true});V.picked=keep;render()}});
+}
+function doDecide(id){
+  var d=D.decisions.filter(function(x){return x.id===id})[0],note=(($("d-note")||{}).value||"").trim();
+  if(d.kind!=="Policy"&&note.length<3){toast("Write the answer first.",true);return}
+  act(d.kind==="Policy"?"signPolicy":"answerDecision",{decisionId:id,articleId:d.articleId||null,ruleStatement:d.rule||null,note:note||null},"dec:"+id).then(function(r){if(r.ok){delete V.forms["d:"+id];toast(d.kind==="Policy"?"Signed. Penny can quote it once the article is validated.":"Answer saved.")}});
+}
+})();
+</script>
+</body>
+</html>
