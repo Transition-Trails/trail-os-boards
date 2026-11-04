@@ -90,7 +90,7 @@ aside.panel{position:relative;width:600px;max-width:100%;flex-shrink:0;border-le
 .issue .meta{font-size:11.5px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.04em}
 .issue.done{opacity:.55}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink)}
-input[type=text],input[type=number],select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-height:38px;background:#fff;font-weight:400;font-size:14px}
+input[type=text],input[type=number],input[type=date],select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-height:38px;background:#fff;font-weight:400;font-size:14px}
 textarea{min-height:76px;resize:vertical}
 .checks{display:flex;flex-wrap:wrap;gap:6px 14px;font-weight:400;font-size:13.5px}
 .checks label{display:flex;gap:6px;align-items:center;min-height:30px}
@@ -141,6 +141,11 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .ib{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:34px;min-height:32px;font-size:13px}
 .ib:disabled{opacity:.4;cursor:not-allowed}
 .sec{font-family:var(--head);font-weight:600;color:var(--ink);font-size:14px;margin-top:4px}
+.asg{display:flex;flex-direction:column;gap:8px}
+.kv{display:flex;gap:10px;font-size:13.5px}.kv span{min-width:120px;color:var(--body)}.kv b{color:var(--ink);font-weight:600}
+.ckrow{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:start;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.ckrow input{margin-top:6px;width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media (max-width:1000px){
  .body{flex-direction:column}
  nav.rail{width:auto;border-right:0;border-bottom:1px solid var(--line);max-height:180px}
@@ -195,12 +200,14 @@ var tt=null;function toast(msg,bad){var t=$("toast");t.textContent=msg;t.classNa
 var STAGES=["Write","Review","Publish","Penny"];
 var STEP={write:{i:0,l:"Draft"},review:{i:1,l:"In review"},syncBlocked:{i:2,l:"Sync blocked"},notLinked:{i:2,l:"Live, not linked"},publish:{i:2,l:"Ready to publish"},penny:{i:3,l:"Penny check"},ready:{i:4,l:"Ready for Penny"}};
 var FIELDS=[{k:"appliesTo",l:"Applies To",kind:"multi"},{k:"audience",l:"Audience",kind:"select",list:"audiences"},{k:"difficulty",l:"Difficulty",kind:"select",list:"difficulties"},{k:"reviewCycle",l:"Review cycle",kind:"select",list:"reviewCycles"},{k:"department",l:"Owner department",kind:"select",list:"departments"},{k:"estimatedMinutes",l:"Estimated time",kind:"number"},{k:"category",l:"Data category",kind:"category"}];
-function fieldDef(k){for(var i=0;i<FIELDS.length;i++)if(FIELDS[i].k===k)return FIELDS[i];return FIELDS[0]}
+var PFIELDS=[{k:"reviewer",l:"Business reviewer",kind:"person"},{k:"validator",l:"Technical reviewer",kind:"person"}];
+function fieldDef(k){var all=FIELDS.concat(PFIELDS);for(var i=0;i<all.length;i++)if(all[i].k===k)return all[i];return FIELDS[0]}
+function bulkFields(){return canAssign()?FIELDS.concat(PFIELDS):FIELDS}
 function index(d){
   d.lists=d.lists||{};["types","audiences","appliesTo","departments","difficulties","reviewCycles"].forEach(function(k){d.lists[k]=d.lists[k]||[]});
   d.articles=d.articles||[];d.questions=d.questions||[];d.pages=d.pages||[];d.decisions=d.decisions||[];d.categories=(d.categories||[]).filter(function(c){return c.active!==false});
-  d.viewer=d.viewer||{};
-  d.by={};d.articles.forEach(function(a){d.by[a.id]=a;a.issues=a.issues||[];a.appliesTo=a.appliesTo||[];a.st=STEP[a.step]||STEP.write;a.live=a.issues.filter(function(x){return x.severity!=="info"&&!x.resolved})});
+  d.viewer=d.viewer||{};d.people=d.people||[];d.personBy={};d.people.forEach(function(p){d.personBy[String(p.email||"").toLowerCase()]=p});
+  d.by={};d.articles.forEach(function(a){d.by[a.id]=a;a.issues=a.issues||[];a.appliesTo=a.appliesTo||[];a.st=STEP[a.step]||STEP.write;var as=a.assignment||{};a.reviewer=String((as.reviewer&&as.reviewer.email)||"").toLowerCase();a.validator=String((as.validator&&as.validator.email)||"").toLowerCase();if(as.reviewer&&as.reviewer.name&&!d.personBy[a.reviewer])d.personBy[a.reviewer]=as.reviewer;if(as.validator&&as.validator.name&&!d.personBy[a.validator])d.personBy[a.validator]=as.validator;a.live=a.issues.filter(function(x){return x.severity!=="info"&&!x.resolved})});
   d.typeBy={};d.lists.types.forEach(function(t){d.typeBy[t.key]=t});
   d.paths=d.categories.map(function(c){return c.path});
   return d;
@@ -209,7 +216,7 @@ var V={view:"fix",cat:null,q:"",sel:null,tab:null,back:null,picked:{},limit:200,
   bulk:{field:"appliesTo",mode:"add",vals:{},value:"",onlyBlank:true,skip:false},forms:{},checks:{},done:{},content:{},pw:null,wide:false,linkFor:null,range:null};
 function canEdit(a){return a&&a.perms?!!a.perms.edit:!!(D.viewer.isStaff||D.viewer.isManager)}
 function canPublish(a){return a&&a.perms?!!a.perms.publishHandoff:!!D.viewer.canPublish}
-function canValidate(a){return a&&a.perms?!!a.perms.validate:!!(D.viewer.isStaff||D.viewer.isManager)}
+function canValidate(a){if(a&&a.perms&&a.perms.validate!=null)return !!a.perms.validate;return !ownArticle(a)&&(!!D.viewer.isStaff||isMe(a.validator))}
 function typeLabel(k){return (D.typeBy[k]&&D.typeBy[k].label)||"Unknown type"}
 function shortCat(p){if(!p)return "\u2014";var s=p.split(" \u203a ");return s.length>2?s[1]+" \u203a "+s[s.length-1]:(s[1]||s[0])}
 function fmtDate(iso){if(!iso)return "";var d=new Date(iso.length===10?iso+"T12:00:00Z":iso);return d.toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"America/Chicago"})}
@@ -219,7 +226,11 @@ function dueSoon(a){if(!a.reviewDue)return false;var t=Date.parse(a.reviewDue+"T
 function matchQ(a){if(!V.q)return true;var q=V.q.toLowerCase();return (a.title+" "+(a.summary||"")+" "+(a.category||"")).toLowerCase().indexOf(q)>=0}
 function inCat(a){return !V.cat||(a.category&&(a.category===V.cat||a.category.indexOf(V.cat+" \u203a ")===0))}
 var VIEWS={all:function(){return true},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
-  publish:function(a){return a.st.i===2},penny:function(a){return a.step==="penny"},due:dueSoon};
+  publish:function(a){return a.st.i===2},penny:function(a){return a.step==="penny"},due:dueSoon,
+  myrev:function(a){return isMe(a.reviewer)&&a.step==="review"},
+  mytech:function(a){return isMe(a.validator)&&a.step==="penny"},
+  needrev:function(a){return a.step==="review"&&!a.reviewer},
+  needtech:function(a){return a.step==="penny"&&!a.validator}};
 function viewRows(view){
   var f=VIEWS[view];if(!f&&view.indexOf("miss:")===0){var k=view.slice(5);f=function(a){return a.linked&&blank(a,k)}}
   return D.articles.filter(function(a){return f(a)&&inCat(a)&&matchQ(a)});
@@ -238,12 +249,14 @@ function render(){
 }
 function renderChips(){
   var pub=D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(function(a){return a.st.i>=4}).length;
-  var c=[["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]];
+  var mine=countView("myrev")+countView("mytech");var c=(mine?[[countView("myrev")?"myrev":"mytech","<b>"+mine+"</b> for you to review"]]:[]).concat([["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]]);
   $("chips").innerHTML=c.map(function(x){return '<button type="button" class="chip" data-view="'+x[0]+'" aria-pressed="'+(V.view===x[0])+'">'+x[1]+"</button>"}).join("");
 }
 function rb(view,label,n,extra){return '<button type="button" data-view="'+esc(view)+'" aria-current="'+(V.view===view&&!V.cat)+'"'+(extra||"")+'><span>'+esc(label)+'</span><span class="n">'+(n==null?"":n)+"</span></button>"}
 function renderRail(){
   var h=rb("all","All articles",D.articles.length)+rb("fix","Fix",countView("fix"))+rb("review","Write and review",countView("review"))+rb("publish","Publish",countView("publish"))+rb("penny","Penny check",countView("penny"))+rb("decisions","Decisions",D.decisions.filter(decOpen).length);
+  h+="<h4>MY WORK</h4>"+rb("myrev","My business reviews",countView("myrev"))+rb("mytech","My technical reviews",countView("mytech"));
+  if(canAssign())h+="<h4>ASSIGN REVIEWERS</h4>"+rb("needrev","Needs a business reviewer",countView("needrev"))+rb("needtech","Needs a technical reviewer",countView("needtech"));
   h+="<h4>COVERAGE</h4>"+rb("questions","Reader questions",D.questions.filter(function(q){return qStatus(q)[0]==="No article"}).length)+rb("pages","Trail OS pages",D.pages.filter(function(p){return pStatus(p)[0]!=="Covered"}).length);
   h+="<h4>KEEP CURRENT</h4>"+rb("due","Review due",countView("due"));
   h+="<h4>MISSING IN SALESFORCE</h4>"+FIELDS.filter(function(f){return f.k!=="category"}).map(function(f){return rb("miss:"+f.k,f.l,countView("miss:"+f.k))}).join("");
@@ -254,7 +267,7 @@ function renderRail(){
 }
 function viewTitle(){
   if(V.cat)return V.cat.split(" \u203a ").slice(1).join(" \u203a ")||V.cat;
-  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
+  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",myrev:"My business reviews",mytech:"My technical reviews",needrev:"Needs a business reviewer",needtech:"Needs a technical reviewer",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
   if(t)return t;if(V.view.indexOf("miss:")===0)return "Missing "+fieldDef(V.view.slice(5)).l;return "Articles";
 }
 function renderMain(){
@@ -271,6 +284,7 @@ function insightsBox(){
   var i=D.insights;return '<section class="card ins" aria-label="Insights"><h3>From Claude, '+esc(fmtWhen(i.generatedAt))+(i.stale?" (stale: the last refresh failed)":"")+"</h3><ul>"+i.items.map(function(x){return '<li class="'+esc(x.severity||"")+'"><span class="tag">'+esc(x.tag||"Note")+"</span><span>"+esc(x.text)+(x.articleId&&D.by[x.articleId]?' <button type="button" class="linkbtn" data-open="'+esc(x.articleId)+'">Open</button>':"")+"</span></li>"}).join("")+"</ul></section>";
 }
 function fieldCell(a,k){
+  if(k==="reviewer"||k==="validator")return a[k]?esc(personName(a[k])):'<span class="note">Not assigned</span>';
   if(k==="reviewDue")return a.reviewDue?esc(fmtDate(a.reviewDue)):"\u2014";
   var v=a[k];if(blank(a,k))return a.linked?'<span class="note">Blank</span>':'<span class="note">Not in Salesforce</span>';
   if(k==="category")return esc(shortCat(v));if(Array.isArray(v))return esc(v.join(", "));return esc(v);
@@ -278,7 +292,7 @@ function fieldCell(a,k){
 function dots(a){var i=a.st.i;return '<span class="dots" role="img" aria-label="'+(i>=4?"All steps done":"At "+STAGES[i])+'">'+STAGES.map(function(s,j){var c=j<i?"d":j===i?(a.step==="syncBlocked"?"b":"c"):"";return '<i class="'+c+'"></i>'}).join("")+"</span>"}
 function table(rows){
   if(!rows.length)return '<div class="card" style="padding:18px">Nothing here'+(V.cat||V.q?" with these filters":"")+".</div>";
-  var fk=V.view==="due"?"reviewDue":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="reviewDue"?"Review due":fieldDef(fk).l;
+  var fk=V.view==="due"?"reviewDue":/^(myrev|needrev)$/.test(V.view)?"reviewer":/^(mytech|needtech)$/.test(V.view)?"validator":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="reviewDue"?"Review due":fieldDef(fk).l;
   var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]}),cmp=panelOpen();
   var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
   h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
@@ -324,14 +338,14 @@ function renderPanel0(p){
 function head(kick,title,sub){
   return '<div class="ph">'+(V.back?'<button type="button" class="linkbtn" id="back" style="align-self:flex-start">\u2190 '+esc(V.back.label)+"</button>":"")+'<div class="row"><div><div class="kick">'+esc(kick)+"</div><h3>"+esc(title)+"</h3>"+(sub?'<div class="note">'+esc(sub)+"</div>":"")+'</div><div class="phbtns"><button type="button" class="x" id="widen" aria-label="'+(V.wide?"Show the list again":"Widen the panel to full width")+'" title="'+(V.wide?"Show the list":"Full width")+'" style="font-size:16px">'+(V.wide?"\u21e5":"\u21e4")+'</button><button type="button" class="x" id="close" aria-label="Close panel">\u00d7</button></div></div>';
 }
-function defaultTab(a){if(a.live.length)return "fix";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
+function defaultTab(a){if(a.step==="review"&&isMe(a.reviewer))return "review";if(a.step==="penny"&&isMe(a.validator))return "penny";if(a.live.length)return "fix";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
 function articlePanel(a){
   var tab=V.tab||defaultTab(a);V.tab=tab;
   var bar='<div class="stagebar" aria-label="Stage">'+STAGES.map(function(s,j){var c=j<a.st.i?"d":j===a.st.i?(a.step==="syncBlocked"?"b":"c"):"";return '<span class="'+c+'">'+s+"</span>"}).join("")+"</div>";
-  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title)+bar+"</div>";
-  var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["publish","Publish"],["penny","Penny"]];
+  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+bar+"</div>";
+  var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["publish","Publish"],["penny","Penny"]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+esc(t[1])+"</button>"}).join("")+"</div>";
-  h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
+  h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
   return h;
 }
 function catOptions(sel,blankLabel){
@@ -418,47 +432,40 @@ function publishTab(a){
   h+='<p class="note">Publishing is done by a licensed Knowledge user in Salesforce. Trail OS confirms it from Salesforce; ticking the list only helps you keep track.</p>';
   return h;
 }
-function pennyTab(a){
-  if(a.st.i<3)return '<p class="note">Unlocks when the article is published in Salesforce.</p>';
-  if(a.step==="ready")return '<p class="ok">Validated'+(a.validatedAt?" on "+esc(fmtDate(a.validatedAt)):"")+". Penny can answer from it.</p>";
-  var ok=canValidate(a),key="penny:"+a.id,f=V.forms["p:"+a.id]||{};
-  var h='<p class="note">Ask Penny a question this article answers, as one of its readers, and record whether she cited this article.</p>'+
-  '<label class="f">Ask Penny as<select id="p-aud">'+opts(["Learner","Coach","Staff"],f.aud||"Learner")+"</select></label>"+
-  '<label class="f">Question<input type="text" id="p-q" placeholder="A question this article answers" value="'+esc(f.q||"")+'"></label>'+
-  '<label class="f">What Penny answered (optional)<textarea id="p-ans">'+esc(f.ans||"")+"</textarea></label>"+
-  '<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Did Penny cite this article?</legend><div class="btnrow" style="margin-top:6px"><button type="button" class="btn solid" data-pc="passed"'+(!ok||busy[key]?" disabled":"")+'>Yes, validate</button><button type="button" class="btn ghost" data-pc="failed"'+(!ok||busy[key]?" disabled":"")+">No, record and fix</button></div></fieldset>";
-  if(!ok)h+='<p class="note">Only staff or the assigned validator can record the Penny check.</p>';
-  return h;
-}
+function pennyTab(a){return techForm(a)}
 function bulkPanel(){
   var ids=pickedIds(),b=V.bulk,fd=fieldDef(b.field);
   var h='<div class="ph"><div class="row"><div><div class="kick">Bulk edit</div><h3>'+ids.length+' selected</h3></div><button type="button" class="btn ghost" id="bclear">Clear</button></div></div><div class="pb">';
-  h+='<label class="f">Field<select id="bfield">'+FIELDS.map(function(f){return '<option value="'+f.k+'"'+(f.k===b.field?" selected":"")+">"+esc(f.l)+"</option>"}).join("")+"</select></label>";
+  h+='<label class="f">Field<select id="bfield">'+bulkFields().map(function(f){return '<option value="'+f.k+'"'+(f.k===b.field?" selected":"")+">"+esc(f.l)+"</option>"}).join("")+"</select></label>";
   if(fd.kind==="multi"){
     h+='<div class="seg" role="group" aria-label="How to change Applies To">'+["add","remove","replace"].map(function(m){return '<button type="button" data-bmode="'+m+'" aria-pressed="'+(b.mode===m)+'">'+m.charAt(0).toUpperCase()+m.slice(1)+"</button>"}).join("")+"</div>";
     h+='<div class="chipset" role="group" aria-label="Applies To values">'+D.lists.appliesTo.map(function(v){return '<button type="button" data-bval="'+esc(v)+'" aria-pressed="'+!!b.vals[v]+'">'+esc(v)+"</button>"}).join("")+"</div>";
   }else if(fd.kind==="number")h+='<label class="f">Minutes<input type="number" min="1" step="1" id="bvalue" value="'+esc(b.value)+'"></label>';
   else if(fd.kind==="category")h+='<label class="f">New value<select id="bvalue">'+catOptions(b.value,"Choose")+"</select></label>";
+  else if(fd.kind==="person")h+='<label class="f">Assign to<select id="bvalue"><option value="">Choose a person</option><option value="-"'+(b.value==="-"?" selected":"")+'>Remove the assignment</option>'+D.people.map(function(p){var e=lc(p.email);return '<option value="'+esc(e)+'"'+(e===b.value?" selected":"")+">"+esc(p.name||p.email)+"</option>"}).join("")+'</select></label><label class="f">Review due (optional)<input type="date" id="bdue" value="'+esc(b.due||"")+'"></label>';
   else h+='<label class="f">New value<select id="bvalue">'+opts(D.lists[fd.list],b.value,"Choose")+"</select></label>";
-  h+='<div class="checks" style="flex-direction:column;gap:2px"><label><input type="checkbox" id="bblank"'+(b.onlyBlank?" checked":"")+">Only where blank</label>"+(D.viewer.canSkipReview?'<label><input type="checkbox" id="bskip"'+(b.skip?" checked":"")+">Skip business review (field-only fixes, during setup)</label>":"")+"</div>";
+  h+='<div class="checks" style="flex-direction:column;gap:2px"><label><input type="checkbox" id="bblank"'+(b.onlyBlank?" checked":"")+">"+(fd.kind==="person"?"Only where no one is assigned":"Only where blank")+"</label>"+(D.viewer.canSkipReview&&fd.kind!=="person"?'<label><input type="checkbox" id="bskip"'+(b.skip?" checked":"")+">Skip business review (field-only fixes, during setup)</label>":"")+"</div>";
   var pv=bulkPreview(ids);
-  h+='<div class="box preview">'+(pv.has?"<strong>"+pv.change.length+" will change \u00b7 "+pv.set+" already set \u00b7 "+pv.skipped+" skipped</strong>"+pv.change.slice(0,5).map(function(c){return "<span>"+esc(c.a.title)+": "+esc(c.from||"blank")+" \u2192 "+esc(c.to||"blank")+"</span>"}).join("")+(pv.change.length>5?"<span>and "+(pv.change.length-5)+" more</span>":""):"Pick a value to see what changes.")+"</div>";
-  if(pv.has&&pv.change.length){var live=pv.change.filter(function(c){return c.a.st.i>=3}).length;h+='<p class="note">'+(b.skip?"Sends "+pv.change.length+" straight to Publish, with no business review.":"Saves "+pv.change.length+" draft revision"+(pv.change.length===1?"":"s")+" for business review.")+(live?" "+live+" published article"+(live===1?" stays":"s stay")+" live until republished.":"")+"</p>"}
+  h+='<div class="box preview">'+(pv.has?"<strong>"+pv.change.length+" will change \u00b7 "+pv.set+" already set \u00b7 "+pv.skipped+" skipped</strong>"+pv.change.slice(0,5).map(function(c){var p=fd.kind==="person";return "<span>"+esc(c.a.title)+": "+esc((p?personName(c.from):c.from)||(p?"no one":"blank"))+" \u2192 "+esc((p?personName(c.to):c.to)||(p?"no one":"blank"))+"</span>"}).join("")+(pv.change.length>5?"<span>and "+(pv.change.length-5)+" more</span>":""):"Pick a value to see what changes.")+"</div>";
+  if(pv.has&&fd.kind==="person"&&pv.skipped)h+='<p class="note">'+pv.skipped+" skipped because that person wrote or claimed the article.</p>";
+  if(pv.has&&pv.change.length&&fd.kind==="person")h+='<p class="note">Assigns '+pv.change.length+" article"+(pv.change.length===1?"":"s")+". Nothing is approved; the person still records each review.</p>";
+  else if(pv.has&&pv.change.length){var live=pv.change.filter(function(c){return c.a.st.i>=3}).length;h+='<p class="note">'+(b.skip?"Sends "+pv.change.length+" straight to Publish, with no business review.":"Saves "+pv.change.length+" draft revision"+(pv.change.length===1?"":"s")+" for business review.")+(live?" "+live+" published article"+(live===1?" stays":"s stay")+" live until republished.":"")+"</p>"}
   h+='<div class="btnrow"><button type="button" class="btn solid" id="bapply"'+(!pv.change.length||busy.bulk?" disabled":"")+">"+(busy.bulk?"Saving\u2026":"Apply to "+pv.change.length)+"</button></div>";
   if(V.done.bulk)h+='<p class="ok">'+esc(V.done.bulk)+"</p>";
   return h+"</div>";
 }
 function bulkTarget(a){
-  var b=V.bulk,fd=fieldDef(b.field),cur=a[b.field];
+  var b=V.bulk,fd=fieldDef(b.field),cur=a?a[b.field]:null;
   if(fd.kind==="multi"){var vals=Object.keys(b.vals).filter(function(k){return b.vals[k]});if(!vals.length)return null;var set=(cur||[]).slice();
     if(b.mode==="add")vals.forEach(function(v){if(set.indexOf(v)<0)set.push(v)});else if(b.mode==="remove")set=set.filter(function(v){return vals.indexOf(v)<0});else set=vals.slice();return set}
-  if(b.value===""||b.value==null)return null;return fd.kind==="number"?Number(b.value):b.value;
+  if(b.value===""||b.value==null)return null;if(fd.kind==="person")return b.value==="-"?"":b.value;return fd.kind==="number"?Number(b.value):b.value;
 }
 function show(v){return Array.isArray(v)?v.join(", "):(v==null?"":String(v))}
 function bulkPreview(ids){
   var r={has:false,change:[],set:0,skipped:0};
   ids.forEach(function(id){var a=D.by[id],to=bulkTarget(a);if(to===null)return;r.has=true;
-    if(!canEdit(a)){r.skipped++;return}
+    if(V.bulk.field==="reviewer"||V.bulk.field==="validator"){if(!canAssign()||(to&&ownArticle(a,to))){r.skipped++;return}}
+    else if(!canEdit(a)){r.skipped++;return}
     if(V.bulk.onlyBlank&&!blank(a,V.bulk.field)){r.set++;return}
     if(show(a[V.bulk.field])===show(to)){r.set++;return}
     r.change.push({a:a,from:show(a[V.bulk.field]),to:show(to)})});
@@ -497,6 +504,151 @@ function pagePanel(p){
 }
 
 /* ---------- events ---------- */
+/* ---------- review assignment and reviews (v1.2) ---------- */
+var TECH_CHECKS=[{id:"preparation",label:"Confirm retrieval preparation, source identity, and link-check results."},{id:"audience",label:"Verify intended audience and allowed/denied access boundaries."},{id:"citation",label:"Observe a Penny response citing the correct article and content version."}];
+var RESULTS=[["passed","Passed"],["failed","Failed"],["not_applicable","Not applicable"]];
+function lc(s){return String(s||"").trim().toLowerCase()}
+function me(){return lc(D.viewer.email)}
+function isMe(e){return !!e&&!!me()&&lc(e)===me()}
+function personName(email){if(!email)return "";var p=D.personBy[lc(email)];return p&&p.name?p.name:email}
+function ownArticle(a,email){var e=email==null?me():lc(email);return !!e&&(lc(a.author)===e||lc(a.claimedBy)===e)}
+function canAssign(){return D.viewer.canAssign!=null?!!D.viewer.canAssign:!!(D.viewer.isStaff||D.viewer.isManager)}
+function canBizReview(a){if(a&&a.perms&&a.perms.review!=null)return !!a.perms.review;return !ownArticle(a)&&(isMe(a.reviewer)||!!D.viewer.isAdmin)}
+function normType(t){var k=lc(t).replace(/[\s-]+/g,"_");return k==="release"?"release_note":k}
+function bizChecks(a){var c=D.lists.checklists||{};return c[normType(a.type)]||c[a.type]||[]}
+function techChecks(){var c=D.lists.checklists||{};return c._technical&&c._technical.length?c._technical:TECH_CHECKS}
+function rstate(a,k){return (a.reviewState&&a.reviewState[k])||{}}
+function rsText(s){
+  if(!s.status)return ["Not reviewed yet","p-none"];
+  var who=s.by?" by "+personName(s.by):"",when=s.at?" on "+fmtDate(s.at):"";
+  if(s.status==="passed")return [s.current===false?"Passed an older version"+who+when+". Review again.":"Passed"+who+when,s.current===false?"p-open":"p-done"];
+  return [(s.status==="blocked"?"Blocked":"Returned to author")+who+when,"p-open"];
+}
+function assignSub(a){
+  var r=a.reviewer?personName(a.reviewer):"no one yet",v=a.validator?personName(a.validator):"no one yet";
+  return "Business review: "+r+" \u00b7 Technical review: "+v+(a.assignment&&a.assignment.dueDate?" \u00b7 Due "+fmtDate(a.assignment.dueDate):"");
+}
+function eligible(a){return D.people.filter(function(p){return !ownArticle(a,p.email)})}
+function personOpts(list,sel){var h='<option value="">No one</option>',found=!sel;list.forEach(function(p){if(lc(p.email)===sel)found=true;h+='<option value="'+esc(lc(p.email))+'"'+(lc(p.email)===sel?" selected":"")+">"+esc(p.name||p.email)+"</option>"});if(!found)h+='<option value="'+esc(sel)+'" selected>'+esc(personName(sel))+"</option>";return h}
+function frm(k){return V.forms[k]=V.forms[k]||{}}
+function assignBlock(a){
+  var f=frm("as:"+a.id),rv=f.reviewer!==undefined?f.reviewer:a.reviewer,vd=f.validator!==undefined?f.validator:a.validator,due=f.dueDate!==undefined?f.dueDate:((a.assignment&&a.assignment.dueDate)||"");
+  var h='<div class="box asg"><div class="sec" style="margin:0">Who reviews</div>';
+  if(!canAssign()){
+    h+='<div class="kv"><span>Business review</span><b>'+esc(a.reviewer?personName(a.reviewer):"Not assigned")+'</b></div><div class="kv"><span>Technical review</span><b>'+esc(a.validator?personName(a.validator):"Not assigned")+"</b></div>"+(due?'<div class="kv"><span>Due</span><b>'+esc(fmtDate(due))+"</b></div>":"")+'<p class="note">A Knowledge Manager assigns reviewers.</p></div>';
+    return h;
+  }
+  var el=eligible(a);
+  h+='<label class="f">Business reviewer<select data-ff="as" data-fn="reviewer">'+personOpts(el,rv)+'</select></label>';
+  h+='<label class="f">Technical reviewer<select data-ff="as" data-fn="validator">'+personOpts(el,vd)+'</select></label>';
+  h+='<label class="f">Review due<input type="date" data-ff="as" data-fn="dueDate" value="'+esc(due)+'"></label>';
+  var changed=rv!==a.reviewer||vd!==a.validator||due!==((a.assignment&&a.assignment.dueDate)||"");
+  h+='<div class="btnrow"><button type="button" class="btn solid" data-asg="'+esc(a.id)+'"'+(!changed||busy["asg:"+a.id]?" disabled":"")+">"+(busy["asg:"+a.id]?"Saving\u2026":"Save assignment")+"</button>"+(changed?'<span class="note">Not saved yet</span>':"")+"</div>";
+  h+='<p class="note">The list leaves out the author and whoever claimed the article. Assigning someone does not approve anything: the business review can be passed only by the assigned reviewer (or an admin, except for policies), and the technical review by staff or the assigned technical reviewer.</p></div>';
+  return h;
+}
+function checkRows(kind,a,list){
+  var f=frm(kind+":"+a.id),cs=f.checks=f.checks||{};
+  return list.map(function(c){var v=cs[c.id]||{};var na=v.r==="not_applicable";
+    return '<div class="ckrow"><div><div style="color:var(--ink)">'+esc(c.label||c.id)+'</div>'+(na||v.r==="failed"||v.n?'<input type="text" data-ff="'+kind+'c" data-fn="'+esc(c.id)+'" data-fp="n" placeholder="'+(na?"Why it doesn't apply (10 characters or more)":"Note")+'" aria-label="Note for '+esc(c.label||c.id)+'" value="'+esc(v.n||"")+'">':"")+'</div><select data-ff="'+kind+'c" data-fn="'+esc(c.id)+'" data-fp="r" aria-label="Result for '+esc(c.label||c.id)+'"><option value="">Choose</option>'+RESULTS.map(function(r){return '<option value="'+r[0]+'"'+(v.r===r[0]?" selected":"")+">"+r[1]+"</option>"}).join("")+"</select></div>"}).join("");
+}
+function ensureContent(a){var c=V.content[a.id];if(!c){V.content[a.id]=c={loading:true};setTimeout(function(){loadContent(a.id)},0)}return c}
+function reviewTab(a){
+  var h=assignBlock(a),s=rstate(a,"business"),t=rsText(s);
+  h+='<div class="sec">Business review</div><div class="btnrow"><span class="pill '+t[1]+'">'+esc(t[0])+"</span></div>";
+  if(s.findings&&s.status!=="passed")h+='<blockquote>'+esc(s.findings)+"</blockquote>";
+  if(a.step==="write")return h+'<p class="note">The author submits the article for business review when the draft is ready.</p>';
+  if(a.step!=="review")return h+'<p class="note">'+(s.status==="passed"?"Business review is done for this version. If someone edits the content, it comes back here for review.":"Business review happens while the article is in review.")+"</p>";
+  if(!canBizReview(a)){
+    h+='<p class="note">'+(ownArticle(a)?"You wrote or claimed this article, so someone else reviews it.":a.reviewer?"Only "+personName(a.reviewer)+" (the assigned reviewer) or an admin can record the business review.":"No reviewer is assigned yet. Only the assigned reviewer or an admin can record the business review.")+"</p>";
+    return h;
+  }
+  var list=bizChecks(a),f=frm("br:"+a.id),key="br:"+a.id,pol=normType(a.type)==="policy";
+  h+='<p class="note">Review content version '+esc(String(a.contentVersion||"").slice(0,8))+'. Give every check a result to pass. To send it back, explain what needs to change.</p>';
+  h+=list.length?checkRows("br",a,list):'<p class="err">Trail OS sent no checklist for this article type, so it can\'t pass yet. You can still return it.</p>';
+  h+='<label class="f">Findings<textarea data-ff="br" data-fn="findings" placeholder="What the author should change, or notes for the record">'+esc(f.findings||"")+"</textarea></label>";
+  if(pol){
+    var c=ensureContent(a);
+    h+='<div class="box"><div class="sec" style="margin:0 0 6px">Policy sign-off</div>';
+    if(c.loading)h+='<p class="note">Loading the policy fields\u2026</p>';
+    else if(c.err)h+='<p class="err">'+esc(c.err)+"</p>";
+    else{var pf=c.fields||{};h+='<div class="kv"><span>Rule</span><b>'+esc(pf.ruleStatement||"Missing")+'</b></div><div class="kv"><span>Effective</span><b>'+esc(pf.effectiveDate?fmtDate(pf.effectiveDate):"Missing")+'</b></div><div class="kv"><span>Exceptions</span><b>'+esc(pf.waiverAuthority||"Missing")+"</b></div>";
+      if(isMe(a.reviewer))h+='<div class="checks"><label><input type="checkbox" data-ff="br" data-fn="sign"'+(f.sign?" checked":"")+">I sign off on this rule as "+esc(D.viewer.name||D.viewer.email)+"</label></div>";
+      else h+='<p class="note">Only the assigned reviewer can pass a policy, even if you are an admin. You can still return it.</p>';}
+    h+="</div>";
+  }
+  h+='<div class="btnrow"><button type="button" class="btn solid" data-br="passed"'+(busy[key]?" disabled":"")+'>Pass</button><button type="button" class="btn ghost" data-br="needs_revision"'+(busy[key]?" disabled":"")+'>Return to author</button><button type="button" class="btn ghost" data-br="blocked"'+(busy[key]?" disabled":"")+">Blocked</button></div>";
+  h+='<p class="note">Passing sends a draft to Salesforce for publishing. Returning or blocking sends it back to the author.</p>';
+  return h;
+}
+function techForm(a){
+  var s=rstate(a,"technical"),t=rsText(s),h='<div class="sec">Technical review</div><div class="kv"><span>Assigned to</span><b>'+esc(a.validator?personName(a.validator):"Not assigned")+'</b></div><div class="btnrow"><span class="pill '+t[1]+'">'+esc(t[0])+"</span></div>";
+  if(s.findings&&s.status!=="passed")h+='<blockquote>'+esc(s.findings)+"</blockquote>";
+  if(a.st.i<3)return h+'<p class="note">The Penny check unlocks when the article is published in Salesforce, because Penny can only cite published articles.</p>';
+  if(a.step==="ready"&&s.current!==false)return h+'<p class="ok">Validated'+(a.validatedAt?" on "+esc(fmtDate(a.validatedAt)):"")+". Penny can answer from it.</p>";
+  if(!canValidate(a))return h+'<p class="note">'+(ownArticle(a)?"You wrote or claimed this article, so someone else does the technical review.":"Only staff or the assigned technical reviewer can record the technical review.")+"</p>";
+  var f=frm("tr:"+a.id),key="tr:"+a.id;
+  if(f.env===undefined)f.env="Production";if(f.app===undefined)f.app=D.appVersion||"";if(f.persona===undefined)f.persona="Learner";
+  h+='<p class="note">Ask Penny a question this article answers, as one of its readers. Record what happened and link the evidence.</p>';
+  h+='<div class="grid2"><label class="f">Environment<select data-ff="tr" data-fn="env">'+opts(["Production","Sandbox"],f.env)+'</select></label><label class="f">Trail OS version<input type="text" data-ff="tr" data-fn="app" value="'+esc(f.app)+'"></label></div>';
+  h+='<label class="f">Ask Penny as<select data-ff="tr" data-fn="persona">'+opts(["Learner","Coach","Volunteer","Staff"],f.persona)+"</select></label>";
+  h+='<label class="f">Question and expected answer<textarea data-ff="tr" data-fn="exp" placeholder="The question you asked, and the answer and citation you expected">'+esc(f.exp||"")+"</textarea></label>";
+  h+='<label class="f">What Penny answered<textarea data-ff="tr" data-fn="act" placeholder="What Penny said and which article she cited">'+esc(f.act||"")+"</textarea></label>";
+  h+='<label class="f">Evidence links, one per line<textarea data-ff="tr" data-fn="links" placeholder="https://">'+esc(f.links||"")+"</textarea></label>";
+  h+=checkRows("tr",a,techChecks());
+  h+='<label class="f">Findings<textarea data-ff="tr" data-fn="findings" placeholder="Required if you return it or mark it blocked">'+esc(f.findings||"")+"</textarea></label>";
+  h+='<div class="btnrow"><button type="button" class="btn solid" data-tr="passed"'+(busy[key]?" disabled":"")+'>Pass</button><button type="button" class="btn ghost" data-tr="needs_revision"'+(busy[key]?" disabled":"")+'>Needs revision</button><button type="button" class="btn ghost" data-tr="blocked"'+(busy[key]?" disabled":"")+">Blocked</button></div>";
+  return h;
+}
+function collectChecks(kind,a,list){var cs=frm(kind+":"+a.id).checks||{};return list.map(function(c){var v=cs[c.id]||{};return {id:c.id,result:v.r||"",note:(v.n||"").trim()}})}
+function doBizReview(disp){
+  var a=D.by[V.sel.id],f=frm("br:"+a.id),list=bizChecks(a),checks=collectChecks("br",a,list),findings=(f.findings||"").trim();
+  if(disp==="passed"){
+    if(!list.length){toast("There's no checklist for this type, so it can't pass.",true);return}
+    if(checks.some(function(c){return !c.result})){toast("Give every check a result first.",true);return}
+    if(checks.some(function(c){return c.result==="failed"})){toast("A check failed. Return it to the author instead.",true);return}
+    if(checks.some(function(c){return c.result==="not_applicable"&&c.note.length<10})){toast("Explain each Not applicable check in 10 characters or more.",true);return}
+  }else if(!findings){toast("Write what needs to change in Findings.",true);return}
+  var p={articleId:a.id,contentVersion:a.contentVersion,disposition:disp,checks:checks.filter(function(c){return c.result}),findings:findings};
+  if(normType(a.type)==="policy"&&disp==="passed"){
+    if(!isMe(a.reviewer)){toast("Only the assigned reviewer can pass a policy.",true);return}
+    var c=V.content[a.id];if(!c||!c.fields){toast("The policy fields haven't loaded yet.",true);return}
+    var pf=c.fields;if(!pf.ruleStatement||!pf.effectiveDate||!pf.waiverAuthority){toast("The policy needs a rule, an effective date and who grants exceptions. Fill them in on the Content tab.",true);return}
+    if(!f.sign){toast("Tick the sign-off box to pass a policy.",true);return}
+    p.policySignoff={ruleStatement:pf.ruleStatement,effectiveDate:pf.effectiveDate,waiverAuthority:pf.waiverAuthority,authority:me()};
+  }
+  act("submitBusinessReview",p,"br:"+a.id).then(function(r){if(r.ok){delete V.forms["br:"+a.id];toast(r.message||(disp==="passed"?"Passed. Trail OS is sending the draft to Salesforce.":"Sent back to the author."))}});
+}
+function doTechReview(disp){
+  var a=D.by[V.sel.id],f=frm("tr:"+a.id),checks=collectChecks("tr",a,techChecks()),findings=(f.findings||"").trim();
+  var links=String(f.links||"").split(/\s+/).filter(Boolean);
+  var req=[["env","the environment"],["app","the Trail OS version"],["persona","who you asked as"],["exp","the question and expected answer"],["act","what Penny answered"]];
+  for(var i=0;i<req.length;i++)if(!String(f[req[i][0]]||"").trim()){toast("Fill in "+req[i][1]+".",true);return}
+  if(checks.some(function(c){return !c.result})){toast("Give all three checks a result.",true);return}
+  if(checks.some(function(c){return c.result==="not_applicable"&&c.note.length<10})){toast("Explain each Not applicable check in 10 characters or more.",true);return}
+  if(links.some(function(l){return !/^https:\/\/\S+$/.test(l)})){toast("Each evidence link must start with https://",true);return}
+  if(disp==="passed"){
+    if(checks.some(function(c){return c.result!=="passed"})){toast("All three checks must pass. Otherwise choose Needs revision.",true);return}
+    if(!links.length){toast("Add at least one evidence link.",true);return}
+  }else if(!findings){toast("Write what went wrong in Findings.",true);return}
+  act("submitTechnicalReview",{articleId:a.id,contentVersion:a.contentVersion,environment:f.env.trim(),applicationVersion:f.app.trim(),persona:f.persona.trim(),expectedResults:f.exp.trim(),actualResults:f.act.trim(),evidenceLinks:links,findings:findings,disposition:disp,checks:checks},"tr:"+a.id).then(function(r){if(r.ok){delete V.forms["tr:"+a.id];toast(r.message||(disp==="passed"?"Validated. Penny can answer from it once it's ready.":"Recorded. The author fixes it, then you check again."));if(disp!=="passed"){V.tab="fix"}}});
+}
+function doAssign(id){
+  var a=D.by[id],f=frm("as:"+id),p={articleId:id,expectedRevision:(a.assignment&&a.assignment.revision)||null},n=0;
+  if(f.reviewer!==undefined&&f.reviewer!==a.reviewer){p.reviewer=f.reviewer||null;n++}
+  if(f.validator!==undefined&&f.validator!==a.validator){p.validator=f.validator||null;n++}
+  var cur=(a.assignment&&a.assignment.dueDate)||"";if(f.dueDate!==undefined&&f.dueDate!==cur){p.dueDate=f.dueDate||null;n++}
+  if(!n){toast("Nothing has changed.");return}
+  if((p.reviewer&&ownArticle(a,p.reviewer))||(p.validator&&ownArticle(a,p.validator))){toast("The author or claimer can't review their own article.",true);return}
+  act("assignReviewers",p,"asg:"+id).then(function(r){if(r.ok){delete V.forms["as:"+id];toast(r.message||"Assignment saved.")}});
+}
+function formInput(t,rerender){
+  var ff=t.dataset.ff,fn=t.dataset.fn,id=V.sel&&V.sel.id;if(!ff||!id)return false;
+  var val=t.type==="checkbox"?t.checked:t.value;
+  if(ff==="brc"||ff==="trc"){var f=frm(ff.slice(0,2)+":"+id),cs=f.checks=f.checks||{},c=cs[fn]=cs[fn]||{};c[t.dataset.fp]=val;if(rerender&&t.dataset.fp==="r")keepScroll(renderPanel);return true}
+  var g=frm(ff+":"+id);g[fn]=ff==="as"&&fn!=="dueDate"?lc(val):val;if(rerender&&ff==="as")keepScroll(renderPanel);return true;
+}
+function keepScroll(fn){var p=$("panel"),y=p?p.scrollTop:0;fn();if(p)p.scrollTop=y}
 function setView(v){V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back){V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
@@ -541,6 +693,10 @@ document.addEventListener("click",function(e){
   if(t.dataset.sync){var sid=t.dataset.sync;act("retrySync",{articleId:sid},"sync:"+sid).then(function(r){if(r.ok)toast(r.message||"Sent to Salesforce again.")});return}
   if(t.dataset.pubcheck){var pid=t.dataset.pubcheck;act("checkPublication",{articleId:pid},"pub:"+pid).then(function(r){if(r.ok)toast(r.message||"Checked Salesforce.")});return}
   if(t.dataset.pc){doPenny(t.dataset.pc);return}
+  if(t.dataset.br){doBizReview(t.dataset.br);return}
+  if(t.dataset.tr){doTechReview(t.dataset.tr);return}
+  if(t.dataset.asg){doAssign(t.dataset.asg);return}
+  if(t.dataset.ff&&t.type==="checkbox"){formInput(t,false);return}
   if(t.id==="bapply"){doBulk();return}
   if(t.dataset.decide){doDecide(t.dataset.decide);return}
   if(t.dataset.start){var qid=t.dataset.start;act("startArticle",{questionId:qid},"start:"+qid).then(function(r){if(r.ok){toast("Draft article started.");if(r.data&&r.data.articleId)V.pendingOpen=r.data.articleId}});return}
@@ -549,6 +705,7 @@ document.addEventListener("click",function(e){
 document.addEventListener("input",function(e){
   var t=e.target;if(!D)return;
   if(t.id==="rte"){captureBody();return}
+  if(t.dataset&&t.dataset.ff&&t.tagName!=="SELECT"&&t.type!=="date"){formInput(t,false);return}
   if(t.dataset&&t.dataset.sf&&V.sel){var c=V.content[V.sel.id],k=t.dataset.sf.split(":");c.steps[+k[0]][k[1]]=t.value;c.dirty=true;return}
   if(t.dataset&&t.dataset.tf&&V.sel){var c5=V.content[V.sel.id];c5.fields[t.dataset.tf]=t.value;c5.dirty=true;return}
   if(t.id==="q"){V.q=t.value.trim();V.limit=200;renderChips();renderRail();renderMain();return}
@@ -559,6 +716,8 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   var t=e.target;if(!D)return;
+  if(t.dataset&&t.dataset.ff){formInput(t,t.tagName==="SELECT"||t.type==="date");return}
+  if(t.id==="bdue"){V.bulk.due=t.value;return}
   if(t.id==="bfield"){V.bulk.field=t.value;V.bulk.value="";V.bulk.vals={};render();return}
   if(t.id==="bvalue"){V.bulk.value=t.value;renderPanel();return}
   if(t.id==="p-aud"&&V.sel){var f=V.forms["p:"+V.sel.id]=V.forms["p:"+V.sel.id]||{};f.aud=t.value;return}
@@ -619,6 +778,9 @@ function doPenny(outcome){
 }
 function doBulk(){
   var ids=pickedIds(),pv=bulkPreview(ids);if(!pv.change.length)return;
+  if(fieldDef(V.bulk.field).kind==="person"){var to=bulkTarget(null);
+    act("bulkAssign",{items:pv.change.map(function(c){return {id:c.a.id,expectedRevision:(c.a.assignment&&c.a.assignment.revision)||null}}),kind:V.bulk.field==="reviewer"?"business":"technical",assignee:to||null,dueDate:V.bulk.due||null},"bulk").then(function(r){if(r.ok){var n=r.data&&r.data.saved!=null?r.data.saved:pv.change.length,failed=r.data&&r.data.failed||0;V.done.bulk="Assigned "+n+" article"+(n===1?"":"s")+"."+(failed?" "+failed+" couldn't be assigned; they stay selected.":"");var keep={};(r.data&&r.data.failedIds||[]).forEach(function(id){keep[id]=true});V.picked=keep;render()}});
+    return}
   var b=V.bulk,fd=fieldDef(b.field),p={articleIds:pv.change.map(function(c){return c.a.id}),versions:{},field:b.field,onlyBlank:b.onlyBlank,skipReview:!!(b.skip&&D.viewer.canSkipReview)};
   pv.change.forEach(function(c){p.versions[c.a.id]=c.a.editVersion});
   if(fd.kind==="multi"){p.mode=b.mode;p.values=Object.keys(b.vals).filter(function(k){return b.vals[k]})}else p.value=fd.kind==="number"?Number(b.value):b.value;
