@@ -418,22 +418,33 @@ function catOptions(sel,blankLabel){
 }
 function opts(list,sel,blankLabel){return (blankLabel!=null?'<option value="">'+esc(blankLabel)+"</option>":"")+list.map(function(v){return '<option'+(v===sel?" selected":"")+">"+esc(v)+"</option>"}).join("")}
 function applyChecks(name,cur){return '<div class="checks">'+D.lists.appliesTo.map(function(v){return '<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(v)+'"'+(cur.indexOf(v)>=0?" checked":"")+">"+esc(v)+"</label>"}).join("")+"</div>"}
+var RETURN_KINDS={sync_rejected:1,needs_category:1,applies_to_blank:1};
+function inReview(a){return a.status==="in_review"||a.status==="pending-review"}
+function needsReturn(a,x){return inReview(a)&&!!RETURN_KINDS[x.kind]}
+function canReturnFix(a){if(a.perms&&a.perms.returnFix!=null)return !!a.perms.returnFix;if(D.viewer.isAdmin)return true;if(a.claimedBy&&!isMe(a.claimedBy))return false;return isMe(a.author)||isMe(a.reviewer)}
+function returnFixWhy(a){if(a.claimedBy&&!isMe(a.claimedBy)&&(isMe(a.author)||isMe(a.reviewer)))return personName(a.claimedBy)+" holds the claim on this article, so only an admin can return it.";return "Only the author, the assigned business reviewer or an admin can return this article to fix it."}
+function issueField(x){var k=x.field||"estimatedMinutes";for(var i=0;i<FIELDS.length;i++)if(FIELDS[i].k===k)return FIELDS[i];if(k==="type")return {k:"type",l:"Article type",kind:"type"};if(k==="title")return {k:"title",l:"Title",kind:"text"};if(k==="summary")return {k:"summary",l:"Summary",kind:"text"};return {k:k,l:k,kind:"text"}}
 function fixTab(a){
   if(!a.issues.length)return '<p class="ok">Nothing to fix.</p>';
   var ed=canEdit(a);
   return a.issues.map(function(x){
     var key="fix:"+x.id,isBusy=busy[key],done=x.resolved,inp="",btn="Mark checked";
     if(x.kind==="sync_rejected"){
-      var fd=fieldDef(x.field||"estimatedMinutes");btn="Save and re-sync";
+      var fd=issueField(x);btn="Save and re-sync";
       if(fd.kind==="number")inp='<label class="f">'+esc(fd.l)+' in minutes<input type="number" min="1" step="1" data-fv="'+esc(x.id)+'" placeholder="Minutes, e.g. 15" value="'+esc(x.value&&/^\d+$/.test(x.value)?x.value:"")+'"></label>';
       else if(fd.kind==="select")inp='<label class="f">'+esc(fd.l)+'<select data-fv="'+esc(x.id)+'">'+opts(D.lists[fd.list],a[fd.k],"Choose")+"</select></label>";
       else if(fd.kind==="multi")inp='<label class="f">'+esc(fd.l)+"</label>"+applyChecks("fv-"+x.id,a.appliesTo);
+      else if(fd.kind==="type")inp='<label class="f">'+esc(fd.l)+'<select data-fv="'+esc(x.id)+'"><option value="">Choose</option>'+D.lists.types.map(function(t){return '<option value="'+esc(t.key)+'"'+(t.key===a.type?" selected":"")+">"+esc(t.label)+"</option>"}).join("")+"</select></label>";
+      else if(fd.kind==="text")inp='<label class="f">'+esc(fd.l)+'<input type="text" data-fv="'+esc(x.id)+'" value="'+esc(a[fd.k]||"")+'"></label>';
       else inp='<label class="f">'+esc(fd.l)+'<select data-fv="'+esc(x.id)+'">'+catOptions(a.category)+"</select></label>";
       if(x.value)inp='<p class="note">Rejected value: \u201c'+esc(x.value)+'\u201d</p>'+inp;
     }else if(x.kind==="not_linked"){btn="Link";inp='<label class="f">Salesforce article number<input type="text" inputmode="numeric" data-fv="'+esc(x.id)+'" placeholder="Article number, e.g. 000001148" value="'+esc(a.sfNumber||"")+'"></label>'}
     else if(x.kind==="needs_category"){btn="Save";inp='<label class="f">Data category<select data-fv="'+esc(x.id)+'">'+catOptions(a.category)+"</select></label>"}
     else if(x.kind==="applies_to_blank"){btn="Save";inp='<label class="f">Applies To</label>'+applyChecks("fv-"+x.id,a.appliesTo)}
-    return '<div class="issue '+esc(x.severity)+(done?" done":"")+'"><span class="meta">'+({block:"Blocks publishing",warn:"Needs fixing",info:"Check"}[x.severity]||"Check")+'</span><div style="color:var(--ink)">'+esc(x.text)+"</div>"+(done?'<span class="ok">Done</span>':(inp+'<div class="btnrow"><button type="button" class="btn '+(x.severity==="info"?"ghost":"solid")+'" data-fix="'+esc(x.id)+'"'+(!ed||isBusy?" disabled":"")+">"+(isBusy?"Saving\u2026":btn)+"</button>"+(ed?"":'<span class="note">Only authors and Knowledge staff can fix this.</span>')+"</div>"))+"</div>";
+    var ret=!done&&needsReturn(a,x),ok=ret?canReturnFix(a):ed;
+    if(ret){btn="Return and fix";inp+='<div class="box warn" style="font-size:13px">This article is in business review. Fixing it returns it to the author: business review and any Penny validation start over, and someone sends it for business review again before it syncs to Salesforce.</div><label class="f">Why you\'re returning it<textarea data-rn="'+esc(x.id)+'" placeholder="At least 10 characters, e.g. Audience must be a Salesforce value">'+esc(V.forms["rn:"+x.id]||"")+"</textarea></label>"}
+    var ro=ret?(ok?"":'<span class="note">'+esc(returnFixWhy(a))+"</span>"):(ok?"":'<span class="note">Only authors and Knowledge staff can fix this.</span>');
+    return '<div class="issue '+esc(x.severity)+(done?" done":"")+'"><span class="meta">'+({block:"Blocks publishing",warn:"Needs fixing",info:"Check"}[x.severity]||"Check")+'</span><div style="color:var(--ink)">'+esc(x.text)+"</div>"+(done?'<span class="ok">Done</span>':(inp+'<div class="btnrow"><button type="button" class="btn '+(x.severity==="info"?"ghost":"solid")+'" data-fix="'+esc(x.id)+'"'+(!ok||isBusy?" disabled":"")+">"+(isBusy?"Saving\u2026":btn)+"</button>"+ro+"</div>"))+"</div>";
   }).join("");
 }
 function editTab(a){
@@ -872,6 +883,7 @@ document.addEventListener("click",function(e){
 document.addEventListener("input",function(e){
   var t=e.target;if(!D)return;
   if(t.id==="rte"){captureBody();return}
+  if(t.dataset&&t.dataset.rn){V.forms["rn:"+t.dataset.rn]=t.value;return}
   if(t.dataset&&t.dataset.ff&&t.tagName!=="SELECT"&&t.type!=="date"){formInput(t,false);return}
   if(t.dataset&&t.dataset.sf&&V.sel){var c=V.content[V.sel.id],k=t.dataset.sf.split(":");c.steps[+k[0]][k[1]]=t.value;c.dirty=true;return}
   if(t.dataset&&t.dataset.tf&&V.sel){var c5=V.content[V.sel.id];c5.fields[t.dataset.tf]=t.value;c5.dirty=true;return}
@@ -920,13 +932,16 @@ document.addEventListener("keydown",function(e){if(!e.target||e.target.id!=="gri
 function doFix(issueId){
   var a=D.by[V.sel.id],x=a.issues.filter(function(i){return i.id===issueId})[0];if(!x)return;
   var p={articleId:a.id,issueId:x.id,kind:x.kind,editVersion:a.editVersion},el=document.querySelector('[data-fv="'+issueId+'"]');
-  if(x.kind==="sync_rejected"){var fd=fieldDef(x.field||"estimatedMinutes");p.field=fd.k;p.value=fd.kind==="multi"?checkedVals("fv-"+issueId):(el?el.value:"");
+  if(x.kind==="sync_rejected"){var fd=issueField(x);p.field=fd.k;p.value=fd.kind==="multi"?checkedVals("fv-"+issueId):(el?el.value:"");
     if(fd.kind==="number"&&!/^\d+$/.test(String(p.value))){toast("Enter a whole number of minutes.",true);return}
     if((fd.kind!=="multi"&&!p.value)||(fd.kind==="multi"&&!p.value.length)){toast("Choose a value first.",true);return}
     if(fd.kind==="number")p.value=Number(p.value)}
   else if(x.kind==="not_linked"){p.sfNumber=(el&&el.value||"").trim();if(!/^\d{6,10}$/.test(p.sfNumber)){toast("Enter the Salesforce article number, digits only.",true);return}}
   else if(x.kind==="needs_category"){p.category=el&&el.value;if(!p.category){toast("Choose a data category.",true);return}}
   else if(x.kind==="applies_to_blank"){p.appliesTo=checkedVals("fv-"+issueId);if(!p.appliesTo.length){toast("Tick at least one Applies To value.",true);return}}
+  if(needsReturn(a,x)){var note=String(V.forms["rn:"+issueId]||"").trim();if(note.length<10){toast("Say why you're returning it, in 10 characters or more.",true);return}
+    if(note.length>10000){toast("Keep the reason under 10,000 characters.",true);return}
+    p.note=note;act("returnAndFixIssue",p,"fix:"+issueId).then(function(r){if(r.ok){delete V.forms["rn:"+issueId];toast(r.message||"Correction saved. Send the article for business review again.")}});return}
   act("fixIssue",p,"fix:"+issueId).then(function(r){if(r.ok)toast(r.message||"Saved.")});
 }
 function doSave(){
