@@ -141,6 +141,14 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .ib{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:34px;min-height:32px;font-size:13px}
 .ib:disabled{opacity:.4;cursor:not-allowed}
 .sec{font-family:var(--head);font-weight:600;color:var(--ink);font-size:14px;margin-top:4px}
+.sfc{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line)}
+.sfh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.vtrack{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:2px 0 4px}
+.vtrack i{display:inline-block;width:14px;height:2px;background:var(--line)}
+.vdot{font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--body);border:1px solid var(--line)}
+.vdot.live{background:var(--green);border-color:var(--green);color:#fff}
+.vdot.draft{background:#fff;border:1.5px dashed var(--amber);color:var(--ink)}
+.vmore{font-size:12px;color:var(--body);padding:0 4px}
 .ov{display:flex;flex-direction:column;gap:14px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .tile{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
@@ -477,14 +485,55 @@ function loadContent(id){
     render();
   });
 }
-function publishTab(a){
+/* ---------- Salesforce publication card (v1.5) ---------- */
+function sfState(a){
+  var s=a.sf;if(!s||!s.knowledgeArticleId)return a.step==="notLinked"?"unlinked":"none";
+  if(s.status==="Archived"&&!s.online&&!s.draft)return "archived";
+  if(s.draft&&(s.online||s.firstPublishedAt))return "editing";
+  if(s.draft)return "first";
+  if(s.online)return (s.online.versionNumber||1)>1?"republished":"once";
+  return "none";
+}
+var SF_BADGE={none:["Not in Salesforce yet","p-none"],unlinked:["Live in Salesforce, not linked","p-open"],first:["First publish: draft, never published","p-review"],once:["Published once","p-done"],republished:["Published %n times","p-done"],editing:["Editing a draft of a published article","p-open"],archived:["Archived in Salesforce","p-write"]};
+function sfBadge(a){var k=sfState(a),b=SF_BADGE[k],n=a.sf&&a.sf.online?a.sf.online.versionNumber:0;return '<span class="pill '+b[1]+'">'+esc(b[0].replace("%n",n))+"</span>"}
+function verTrack(a){
+  var s=a.sf,live=s.online?s.online.versionNumber||1:0,dr=!!s.draft,dots=[];
+  var from=Math.max(1,live-5);if(from>1)dots.push('<span class="vmore">v1 \u2026</span>');
+  for(var v=from;v<=live;v++)dots.push('<span class="vdot'+(v===live?" live":"")+'" title="Version '+v+(v===live?", live now":", replaced")+'">v'+v+"</span>");
+  if(dr)dots.push('<span class="vdot draft" title="Draft, not published yet">v'+(live+1)+" draft</span>");
+  return '<div class="vtrack" role="img" aria-label="'+esc((live?"Published "+live+" time"+(live===1?"":"s")+". ":"Never published. ")+(dr?"A draft is open.":""))+'">'+dots.join('<i aria-hidden="true"></i>')+"</div>";
+}
+function sfCard(a){
+  var k=sfState(a),s=a.sf||{},h='<div class="box sfc"><div class="sfh"><div class="sec" style="margin:0">In Salesforce</div>'+sfBadge(a)+"</div>";
+  if(k==="none"){
+    h+='<p class="note">'+(a.status==="published_revision_in_draft"?"Trail OS has a revision in progress that hasn't reached Salesforce yet.":"No Salesforce article yet.")+" Trail OS sends a Salesforce draft when business review passes"+(a.step==="syncBlocked"?", but the last sync was blocked: fix it on the Fix tab, then re-sync.":".")+"</p>";
+    return h+"</div>";
+  }
+  if(k==="unlinked")return h+'<p class="note">This article is live in Salesforce but Trail OS hasn\'t linked it. Link it with its article number on the Fix tab.</p></div>';
+  h+='<div class="kv"><span>Article number</span><b>'+esc(s.articleNumber?"#"+s.articleNumber:a.sfNumber?"#"+a.sfNumber:"Unknown")+"</b></div>";
+  h+=verTrack(a);
+  if(s.firstPublishedAt)h+='<div class="kv"><span>First published</span><b>'+esc(fmtWhen(s.firstPublishedAt))+"</b></div>";
+  if(s.online&&s.online.lastPublishedAt&&s.online.lastPublishedAt!==s.firstPublishedAt)h+='<div class="kv"><span>Last published</span><b>'+esc(fmtWhen(s.online.lastPublishedAt))+(s.online.lastPublishedBy?" by "+esc(s.online.lastPublishedBy):"")+"</b></div>";
+  if(s.online)h+='<div class="kv"><span>Live now</span><b>Version '+esc(s.online.versionNumber||1)+"</b></div>";
+  if(k==="archived")h+='<div class="kv"><span>Archived</span><b>'+esc(fmtWhen(s.archivedAt))+"</b></div>";
+  if(s.draft){
+    h+='<div class="kv"><span>Draft</span><b>'+(s.draft.lastModifiedAt?"Last changed "+esc(fmtWhen(s.draft.lastModifiedAt))+(s.draft.lastModifiedBy?" by "+esc(s.draft.lastModifiedBy):""):"Open")+"</b></div>";
+    h+='<p class="note">'+(k==="editing"?"Readers and Penny still see version "+esc(s.online?s.online.versionNumber:"")+" until this draft is published. Publishing it makes it version "+esc((s.online?s.online.versionNumber:0)+1)+".":"This is the first version. Nobody can read it until it's published.")+"</p>";
+  }
+  if(a.status==="published_revision_in_draft"&&!s.draft)h+='<p class="note">Trail OS has a revision in progress that hasn\'t reached Salesforce yet. It becomes a Salesforce draft when business review passes.</p>';
+  h+='<div class="btnrow">'+(s.online?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'" data-ver="online">Open live article \u2197</button>':"")+(s.draft?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'" data-ver="draft">Open draft \u2197</button>':"")+(!s.online&&!s.draft?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce \u2197</button>':"")+"</div>";
+  h+='<div class="btnrow"><span class="note">'+(s.checkedAt?"Checked in Salesforce "+esc(fmtWhen(s.checkedAt)):"Not checked in Salesforce yet")+'</span><button type="button" class="linkbtn" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"Check now")+"</button></div>";
+  return h+"</div>";
+}
+function publishTab(a){return sfCard(a)+publishSteps(a)}
+function publishSteps(a){
   if(a.step==="syncBlocked")return '<div class="box warn">No Salesforce draft yet. Fix the field on the Fix tab, then re-sync.</div><div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(!canPublish(a)||busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry Salesforce sync")+"</button></div>";
-  if(a.st.i>=3)return '<p class="ok">Online in Salesforce.</p>'+(a.sfUrl||a.sfNumber?'<div class="btnrow"><button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce \u2197</button></div>':"");
+  if(a.st.i>=3)return a.step=="penny"?'<p class="note">Next: the Penny check, on the Penny tab.</p>':"";
   if(a.st.i<2)return '<p class="note">This article reaches the publish step after business review passes.</p>';
   var ck=V.checks[a.id]||{},items=a.publishChecks&&a.publishChecks.length?a.publishChecks:["Content in "+((D.typeBy[a.type]||{}).contentField||"Overview"),"Data category assigned","Published in Salesforce","Trail OS shows Published"];
   var h='<div><div class="note" style="font-weight:600;color:var(--ink)">Data category to assign</div><div class="btnrow"><span class="mono">'+esc(a.category||"None yet: set it on the Edit tab")+"</span>"+(a.category?'<button type="button" class="btn ghost" id="copycat">Copy</button>':"")+"</div></div>";
   h+='<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Your checklist in Salesforce</legend><div class="checks" style="flex-direction:column;gap:2px">'+items.map(function(t,i){return '<label><input type="checkbox" data-ck="'+i+'"'+(ck[i]?" checked":"")+">"+esc(t)+"</label>"}).join("")+"</div></fieldset>";
-  h+='<div class="btnrow"><button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce \u2197</button><button type="button" class="btn solid" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"I published it: check now")+"</button></div>";
+  h+='<div class="btnrow"><button type="button" class="btn solid" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"I published it: check now")+"</button></div>";
   h+='<p class="note">Publishing is done by a licensed Knowledge user in Salesforce. Trail OS confirms it from Salesforce; ticking the list only helps you keep track.</p>';
   return h;
 }
@@ -805,7 +854,7 @@ document.addEventListener("click",function(e){
   if(t.id==="bskip"){V.bulk.skip=t.checked;render();return}
   if(t.dataset.ck!==undefined){var a0=V.sel&&D.by[V.sel.id];if(a0){V.checks[a0.id]=V.checks[a0.id]||{};V.checks[a0.id][t.dataset.ck]=t.checked}return}
   if(t.id==="copycat"){var a1=D.by[V.sel.id];try{navigator.clipboard.writeText(a1.category).then(function(){toast("Category path copied.")},function(){toast("Couldn't copy. Select the path and copy it.",true)})}catch(err){toast("Couldn't copy. Select the path and copy it.",true)}return}
-  if(t.dataset.rec){act("openRecord",{type:t.dataset.rec,id:t.dataset.id});return}
+  if(t.dataset.rec){var op={type:t.dataset.rec,id:t.dataset.id};if(t.dataset.ver)op.version=t.dataset.ver;act("openRecord",op);return}
   if(t.dataset.fix){doFix(t.dataset.fix);return}
   if(t.id==="savedraft"){doSave();return}
   if(t.dataset.sync){var sid=t.dataset.sync;act("retrySync",{articleId:sid},"sync:"+sid).then(function(r){if(r.ok)toast(r.message||"Sent to Salesforce again.")});return}
