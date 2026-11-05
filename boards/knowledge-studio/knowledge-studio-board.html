@@ -141,6 +141,19 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .ib{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:34px;min-height:32px;font-size:13px}
 .ib:disabled{opacity:.4;cursor:not-allowed}
 .sec{font-family:var(--head);font-weight:600;color:var(--ink);font-size:14px;margin-top:4px}
+.apbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.btn.sm{min-height:32px;padding:0 12px;font-size:13px}
+.anbox{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.chg{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line)}
+.sec.sm{font-size:13px;margin-top:6px}
+.cmp{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}.cmp th:first-child{width:110px}.cmp td{overflow-wrap:anywhere}.cmp th{text-align:left;font-weight:600;color:var(--body);padding:4px 6px;border-bottom:1px solid var(--line)}
+.cmp td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+.o{color:#8A3B12;text-decoration:line-through;text-decoration-color:rgba(138,59,18,.5)}.n{color:var(--ink);font-weight:600}
+.dlist{display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.dadd{background:#E5F4E4;border-left:3px solid #3E9A55;padding:5px 8px;border-radius:0 6px 6px 0;color:var(--ink)}
+.ddel{background:#FBEBEB;border-left:3px solid #C2462B;padding:5px 8px;border-radius:0 6px 6px 0;color:#6B2A1A;text-decoration:line-through;text-decoration-color:rgba(107,42,26,.45)}
+.dsame{font-size:12px;color:var(--body);padding:2px 8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .sfc{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line)}
 .sfh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
 .vtrack{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:2px 0 4px}
@@ -280,7 +293,7 @@ function inCat(a){return !V.cat||(a.category&&(a.category===V.cat||a.category.in
 function myRoles(a){var r=[];if(isMe(a.author)||isMe(a.claimedBy))r.push("author");if(isMe(a.reviewer))r.push("business");if(isMe(a.validator))r.push("penny");return r}
 var ROLE_L={author:"Author",business:"Business reviewer",penny:"Penny validator"};
 function returnedToMe(a){var b=rstate(a,"business"),t=rstate(a,"technical");return myRoles(a).indexOf("author")>=0&&((b.status&&b.status!=="passed"&&b.current!==false)||(t.status&&t.status!=="passed"&&t.current!==false))}
-var VIEWS={all:function(){return true},ready:function(a){return a.step==="ready"},mine:function(a){return myRoles(a).length>0},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
+var VIEWS={all:function(){return true},approve:function(a){return awaitingApproval(a)},unsent:function(a){return !!DRAFT_ST[a.status]},ready:function(a){return a.step==="ready"},mine:function(a){return myRoles(a).length>0},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
   publish:function(a){return a.st.i===2},penny:function(a){return a.step==="penny"},due:dueSoon,
   myrev:function(a){return isMe(a.reviewer)&&a.step==="review"},
   mytech:function(a){return isMe(a.validator)&&a.step==="penny"},
@@ -306,12 +319,13 @@ function render(){
 }
 function renderChips(){
   var pub=D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(function(a){return a.st.i>=4}).length;
-  var mine=countView("myrev")+countView("mytech");var c=(mine?[[countView("myrev")?"myrev":"mytech","<b>"+mine+"</b> for you to review"]]:[]).concat([["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]]);
+  var apn=D.articles.filter(function(a){return awaitingApproval(a)&&canBizReview(a)}).length,mine=countView("myrev")+countView("mytech");var c=(apn?[["approve","<b>"+apn+"</b> for you to approve"]]:[]).concat(mine?[[countView("myrev")?"myrev":"mytech","<b>"+mine+"</b> for you to review"]]:[]).concat([["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]]);
   $("chips").innerHTML=c.map(function(x){return '<button type="button" class="chip" data-view="'+x[0]+'" aria-pressed="'+(V.view===x[0])+'">'+x[1]+"</button>"}).join("");
 }
 function rb(view,label,n,extra){return '<button type="button" data-view="'+esc(view)+'" aria-current="'+(V.view===view&&!V.cat)+'"'+(extra||"")+'><span>'+esc(label)+'</span><span class="n">'+(n==null?"":n)+"</span></button>"}
 function renderRail(){
   var h=rb("overview","Overview",null)+rb("all","All articles",D.articles.length)+rb("fix","Fix",countView("fix"))+rb("review","Write and review",countView("review"))+rb("publish","Publish",countView("publish"))+rb("penny","Penny check",countView("penny"))+rb("decisions","Decisions",D.decisions.filter(decOpen).length);
+  h+="<h4>APPROVALS</h4>"+rb("approve","Waiting for approval",countView("approve"))+rb("unsent","Drafts not sent",countView("unsent"));
   h+="<h4>MY WORK</h4>"+rb("mine","My articles",countView("mine"))+rb("myrev","My business reviews",countView("myrev"))+rb("mytech","My Penny validations",countView("mytech"));
   if(canAssign())h+="<h4>ASSIGN REVIEWERS</h4>"+rb("needrev","Needs a business reviewer",countView("needrev"))+rb("needtech","Needs a Penny validator",countView("needtech"));
   h+="<h4>COVERAGE</h4>"+rb("questions","Reader questions",D.questions.filter(function(q){return qStatus(q)[0]==="No article"}).length)+rb("pages","Trail OS pages",D.pages.filter(function(p){return pStatus(p)[0]!=="Covered"}).length);
@@ -324,7 +338,7 @@ function renderRail(){
 }
 function viewTitle(){
   if(V.cat)return V.cat.split(" \u203a ").slice(1).join(" \u203a ")||V.cat;
-  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",overview:"Knowledge health",ready:"Ready for Penny",mine:"My articles",myrev:"My business reviews",mytech:"My Penny validations",needrev:"Needs a business reviewer",needtech:"Needs a Penny validator",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
+  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",overview:"Knowledge health",approve:"Waiting for approval",unsent:"Drafts not sent for approval",ready:"Ready for Penny",mine:"My articles",myrev:"My business reviews",mytech:"My Penny validations",needrev:"Needs a business reviewer",needtech:"Needs a Penny validator",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
   if(V.view==="questions"&&V.qaud)return "Reader questions: "+V.qaud;if(t)return t;if(V.view.indexOf("iss:")===0)return "Fix: "+issueLabel(V.view.slice(4));if(V.view.indexOf("miss:")===0)return "Missing "+fieldDef(V.view.slice(5)).l;return "Articles";
 }
 function renderMain(){
@@ -347,6 +361,7 @@ function insightsBox(){
   var i=D.insights;return '<section class="card ins" aria-label="Insights"><h3>From Claude, '+esc(fmtWhen(i.generatedAt))+(i.stale?" (stale: the last refresh failed)":"")+"</h3><ul>"+i.items.map(function(x){return '<li class="'+esc(x.severity||"")+'"><span class="tag">'+esc(x.tag||"Note")+"</span><span>"+esc(x.text)+(x.articleId&&D.by[x.articleId]?' <button type="button" class="linkbtn" data-open="'+esc(x.articleId)+'">Open</button>':"")+"</span></li>"}).join("")+"</ul></section>";
 }
 function fieldCell(a,k){
+  if(k==="_approval"){var at=approverText(a);return '<span class="roles">'+(at?'<span class="pill '+(at==="You can approve"?"p-done":"p-role")+'">'+esc(at)+"</span>":"")+'<span class="sub">'+esc(changeKind(a))+"</span></span>"}
   if(k==="_roles")return '<span class="roles">'+myRoles(a).map(function(r){return '<span class="pill p-role">'+ROLE_L[r]+"</span>"}).join("")+(returnedToMe(a)?'<span class="pill p-open">Returned to you</span>':"")+"</span>";
   if(k==="reviewer"||k==="validator")return a[k]?esc(personName(a[k])):'<span class="note">Not assigned</span>';
   if(k==="reviewDue")return a.reviewDue?esc(fmtDate(a.reviewDue)):"\u2014";
@@ -356,7 +371,7 @@ function fieldCell(a,k){
 function dots(a){var i=a.st.i;return '<span class="dots" role="img" aria-label="'+(i>=4?"All steps done":"At "+STAGES[i])+'">'+STAGES.map(function(s,j){var c=j<i?"d":j===i?(a.step==="syncBlocked"?"b":"c"):"";return '<i class="'+c+'"></i>'}).join("")+"</span>"}
 function table(rows){
   if(!rows.length)return '<div class="card" style="padding:18px">Nothing here'+(V.cat||V.q?" with these filters":"")+".</div>";
-  var fk=V.view==="mine"?"_roles":V.view==="due"?"reviewDue":/^(myrev|needrev)$/.test(V.view)?"reviewer":/^(mytech|needtech)$/.test(V.view)?"validator":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="_roles"?"My role":fk==="reviewDue"?"Review due":fieldDef(fk).l;
+  var fk=/^(approve|unsent)$/.test(V.view)?"_approval":V.view==="mine"?"_roles":V.view==="due"?"reviewDue":/^(myrev|needrev)$/.test(V.view)?"reviewer":/^(mytech|needtech)$/.test(V.view)?"validator":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="_approval"?"Approval":fk==="_roles"?"My role":fk==="reviewDue"?"Review due":fieldDef(fk).l;
   var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]}),cmp=panelOpen();
   var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
   h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
@@ -406,7 +421,7 @@ function defaultTab(a){if(a.step==="review"&&isMe(a.reviewer))return "review";if
 function articlePanel(a){
   var tab=V.tab||defaultTab(a);V.tab=tab;
   var bar='<div class="stagebar" aria-label="Stage">'+STAGES.map(function(s,j){var c=j<a.st.i?"d":j===a.st.i?(a.step==="syncBlocked"?"b":"c"):"";return '<span class="'+c+'">'+s+"</span>"}).join("")+"</div>";
-  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+bar+"</div>";
+  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+bar+approvalBar(a)+"</div>";
   var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["publish","Publish"],["penny","Penny"]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+esc(t[1])+"</button>"}).join("")+"</div>";
   h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
@@ -461,8 +476,8 @@ function editTab(a){
   '<label class="f">Estimated time in minutes<input type="number" min="1" step="1" id="e-estimatedMinutes" value="'+esc(v("estimatedMinutes")==null?"":v("estimatedMinutes"))+'"'+dis+"></label>"+
   '<label class="f">Data category<select id="e-category"'+dis+">"+catOptions(v("category"),"Not set")+"</select></label>";
   h+='<div class="btnrow"><button type="button" class="btn solid" id="savedraft"'+(!ed||busy["edit:"+a.id]?" disabled":"")+">"+(busy["edit:"+a.id]?"Saving\u2026":"Save draft")+'</button></div>';
-  h+='<p class="note">'+(a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving sends the article back to business review.")+"</p>";
-  if(V.done["edit:"+a.id])h+='<p class="ok">Saved. It goes back to business review.</p>';
+  h+='<p class="note">'+(a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
+  if(V.done["edit:"+a.id])h+='<p class="ok">Saved as a draft. Send it for approval when it\'s ready.</p>';
   return h;
 }
 var STEP_TYPES={"procedure":1,"learner-task":1};
@@ -472,7 +487,7 @@ function contentTab(a){
   if(!c){V.content[a.id]=c={loading:true};setTimeout(function(){loadContent(a.id)},0)}
   if(c.loading||c.err){return c.err?'<p class="err">'+esc(c.err)+'</p><div class="btnrow"><button type="button" class="btn ghost" data-reload="'+esc(a.id)+'">Try again</button></div>':'<p class="note">Loading the article content\u2026</p>'}
   var ed=canEdit(a),dis=ed?"":" disabled";
-  var h='<p class="note">'+(a.st.i>=3?"You are editing a draft revision. Readers keep the live version until the revision is published.":"Saving sends the article back to business review.")+"</p>";
+  var h='<p class="note">'+(a.st.i>=3?"You are editing a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
   h+='<div class="sec">'+esc(c.contentLabel||"Article content")+"</div>";
   if(ed)h+='<div class="tool" role="toolbar" aria-label="Formatting">'+[["bold","B","Bold"],["italic","I","Italic"],["h3","H","Heading"],["ul","\u2022 List","Bulleted list"],["ol","1. List","Numbered list"],["link","Link","Add a link"],["unlink","Unlink","Remove link"]].map(function(b){return '<button type="button" data-fmt="'+b[0]+'" aria-label="'+b[2]+'">'+b[1]+"</button>"}).join("")+"</div>";
   if(V.linkFor===a.id)h+='<div class="linkrow"><input type="text" id="linkurl" placeholder="https://" aria-label="Link address"><button type="button" class="btn solid" id="linkok">Add link</button><button type="button" class="btn ghost" id="linkno">Cancel</button></div>';
@@ -485,7 +500,7 @@ function contentTab(a){
     if(ed)h+='<div class="btnrow"><button type="button" class="btn ghost" id="addstep">Add a step</button></div>';
   }
   h+='<div class="btnrow"><button type="button" class="btn solid" id="savecontent"'+(!ed||busy["content:"+a.id]?" disabled":"")+">"+(busy["content:"+a.id]?"Saving\u2026":"Save content")+"</button>"+(c.dirty?'<span class="note">Unsaved changes</span>':"")+"</div>";
-  if(V.done["content:"+a.id])h+='<p class="ok">Saved. It goes back to business review.</p>';
+  if(V.done["content:"+a.id])h+='<p class="ok">Saved as a draft. Send it for approval when it\'s ready.</p>';
   return h;
 }
 function loadContent(id){
@@ -670,10 +685,10 @@ function checkRows(kind,a,list){
 }
 function ensureContent(a){var c=V.content[a.id];if(!c){V.content[a.id]=c={loading:true};setTimeout(function(){loadContent(a.id)},0)}return c}
 function reviewTab(a){
-  var h=assignBlock(a),s=rstate(a,"business"),t=rsText(s);
+  var h=changesBlock(a)+assignBlock(a),s=rstate(a,"business"),t=rsText(s);
   h+='<div class="sec">Business review</div><div class="btnrow"><span class="pill '+t[1]+'">'+esc(t[0])+"</span></div>";
   if(s.findings&&s.status!=="passed")h+='<blockquote>'+esc(s.findings)+"</blockquote>";
-  if(a.step==="write")return h+'<p class="note">The author submits the article for business review when the draft is ready.</p>';
+  if(a.step==="write")return h+'<p class="note">This is a draft. When it\'s ready, send it for approval with the button at the top.</p>';
   if(a.step!=="review")return h+'<p class="note">'+(s.status==="passed"?"Business review is done for this version. If someone edits the content, it comes back here for review.":"Business review happens while the article is in review.")+"</p>";
   if(!canBizReview(a)){
     h+='<p class="note">'+(ownArticle(a)?"You wrote or claimed this article, so someone else reviews it.":a.reviewer?"Only "+personName(a.reviewer)+" (the assigned reviewer) or an admin can record the business review.":"No reviewer is assigned yet. Only the assigned reviewer or an admin can record the business review.")+"</p>";
@@ -823,6 +838,85 @@ function insightsSection(){
 var tipEl=null;
 document.addEventListener("mouseover",function(e){var t=e.target.closest&&e.target.closest("[data-tip]");if(!t){if(tipEl)tipEl.hidden=true;return}if(!tipEl){tipEl=document.createElement("div");tipEl.className="tip";document.body.appendChild(tipEl)}tipEl.textContent=t.dataset.tip;tipEl.hidden=false;var r=t.getBoundingClientRect();tipEl.style.left=Math.min(window.innerWidth-tipEl.offsetWidth-8,Math.max(8,r.left+r.width/2-tipEl.offsetWidth/2))+"px";tipEl.style.top=Math.max(8,r.top-tipEl.offsetHeight-6)+"px"});
 document.addEventListener("focusin",function(e){var t=e.target;if(t&&t.dataset&&t.dataset.tip){var ev=new MouseEvent("mouseover",{bubbles:true});t.dispatchEvent(ev)}});
+/* ---------- approval (v1.7) ---------- */
+var DRAFT_ST={unclaimed:1,claimed:1,in_progress:1,returned:1,draft:1};
+var OVERRIDE_ST={unclaimed:1,claimed:1,in_progress:1,returned:1,draft:1,"pending-review":1,in_review:1};
+function canSubmit(a){if(a.perms&&a.perms.submit!=null)return !!a.perms.submit;return !!DRAFT_ST[a.status]&&canEdit(a)}
+function canOverride(a){return !!D.viewer.canSkipReview&&!!OVERRIDE_ST[a.status]}
+function awaitingApproval(a){return a.status==="in_review"||a.status==="pending-review"}
+function publishedSibling(a){
+  var gs=D.articleGroups||[];for(var i=0;i<gs.length;i++){var g=gs[i];if(g.articleIds&&g.articleIds.indexOf(a.id)>=0){var pid=g.publishedArticleId;if(pid&&pid!==a.id&&D.by[pid])return D.by[pid];return null}}
+  return null;
+}
+function workingCopy(a){var gs=D.articleGroups||[];for(var i=0;i<gs.length;i++){var g=gs[i];if(g.articleIds&&g.articleIds.indexOf(a.id)>=0){var did=g.draftArticleId;if(did&&did!==a.id&&D.by[did])return D.by[did]}}return null}
+function changeKind(a){return publishedSibling(a)?"Revision of a published article":(a.st.i>=3?"Published":"New article")}
+function approverText(a){
+  if(!awaitingApproval(a))return DRAFT_ST[a.status]?"Not sent yet":"";
+  if(canBizReview(a))return "You can approve";
+  return a.reviewer?personName(a.reviewer):"Needs a reviewer";
+}
+function approvalBar(a){
+  var s=rstate(a,"business"),h="",btns="",msg="",tone="";
+  var wc=workingCopy(a);
+  if(wc)return '<div class="apbar"><span class="pill p-open">A revision is in progress</span><span class="note">Readers see this version. Changes are in a separate draft.</span><button type="button" class="btn ghost sm" data-open="'+esc(wc.id)+'">Open the revision</button></div>';
+  if(DRAFT_ST[a.status]){
+    tone="p-write";msg=s.status&&s.status!=="passed"&&s.current!==false?"Returned to the author":"Draft, not sent for approval";
+    if(canSubmit(a))btns+='<button type="button" class="btn solid sm" data-submit="'+esc(a.id)+'"'+(busy["sub:"+a.id]?" disabled":"")+">"+(busy["sub:"+a.id]?"Sending\u2026":"Send for approval")+"</button>";
+  }else if(awaitingApproval(a)){
+    tone="p-review";msg="Waiting for approval"+(a.reviewer?" from "+personName(a.reviewer):"");
+    if(canBizReview(a)&&V.tab!=="review")btns+='<button type="button" class="btn solid sm" data-tab="review">Review and approve</button>';
+  }else if(a.status==="approved"||a.status==="ready-to-publish"){
+    tone="p-done";msg="Approved"+(s.status==="passed"&&s.by?" by "+personName(s.by)+(s.at?" on "+fmtDate(s.at):""):"")+". Next: publish in Salesforce.";
+  }else return "";
+  if(canOverride(a)&&!(V.forms["an:"+a.id]||{}).open)btns+='<button type="button" class="btn ghost sm" data-annow="'+esc(a.id)+'">Approve now (superadmin)</button>';
+  h='<div class="apbar"><span class="pill '+tone+'">'+esc(msg)+"</span>"+(publishedSibling(a)?'<span class="note">Revision of a published article</span>':"")+btns+"</div>";
+  var f=V.forms["an:"+a.id];
+  if(f&&f.open)h+='<div class="box warn anbox"><b>Approve without the independent review?</b><p class="note" style="margin:0">This marks the current version approved and sends it to Salesforce as a draft. It skips the assigned reviewer, the review checklist and the Penny check, and Trail OS records that you did. It doesn\'t publish anything.</p><label class="f">Why you\'re approving it this way<textarea data-an="note" placeholder="At least 10 characters, e.g. Founder approval of a wording fix">'+esc(f.note||"")+'</textarea></label><div class="checks"><label><input type="checkbox" data-an="ok"'+(f.ok?" checked":"")+'>I approve version '+esc(String(a.contentVersion||"").slice(0,8))+" of this article</label></div><div class=\"btnrow\"><button type=\"button\" class=\"btn solid\" data-anconfirm=\""+esc(a.id)+"\""+(busy["an:"+a.id]?" disabled":"")+">"+(busy["an:"+a.id]?"Approving\u2026":"Approve")+'</button><button type="button" class="btn ghost" data-ancancel="'+esc(a.id)+'">Cancel</button></div></div>';
+  return h;
+}
+function doSubmit(id){var a=D.by[id];act("submitForReview",{articleId:id,editVersion:a.editVersion},"sub:"+id).then(function(r){if(r.ok)toast(r.message||"Sent for approval.")})}
+function doApproveNow(id){
+  var a=D.by[id],f=V.forms["an:"+id]||{},note=String(f.note||"").trim();
+  if(note.length<10){toast("Say why you're approving it this way, in 10 characters or more.",true);return}
+  if(!f.ok){toast("Tick the box to confirm.",true);return}
+  act("approveNow",{articleId:id,contentVersion:a.contentVersion,confirmed:true,note:note},"an:"+id).then(function(r){if(r.ok){delete V.forms["an:"+id];toast(r.message||"Approved. Trail OS is sending the draft to Salesforce.")}});
+}
+/* what changed */
+var CMP_FIELDS=[["title","Title"],["summary","Summary"],["type","Type"],["audience","Audience"],["appliesTo","Applies To"],["department","Owner department"],["difficulty","Difficulty"],["reviewCycle","Review cycle"],["estimatedMinutes","Estimated time"],["category","Data category"]];
+function blocks(html){
+  var out=[];try{var doc=new DOMParser().parseFromString("<div>"+(html||"")+"</div>","text/html");
+    var els=doc.body.querySelectorAll("p,li,h1,h2,h3,h4,h5,h6,blockquote,pre,td");
+    Array.prototype.forEach.call(els,function(el){if(el.querySelector("p,li,h1,h2,h3,h4,h5,h6,blockquote,pre,td"))return;var t=el.textContent.replace(/\s+/g," ").trim();if(t)out.push((/^H\d$/.test(el.tagName)?"## ":el.tagName==="LI"?"\u2022 ":"")+t)});
+    if(!out.length){var t=doc.body.textContent.replace(/\s+/g," ").trim();if(t)out.push(t)}}catch(e){}
+  return out;
+}
+function diff(a,b){
+  var n=a.length,m=b.length,L=[];for(var i=0;i<=n;i++){L.push(new Array(m+1).fill(0))}
+  for(i=n-1;i>=0;i--)for(var j=m-1;j>=0;j--)L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  var r=[];i=0;j=0;while(i<n&&j<m){if(a[i]===b[j]){r.push(["=",a[i]]);i++;j++}else if(L[i+1][j]>=L[i][j+1]){r.push(["-",a[i]]);i++}else{r.push(["+",b[j]]);j++}}
+  while(i<n)r.push(["-",a[i++]]);while(j<m)r.push(["+",b[j++]]);return r;
+}
+function diffHtml(d){
+  var h="",run=0;function flush(){if(run){h+='<div class="dsame">'+run+" unchanged</div>";run=0}}
+  d.forEach(function(x){if(x[0]==="="){run++;return}flush();h+='<div class="d'+(x[0]==="+"?"add":"del")+'"><span class="sr">'+(x[0]==="+"?"Added: ":"Removed: ")+'</span><span aria-hidden="true">'+(x[0]==="+"?"+ ":"\u2212 ")+"</span>"+esc(x[1])+"</div>"});
+  flush();return h;
+}
+function changesBlock(a){
+  var sib=publishedSibling(a);
+  if(!sib)return '<div class="box chg"><div class="sec" style="margin:0">What changed</div><p class="note" style="margin:0">'+(a.st.i>=3?"This is the live version. Edits are made in a separate revision.":"New article: nothing has been published yet, so everything in it is new.")+"</p></div>";
+  var h='<div class="box chg"><div class="sfh"><div class="sec" style="margin:0">What changed</div><button type="button" class="linkbtn" data-open="'+esc(sib.id)+'">Open the live version</button></div><p class="note" style="margin:0">Compared with the version readers see now'+(sib.sfNumber?" (#"+esc(sib.sfNumber)+")":"")+".</p>";
+  var rows=CMP_FIELDS.filter(function(f){return show(a[f[0]])!==show(sib[f[0]])});
+  h+=rows.length?'<table class="cmp"><thead><tr><th>Field</th><th>Live now</th><th>This revision</th></tr></thead><tbody>'+rows.map(function(f){var o=f[0]==="type"?typeLabel(sib.type):show(sib[f[0]]),n=f[0]==="type"?typeLabel(a.type):show(a[f[0]]);return "<tr><td>"+esc(f[1])+'</td><td class="o">'+esc(o||"Blank")+'</td><td class="n">'+esc(n||"Blank")+"</td></tr>"}).join("")+"</tbody></table>":'<p class="note" style="margin:0">No field changes.</p>';
+  var c1=ensureContent(a),c0=ensureContent(sib);
+  if(c1.loading||c0.loading)return h+'<p class="note" style="margin:0">Loading the content to compare\u2026</p></div>';
+  if(c1.err||c0.err)return h+'<p class="err">'+esc(c1.err||c0.err)+"</p></div>";
+  var tf=TYPE_FIELDS[a.type]||[];tf.forEach(function(f){var o=(c0.fields||{})[f[0]]||"",n=(c1.fields||{})[f[0]]||"";if(o!==n)h+='<div class="kv"><span>'+esc(f[1])+'</span><b class="n">'+esc(n||"Blank")+"</b></div>"+'<div class="kv"><span>was</span><span class="o">'+esc(o||"Blank")+"</span></div>"});
+  var bd=diff(blocks(c0.body),blocks(c1.body)),bchg=bd.some(function(x){return x[0]!=="="});
+  h+='<div class="sec sm">'+esc(c1.contentLabel||"Content")+"</div>"+(bchg?'<div class="dlist">'+diffHtml(bd)+"</div>":'<p class="note" style="margin:0">No changes.</p>');
+  if((c0.steps&&c0.steps.length)||(c1.steps&&c1.steps.length)){var sk=function(s){return (s.instruction||"")+(s.verifyLine?" \u2014 Verify: "+s.verifyLine:"")+(s.isOptional?" (optional)":"")};
+    var sd=diff((c0.steps||[]).map(sk),(c1.steps||[]).map(sk));h+='<div class="sec sm">Steps</div>'+(sd.some(function(x){return x[0]!=="="})?'<div class="dlist">'+diffHtml(sd)+"</div>":'<p class="note" style="margin:0">No changes.</p>')}
+  return h+"</div>";
+}
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back){V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
@@ -830,6 +924,11 @@ document.addEventListener("click",function(e){
   var t=e.target.closest("button,input[type=checkbox]");if(!t||!D)return;
   if(t.dataset.view){setView(t.dataset.view);return}
   if(t.dataset.go){setView(t.dataset.go);return}
+  if(t.dataset.submit){doSubmit(t.dataset.submit);return}
+  if(t.dataset.annow){V.forms["an:"+t.dataset.annow]={open:true};renderPanel();return}
+  if(t.dataset.ancancel){delete V.forms["an:"+t.dataset.ancancel];renderPanel();return}
+  if(t.dataset.anconfirm){doApproveNow(t.dataset.anconfirm);return}
+  if(t.dataset.an==="ok"&&V.sel){(V.forms["an:"+V.sel.id]=V.forms["an:"+V.sel.id]||{}).ok=t.checked;return}
   if(t.dataset.qaud){setView("questions");V.qaud=t.dataset.qaud;render();return}
   if(t.id==="instoggle"){V.insOpen=!V.insOpen;renderMain();var b=$("instoggle");if(b)b.focus();return}
   if(t.dataset.mrole){V.mrole=t.dataset.mrole;V.limit=200;renderMain();return}
@@ -883,6 +982,7 @@ document.addEventListener("click",function(e){
 document.addEventListener("input",function(e){
   var t=e.target;if(!D)return;
   if(t.id==="rte"){captureBody();return}
+  if(t.dataset&&t.dataset.an==="note"&&V.sel){(V.forms["an:"+V.sel.id]=V.forms["an:"+V.sel.id]||{}).note=t.value;return}
   if(t.dataset&&t.dataset.rn){V.forms["rn:"+t.dataset.rn]=t.value;return}
   if(t.dataset&&t.dataset.ff&&t.tagName!=="SELECT"&&t.type!=="date"){formInput(t,false);return}
   if(t.dataset&&t.dataset.sf&&V.sel){var c=V.content[V.sel.id],k=t.dataset.sf.split(":");c.steps[+k[0]][k[1]]=t.value;c.dirty=true;return}
