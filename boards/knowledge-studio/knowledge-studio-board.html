@@ -588,14 +588,14 @@ function loadContent(id){
 }
 /* ---------- Salesforce publication card (v1.5) ---------- */
 function sfState(a){
-  var s=a.sf;if(!s||!s.knowledgeArticleId)return a.step==="notLinked"?"unlinked":"none";
+  var s=a.sf;if(!s||!s.knowledgeArticleId)return a.step==="notLinked"?"unlinked":(a.linked||a.salesforceRecordId)?"known":"none";
   if(s.status==="Archived"&&!s.online&&!s.draft)return "archived";
   if(s.draft&&(s.online||s.firstPublishedAt))return "editing";
   if(s.draft)return "first";
   if(s.online)return (s.online.versionNumber||1)>1?"republished":"once";
   return "none";
 }
-var SF_BADGE={none:["Not in Salesforce yet","p-none"],unlinked:["Live in Salesforce, not linked","p-open"],first:["First publish: draft, never published","p-review"],once:["Published once","p-done"],republished:["Published %n times","p-done"],editing:["Editing a draft of a published article","p-open"],archived:["Archived in Salesforce","p-write"]};
+var SF_BADGE={none:["No Salesforce record confirmed","p-none"],known:["In Salesforce \u00b7 history not read yet","p-review"],unlinked:["Live in Salesforce, not linked","p-open"],first:["First publish: draft, never published","p-review"],once:["Published once","p-done"],republished:["Published %n times","p-done"],editing:["Editing a draft of a published article","p-open"],archived:["Archived in Salesforce","p-write"]};
 function sfBadge(a){var k=sfState(a),b=SF_BADGE[k],n=a.sf&&a.sf.online?a.sf.online.versionNumber:0;return '<span class="pill '+b[1]+'">'+esc(b[0].replace("%n",n))+"</span>"}
 function verTrack(a){
   var s=a.sf,live=s.online?s.online.versionNumber||1:0,dr=!!s.draft,dots=[];
@@ -607,7 +607,14 @@ function verTrack(a){
 function sfCard(a){
   var k=sfState(a),s=a.sf||{},h='<div class="box sfc"><div class="sfh"><div class="sec" style="margin:0">In Salesforce</div>'+sfBadge(a)+"</div>";
   if(k==="none"){
-    h+='<p class="note">'+(a.status==="published_revision_in_draft"?"Trail OS has a revision in progress that hasn't reached Salesforce yet.":"No Salesforce article yet.")+" Trail OS sends a Salesforce draft when business review passes"+(a.step==="syncBlocked"?", but the last sync was blocked: fix it on the Fix tab, then re-sync.":".")+"</p>";
+    h+='<p class="note">'+(a.step==="syncBlocked"?"Trail OS hasn\'t confirmed a Salesforce record for this article. The last sync was blocked, so if a Salesforce draft already exists it was left as it was and doesn\'t have these changes yet.":(a.status==="published_revision_in_draft"?"Trail OS has a revision in progress that hasn\'t reached Salesforce yet.":"Trail OS hasn\'t confirmed a Salesforce record for this article.")+" Trail OS sends a Salesforce draft when business review passes.")+"</p>";
+    return h+"</div>";
+  }
+  if(k==="known"){
+    h+='<p class="note">Trail OS has a Salesforce record for this article but hasn\'t read its publishing history yet. Check now to see whether it\'s a first publish, how many times it has been published, or whether a draft is open.</p>';
+    if(a.step==="syncBlocked")h+='<p class="err" style="margin:0">The last sync was blocked, so the Salesforce record doesn\'t have the latest Trail OS changes yet. It was left as it was.</p>';
+    h+='<div class="btnrow"><button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce'+(a.sfNumber?" #"+esc(a.sfNumber):"")+' \u2197</button></div>';
+    h+='<div class="btnrow"><span class="note">Not checked in Salesforce yet</span><button type="button" class="linkbtn" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"Check now")+"</button></div>";
     return h+"</div>";
   }
   if(k==="unlinked")return h+'<p class="note">This article is live in Salesforce but Trail OS hasn\'t linked it. Link it with its article number on the Fix tab.</p></div>';
@@ -621,6 +628,7 @@ function sfCard(a){
     h+='<div class="kv"><span>Draft</span><b>'+(s.draft.lastModifiedAt?"Last changed "+esc(fmtWhen(s.draft.lastModifiedAt))+(s.draft.lastModifiedBy?" by "+esc(s.draft.lastModifiedBy):""):"Open")+"</b></div>";
     h+='<p class="note">'+(k==="editing"?"Readers and Penny still see version "+esc(s.online?s.online.versionNumber:"")+" until this draft is published. Publishing it makes it version "+esc((s.online?s.online.versionNumber:0)+1)+".":"This is the first version. Nobody can read it until it's published.")+"</p>";
   }
+  if(a.step==="syncBlocked")h+='<p class="err" style="margin:0">The last sync was blocked, so '+(s.draft?"this draft":"Salesforce")+' doesn\'t have the latest Trail OS changes yet. It was left as it was.</p>';
   if(a.status==="published_revision_in_draft"&&!s.draft)h+='<p class="note">Trail OS has a revision in progress that hasn\'t reached Salesforce yet. It becomes a Salesforce draft when business review passes.</p>';
   h+='<div class="btnrow">'+(s.online?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'" data-ver="online">Open live article \u2197</button>':"")+(s.draft?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'" data-ver="draft">Open draft \u2197</button>':"")+(!s.online&&!s.draft?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce \u2197</button>':"")+"</div>";
   h+='<div class="btnrow"><span class="note">'+(s.checkedAt?"Checked in Salesforce "+esc(fmtWhen(s.checkedAt)):"Not checked in Salesforce yet")+'</span><button type="button" class="linkbtn" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"Check now")+"</button></div>";
@@ -649,7 +657,7 @@ function categoryCard(a){
   return h+"</div>";
 }
 function publishSteps(a){
-  if(a.step==="syncBlocked")return '<div class="box warn">No Salesforce draft yet. Fix the field on the Fix tab, then re-sync.</div><div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(!canPublish(a)||busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry Salesforce sync")+"</button></div>";
+  if(a.step==="syncBlocked")return '<div class="box warn">Sync blocked. Fix the field on the Fix tab, then retry the sync.</div><div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(!canPublish(a)||busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry Salesforce sync")+"</button></div>";
   if(a.st.i>=3)return a.step=="penny"?'<p class="note">Next: the Penny check, on the Penny tab.</p>':"";
   if(a.st.i<2)return '<p class="note">This article reaches the publish step after business review passes.</p>';
   var ck=V.checks[a.id]||{},items=a.publishChecks&&a.publishChecks.length?a.publishChecks.slice():["Confirm the selected Data Category has verified sync evidence in Trail OS.","Review the Salesforce draft manually.","Publish manually in Salesforce.","Check publication in Trail OS."];
@@ -974,7 +982,7 @@ function approvalBar(a){
 }
 function sfLink(a){
   var s=a.sf||{},ver=s.draft?"draft":s.online?"online":null;
-  if(!ver&&!a.salesforceRecordId&&!a.linked)return '<span class="note">No Salesforce draft yet'+(canPublish(a)?' \u00b7 <button type="button" class="linkbtn" data-sync="'+esc(a.id)+'">Send it now</button>':"")+"</span>";
+  if(!ver&&!a.salesforceRecordId&&!a.linked)return '<span class="note">No Salesforce record confirmed yet'+(canPublish(a)?' \u00b7 <button type="button" class="linkbtn" data-sync="'+esc(a.id)+'">Send it now</button>':"")+"</span>";
   var num=s.articleNumber||a.sfNumber;
   return '<button type="button" class="btn ghost sm" data-rec="salesforce" data-id="'+esc(a.id)+'"'+(ver?' data-ver="'+ver+'"':"")+">"+(ver==="draft"?"Open Salesforce draft":"Open in Salesforce")+(num?" #"+esc(num):"")+" \u2197</button>";
 }
