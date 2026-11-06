@@ -150,6 +150,9 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .ib{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:34px;min-height:32px;font-size:13px}
 .ib:disabled{opacity:.4;cursor:not-allowed}
 .sec{font-family:var(--head);font-weight:600;color:var(--ink);font-size:14px;margin-top:4px}
+.vbadge{display:inline-flex;align-items:center;min-height:20px;margin:2px 0 0 7px;padding:1px 7px;border:1px solid #cbd9d1;border-radius:999px;background:#edf4ef;color:#284a39;font-size:11px;font-weight:650;line-height:1.2;vertical-align:middle}
+.vbadge.pub{border-color:#d5d2bd;background:#f5f3e9;color:#5c5430}
+.vtools{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:2px 0 4px}.vtools .vbadge{margin:0 4px 0 0}
 .apbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
 .btn.sm{min-height:32px;padding:0 12px;font-size:13px}
 .anbox{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -260,14 +263,16 @@ function send(m){parent.postMessage(m,"*")}
 function act(name,payload,key){
   var id="a"+(++seq);busy[key||id]=true;render();
   return new Promise(function(res){
-    var t=setTimeout(function(){delete pending[id];delete busy[key||id];toast("Trail OS didn't answer in time. Check the record before trying again.",true);render();res({ok:false,code:"timeout"})},20000);
-    pending[id]=function(m){clearTimeout(t);delete busy[key||id];if(!m.ok)toast(m.message||"That didn't save.",true);render();res(m)};
+    var t=null;function arm(){clearTimeout(t);t=setTimeout(function(){delete pending[id];delete busy[key||id];toast("Trail OS didn't answer in time. Check the record before trying again.",true);render();res({ok:false,code:"timeout"})},20000)}
+    arm();pending[id]=function(m){clearTimeout(t);delete busy[key||id];if(!m.ok)toast(m.message||"That didn't save.",true);render();res(m)};
+    pending[id].keepAlive=arm;
     send({type:"action",id:id,name:name,payload:payload});
   });
 }
 window.addEventListener("message",function(e){
   if(e.source!==parent)return;var m=e.data;if(!m||typeof m!=="object")return;
-  if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab="edit";V.pendingOpen=null}render()}
+  if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);followRevision();if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab="edit";V.pendingOpen=null}render()}
+  else if(m.type==="actionPending"&&pending[m.id]&&pending[m.id].keepAlive){pending[m.id].keepAlive()}
   else if(m.type==="result"&&pending[m.id]){var r=pending[m.id];delete pending[m.id];r(m)}
 });
 send({type:"ready",board:BOARD,boardVersion:BOARD_VERSION,contractVersion:CONTRACT});
@@ -287,13 +292,47 @@ function index(d){
   d.articles=d.articles||[];d.questions=d.questions||[];d.pages=d.pages||[];d.decisions=d.decisions||[];d.categories=(d.categories||[]).filter(function(c){return c.active!==false});
   d.viewer=d.viewer||{};d.people=d.people||[];d.personBy={};d.people.forEach(function(p){d.personBy[String(p.email||"").toLowerCase()]=p});
   d.by={};d.articles.forEach(function(a){d.by[a.id]=a;a.issues=a.issues||[];a.appliesTo=a.appliesTo||[];a.st=STEP[a.step]||STEP.write;var as=a.assignment||{};a.reviewer=String((as.reviewer&&as.reviewer.email)||"").toLowerCase();a.validator=String((as.validator&&as.validator.email)||"").toLowerCase();if(as.reviewer&&as.reviewer.name&&!d.personBy[a.reviewer])d.personBy[a.reviewer]=as.reviewer;if(as.validator&&as.validator.name&&!d.personBy[a.validator])d.personBy[a.validator]=as.validator;a.live=a.issues.filter(function(x){return x.severity!=="info"&&!x.resolved})});
+  groupVersions(d);
   d.typeBy={};d.lists.types.forEach(function(t){d.typeBy[t.key]=t});
   d.paths=d.categories.map(function(c){return c.path});
   return d;
 }
-var V={view:"overview",insOpen:false,qaud:null,cat:null,q:"",sel:null,tab:null,back:null,picked:{},limit:200,
+/* knowledge-studio-version-adapter */
+/* Version families are built into this board; the marker above tells Trail OS to skip its server-side adapter. */
+function groupVersions(d){
+  var gs=Array.isArray(d.articleGroups)?d.articleGroups:[],covered={};
+  d.allArticles=d.articles;d.groupOf={};d.repOf={};d.pubGroups=0;
+  gs.forEach(function(g){
+    if(!g||!Array.isArray(g.articleIds))return;
+    var ids=g.articleIds.filter(function(id){return d.by[id]&&!covered[id]});if(!ids.length)return;
+    var x={id:g.id,articleIds:ids,draftArticleId:d.by[g.draftArticleId]&&ids.indexOf(g.draftArticleId)>=0?g.draftArticleId:null,publishedArticleId:d.by[g.publishedArticleId]&&ids.indexOf(g.publishedArticleId)>=0?g.publishedArticleId:null};
+    x.rep=x.draftArticleId||(ids.indexOf(g.defaultArticleId)>=0?g.defaultArticleId:ids[0]);
+    if(x.publishedArticleId)d.pubGroups++;
+    ids.forEach(function(id){covered[id]=true;d.groupOf[id]=x;d.repOf[id]=x.rep});
+  });
+  d.articles.forEach(function(a){if(!covered[a.id]){d.groupOf[a.id]={id:a.id,articleIds:[a.id],draftArticleId:null,publishedArticleId:null,rep:a.id};d.repOf[a.id]=a.id;if(a.st.i>=3)d.pubGroups++}});
+  d.articles=d.allArticles.filter(function(a){return d.repOf[a.id]===a.id});
+}
+function grp(a){return a&&D.groupOf?D.groupOf[a.id]:null}
+function hasDraftRevision(a){var g=grp(a);return !!(g&&g.draftArticleId&&g.publishedArticleId===a.id&&g.draftArticleId!==a.id)}
+function versionMark(a){var g=grp(a);if(!g)return "";
+  if(g.publishedArticleId===a.id)return '<span class="vbadge pub">Published</span>';
+  if(g.draftArticleId===a.id)return '<span class="vbadge">'+(g.articleIds.length>1?"Draft revision":"Draft")+"</span>";return ""}
+function versionTools(a){var g=grp(a);if(!g||g.articleIds.length<2)return "";
+  var h='<div class="vtools" aria-label="Article versions">'+versionMark(a);
+  if(g.publishedArticleId&&g.publishedArticleId!==a.id)h+='<button type="button" class="btn ghost sm" data-vopen="'+esc(g.publishedArticleId)+'">View published version</button>';
+  if(g.draftArticleId&&g.draftArticleId!==a.id)h+='<button type="button" class="btn ghost sm" data-vopen="'+esc(g.draftArticleId)+'">View draft revision</button>';
+  return h+"</div>"}
+function followRevision(){
+  if(!V.sel||V.sel.kind!=="article")return;
+  if(!D.by[V.sel.id]){if(V.pin===V.sel.id)V.pin=null;return}
+  if(V.pin===V.sel.id)return;
+  var a=D.by[V.sel.id];if(hasDraftRevision(a)){var nid=grp(a).draftArticleId;if(V.content[a.id]&&!V.content[nid])delete V.content[a.id];V.sel.id=nid}
+  var keep={};Object.keys(V.picked||{}).forEach(function(id){var r=D.repOf[id]||id;if(V.picked[id]&&D.by[r]&&canEdit(D.by[r]))keep[r]=true});V.picked=keep;
+}
+var V={view:"overview",pin:null,insOpen:false,qaud:null,cat:null,q:"",sel:null,tab:null,back:null,picked:{},limit:200,
   bulk:{field:"appliesTo",mode:"add",vals:{},value:"",onlyBlank:true,skip:false},forms:{},checks:{},done:{},content:{},pw:null,wide:false,linkFor:null,range:null,mrole:"all"};
-function canEdit(a){return a&&a.perms?!!a.perms.edit:!!(D.viewer.isStaff||D.viewer.isManager)}
+function canEdit(a){if(a&&hasDraftRevision(a))return false;return a&&a.perms?!!a.perms.edit:!!(D.viewer.isStaff||D.viewer.isManager)}
 function canPublish(a){return a&&a.perms?!!a.perms.publishHandoff:!!D.viewer.canPublish}
 function canValidate(a){if(a&&a.perms&&a.perms.validate!=null)return !!a.perms.validate;return !ownArticle(a)&&(!!D.viewer.isStaff||isMe(a.validator))}
 function typeLabel(k){return (D.typeBy[k]&&D.typeBy[k].label)||"Unknown type"}
@@ -321,7 +360,7 @@ function viewRows(view){
 function viewFn(v){var f=VIEWS[v];if(f)return f;if(v.indexOf("miss:")===0){var k=v.slice(5);return function(a){return a.linked&&blank(a,k)}}if(v.indexOf("iss:")===0){var ik=v.slice(4);return function(a){return a.live.some(function(x){return x.kind===ik})}}return function(){return false}}
 function countView(v){return D.articles.filter(viewFn(v)).length}
 function qStatus(q){var arts=(q.articleIds||[]).map(function(id){return D.by[id]}).filter(Boolean);if(!arts.length)return ["No article","p-none"];if(arts.some(function(a){return a.st.i>=4}))return ["Ready","p-done"];return ["Not ready","p-open"]}
-function pageArticles(p){if(!p.category)return [];return D.articles.filter(function(a){return a.st.i>=3&&a.category&&(a.category===p.category||a.category.indexOf(p.category+" \u203a ")===0)})}
+function pageArticles(p){if(!p.category)return [];return (D.allArticles||D.articles).filter(function(a){var g=grp(a);return !g||(g.publishedArticleId?g.publishedArticleId===a.id:g.rep===a.id)}).filter(function(a){return a.st.i>=3&&a.category&&(a.category===p.category||a.category.indexOf(p.category+" \u203a ")===0)})}
 function pStatus(p){if(!p.category)return ["Needs a category","p-none"];var n=pageArticles(p).length;if(!n)return ["No help","p-none"];if(n<5)return ["Thin","p-thin"];return ["Covered","p-done"]}
 function decOpen(d){return d.status==="open"}
 
@@ -332,7 +371,7 @@ function render(){
   renderChips();renderRail();renderMain();renderPanel();
 }
 function renderChips(){
-  var pub=D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(function(a){return a.st.i>=4}).length;
+  var pub=D.pubGroups!=null?D.pubGroups:D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(function(a){return a.st.i>=4}).length;
   var apn=D.articles.filter(function(a){return awaitingApproval(a)&&canBizReview(a)}).length,mine=countView("myrev")+countView("mytech");var c=(apn?[["approve","<b>"+apn+"</b> for you to approve"]]:[]).concat(mine?[[countView("myrev")?"myrev":"mytech","<b>"+mine+"</b> for you to review"]]:[]).concat([["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]]);
   $("chips").innerHTML=c.map(function(x){return '<button type="button" class="chip" data-view="'+x[0]+'" aria-pressed="'+(V.view===x[0])+'">'+x[1]+"</button>"}).join("");
 }
@@ -389,7 +428,7 @@ function table(rows){
   var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]}),cmp=panelOpen();
   var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
   h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
-    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button><span class="sub">'+esc(typeLabel(a.type))+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span></td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
+    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button>'+versionMark(a)+'<span class="sub">'+esc(typeLabel(a.type))+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span></td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
   h+="</tbody></table></div>";
   if(rows.length>V.limit)h+='<button type="button" class="btn ghost more" id="more">Show '+Math.min(200,rows.length-V.limit)+" more</button>";
   return h;
@@ -435,7 +474,7 @@ function defaultTab(a){if(a.step==="review"&&isMe(a.reviewer))return "review";if
 function articlePanel(a){
   var tab=V.tab||defaultTab(a);V.tab=tab;
   var bar='<div class="stagebar" aria-label="Stage">'+STAGES.map(function(s,j){var c=j<a.st.i?"d":j===a.st.i?(a.step==="syncBlocked"?"b":"c"):"";return '<span class="'+c+'">'+s+"</span>"}).join("")+"</div>";
-  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+bar+approvalBar(a)+"</div>";
+  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+versionTools(a)+bar+approvalBar(a)+"</div>";
   var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["publish","Publish"],["penny","Penny"]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+esc(t[1])+"</button>"}).join("")+"</div>";
   h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
@@ -490,7 +529,7 @@ function editTab(a){
   '<label class="f">Estimated time in minutes<input type="number" min="1" step="1" id="e-estimatedMinutes" value="'+esc(v("estimatedMinutes")==null?"":v("estimatedMinutes"))+'"'+dis+"></label>"+
   '<label class="f">Data category<select id="e-category"'+dis+">"+catOptions(v("category"),"Not set")+"</select></label>";
   h+='<div class="btnrow"><button type="button" class="btn solid" id="savedraft"'+(!ed||busy["edit:"+a.id]?" disabled":"")+">"+(busy["edit:"+a.id]?"Saving\u2026":"Save draft")+'</button></div>';
-  h+='<p class="note">'+(a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
+  h+='<p class="note">'+(hasDraftRevision(a)?"This is the published version. Make changes in the draft revision.":a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
   if(V.done["edit:"+a.id])h+='<p class="ok">Saved as a draft. Send it for approval when it\'s ready.</p>';
   return h;
 }
@@ -501,7 +540,7 @@ function contentTab(a){
   if(!c){V.content[a.id]=c={loading:true};setTimeout(function(){loadContent(a.id)},0)}
   if(c.loading||c.err){return c.err?'<p class="err">'+esc(c.err)+'</p><div class="btnrow"><button type="button" class="btn ghost" data-reload="'+esc(a.id)+'">Try again</button></div>':'<p class="note">Loading the article content\u2026</p>'}
   var ed=canEdit(a),dis=ed?"":" disabled";
-  var h='<p class="note">'+(a.st.i>=3?"You are editing a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
+  var h='<p class="note">'+(hasDraftRevision(a)?"This is the published version. Make changes in the draft revision.":grp(a)&&grp(a).draftArticleId===a.id&&grp(a).articleIds.length>1?"You are editing a draft revision. Readers keep the live version until the revision is published.":a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
   h+='<div class="sec">'+esc(c.contentLabel||"Article content")+"</div>";
   if(ed)h+='<div class="tool" role="toolbar" aria-label="Formatting">'+[["bold","B","Bold"],["italic","I","Italic"],["h3","H","Heading"],["ul","\u2022 List","Bulleted list"],["ol","1. List","Numbered list"],["link","Link","Add a link"],["unlink","Unlink","Remove link"]].map(function(b){return '<button type="button" data-fmt="'+b[0]+'" aria-label="'+b[2]+'">'+b[1]+"</button>"}).join("")+"</div>";
   if(V.linkFor===a.id)h+='<div class="linkrow"><input type="text" id="linkurl" placeholder="https://" aria-label="Link address"><button type="button" class="btn solid" id="linkok">Add link</button><button type="button" class="btn ghost" id="linkno">Cancel</button></div>';
@@ -872,7 +911,7 @@ function approverText(a){
 function approvalBar(a){
   var s=rstate(a,"business"),h="",btns="",msg="",tone="";
   var wc=workingCopy(a);
-  if(wc)return '<div class="apbar"><span class="pill p-open">A revision is in progress</span><span class="note">Readers see this version. Changes are in a separate draft.</span><button type="button" class="btn ghost sm" data-open="'+esc(wc.id)+'">Open the revision</button></div>';
+  if(wc)return '<div class="apbar"><span class="note">Readers see this version. Changes go in the draft revision.</span></div>';
   if(DRAFT_ST[a.status]){
     tone="p-write";msg=s.status&&s.status!=="passed"&&s.current!==false?"Returned to the author":"Draft, not sent for approval";
     if(canSubmit(a))btns+='<button type="button" class="btn solid sm" data-submit="'+esc(a.id)+'"'+(busy["sub:"+a.id]?" disabled":"")+">"+(busy["sub:"+a.id]?"Sending\u2026":"Send for approval")+"</button>";
@@ -924,7 +963,7 @@ function diffHtml(d){
 function changesBlock(a){
   var sib=publishedSibling(a);
   if(!sib)return '<div class="box chg"><div class="sec" style="margin:0">What changed</div><p class="note" style="margin:0">'+(a.st.i>=3?"This is the live version. Edits are made in a separate revision.":"New article: nothing has been published yet, so everything in it is new.")+"</p></div>";
-  var h='<div class="box chg"><div class="sfh"><div class="sec" style="margin:0">What changed</div><button type="button" class="linkbtn" data-open="'+esc(sib.id)+'">Open the live version</button></div><p class="note" style="margin:0">Compared with the version readers see now'+(sib.sfNumber?" (#"+esc(sib.sfNumber)+")":"")+".</p>";
+  var h='<div class="box chg"><div class="sfh"><div class="sec" style="margin:0">What changed</div><button type="button" class="linkbtn" data-vopen="'+esc(sib.id)+'">Open the live version</button></div><p class="note" style="margin:0">Compared with the version readers see now'+(sib.sfNumber?" (#"+esc(sib.sfNumber)+")":"")+".</p>";
   var rows=CMP_FIELDS.filter(function(f){return show(a[f[0]])!==show(sib[f[0]])});
   h+=rows.length?'<table class="cmp"><thead><tr><th>Field</th><th>Live now</th><th>This revision</th></tr></thead><tbody>'+rows.map(function(f){var o=f[0]==="type"?typeLabel(sib.type):show(sib[f[0]]),n=f[0]==="type"?typeLabel(a.type):show(a[f[0]]);return "<tr><td>"+esc(f[1])+'</td><td class="o">'+esc(o||"Blank")+'</td><td class="n">'+esc(n||"Blank")+"</td></tr>"}).join("")+"</tbody></table>":'<p class="note" style="margin:0">No field changes.</p>';
   var c1=ensureContent(a),c0=ensureContent(sib);
@@ -947,7 +986,7 @@ function setFocus(on,quiet){
 document.addEventListener("keydown",function(e){if(e.key!=="Escape"||!V.focus||V.linkFor)return;if(document.fullscreenElement)return;e.preventDefault();setFocus(false)});
 document.addEventListener("fullscreenchange",function(){});
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
-function openArticle(id,back){V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
+function openArticle(id,back,exact){V.pin=exact?id:null;if(!exact&&D.repOf&&D.repOf[id])id=D.repOf[id];V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
 document.addEventListener("click",function(e){
   var t=e.target.closest("button,input[type=checkbox]");if(!t||!D)return;
@@ -964,6 +1003,7 @@ document.addEventListener("click",function(e){
   if(t.dataset.cat){V.cat=V.cat===t.dataset.cat?null:t.dataset.cat;if(["decisions","questions","pages","overview"].indexOf(V.view)>=0)V.view="all";V.limit=200;render();return}
   if(t.id==="clear"){V.cat=null;V.q="";V.qaud=null;$("q").value="";render();return}
   if(t.id==="more"){V.limit+=200;render();return}
+  if(t.dataset.vopen){var bk=V.back;openArticle(t.dataset.vopen,bk,true);return}
   if(t.dataset.open){openArticle(t.dataset.open);return}
   if(t.dataset.openFrom){var back=V.sel&&V.sel.kind==="question"?{label:"Question "+V.sel.id,sel:V.sel}:V.sel&&V.sel.kind==="page"?{label:"Page",sel:V.sel}:null;openArticle(t.dataset.openFrom,back);return}
   if(t.id==="back"&&V.back){V.sel=V.back.sel;V.back=null;V.tab=null;render();return}
@@ -1086,7 +1126,7 @@ function doSave(){
 function doPenny(outcome){
   var a=D.by[V.sel.id],f=V.forms["p:"+a.id]||{},aud=($("p-aud")||{}).value||f.aud||"Learner",q=(($("p-q")||{}).value||"").trim();
   if(q.length<8){toast("Write the question you asked Penny.",true);return}
-  act("recordPennyCheck",{articleId:a.id,contentVersion:a.contentVersion,audience:aud.toLowerCase(),question:q,answer:(($("p-ans")||{}).value||"").trim()||null,outcome:outcome},"penny:"+a.id).then(function(r){if(r.ok){delete V.forms["p:"+a.id];toast(outcome==="passed"?"Validated. Penny can answer from it.":"Recorded. Fix the article, then check again.");if(outcome==="failed"){V.tab="fix";render()}}});
+  act("recordPennyCheck",{articleId:a.id,contentVersion:a.contentVersion,audience:aud.toLowerCase(),question:q,answer:(($("p-ans")||{}).value||"").trim()||null,outcome:outcome},"penny:"+a.id).then(function(r){if(r.ok){delete V.forms["p:"+a.id];toast(outcome==="passed"?"Penny check saved. Business review and publication are checked separately.":"Recorded. Fix the article, then check again.");if(outcome==="failed"){V.tab="fix";render()}}});
 }
 function doBulk(){
   var ids=pickedIds(),pv=bulkPreview(ids);if(!pv.change.length)return;
@@ -1102,7 +1142,7 @@ function doBulk(){
 function doDecide(id){
   var d=D.decisions.filter(function(x){return x.id===id})[0],note=(($("d-note")||{}).value||"").trim();
   if(d.kind!=="Policy"&&note.length<3){toast("Write the answer first.",true);return}
-  act(d.kind==="Policy"?"signPolicy":"answerDecision",{decisionId:id,articleId:d.articleId||null,ruleStatement:d.rule||null,note:note||null},"dec:"+id).then(function(r){if(r.ok){delete V.forms["d:"+id];toast(d.kind==="Policy"?"Signed. Penny can quote it once the article is validated.":"Answer saved.")}});
+  act(d.kind==="Policy"?"signPolicy":"answerDecision",{decisionId:id,articleId:d.articleId||null,ruleStatement:d.rule||null,note:note||null},"dec:"+id).then(function(r){if(r.ok){delete V.forms["d:"+id];toast(d.kind==="Policy"?"Policy signature saved for this article version.":"Answer saved.")}});
 }
 })();
 </script>
