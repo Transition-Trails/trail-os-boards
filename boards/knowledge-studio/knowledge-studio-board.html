@@ -71,6 +71,8 @@ tbody tr.sel{background:#F3F8F5;box-shadow:inset 3px 0 0 var(--green)}
 .list .t{font-weight:600;color:var(--ink);display:block}
 aside.panel.focus{position:fixed;inset:0;width:auto!important;max-width:none;z-index:40;border:0;box-shadow:none;background:var(--bg)}
 aside.panel.focus{overflow:hidden}
+.panel.focus>.fside{flex:none}
+@media (max-width:899px){aside.panel.focus{overflow-y:auto}.panel.focus>.pb{overflow:visible;flex:none}}
 .panel.focus>.ph,.panel.focus>.tabs{width:100%;max-width:900px;margin-left:auto;margin-right:auto;flex:none}
 .panel.focus>.pb{flex:1 1 auto;min-height:0;overflow:auto;padding:14px max(18px,calc((100% - 864px)/2)) 0}
 .panel.focus .stagebar{display:none}.panel.focus>.ph{padding-top:12px}
@@ -154,17 +156,18 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .vbadge.pub{border-color:#d5d2bd;background:#f5f3e9;color:#5c5430}
 .vtools{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:2px 0 4px}.vtools .vbadge{margin:0 4px 0 0}
 @media (min-width:900px){
- aside.panel.focus{display:grid;grid-template-columns:minmax(260px,300px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"ph pb" "tabs pb"}
- .panel.focus>.ph{grid-area:ph;max-width:none;margin:0;padding:16px 16px 10px;background:var(--surface);border-right:1px solid var(--line)}
- .panel.focus>.ph h3{font-size:15px}
- .panel.focus>.ph .note{font-size:12.5px}
- .panel.focus>.ph .apbar{flex-direction:column;align-items:stretch}
- .panel.focus>.ph .apbar .btn{width:100%}
- .panel.focus>.ph .vtools{flex-direction:column;align-items:flex-start}
- .panel.focus>.tabs{grid-area:tabs;max-width:none;margin:0;flex-direction:column;align-items:stretch;gap:2px;padding:6px 10px 16px;background:var(--surface);border-right:1px solid var(--line);border-bottom:0;overflow:auto}
- .panel.focus>.tabs button{text-align:left;border-bottom:0;border-left:3px solid transparent;border-radius:0 6px 6px 0;padding:8px 12px}
- .panel.focus>.tabs button[aria-selected="true"]{border-left-color:var(--green);background:var(--tint)}
- .panel.focus>.pb{grid-area:pb;padding:28px max(28px,calc((100% - 820px)/2)) 0;overflow:auto}
+ aside.panel.focus{display:grid;grid-template-columns:minmax(260px,300px) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ .panel.focus>.fside{grid-column:1;grid-row:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column}
+ .panel.focus .fside>.ph{max-width:none;margin:0;padding:16px 16px 10px;border-bottom:0;flex:none}
+ .panel.focus .fside>.ph h3{font-size:15px}
+ .panel.focus .fside>.ph .note{font-size:12.5px}
+ .panel.focus .fside>.ph .apbar{flex-direction:column;align-items:stretch}
+ .panel.focus .fside>.ph .apbar .btn{width:100%}
+ .panel.focus .fside>.ph .vtools{flex-direction:column;align-items:flex-start}
+ .panel.focus .fside>.tabs{max-width:none;margin:0;flex-direction:column;align-items:stretch;gap:2px;padding:6px 10px 24px;border-bottom:0;flex:none}
+ .panel.focus .fside>.tabs button{text-align:left;border-bottom:0;border-left:3px solid transparent;border-radius:0 6px 6px 0;padding:8px 12px}
+ .panel.focus .fside>.tabs button[aria-selected="true"]{border-left-color:var(--green);background:var(--tint)}
+ .panel.focus>.pb{grid-column:2;grid-row:1;min-height:0;padding:28px max(28px,calc((100% - 820px)/2)) 0;overflow-y:auto;overscroll-behavior:contain}
  .panel.focus .rte{min-height:calc(100vh - 300px)}
 }
 .ftitle{font-family:var(--head);font-size:26px;line-height:1.25;color:var(--ink);margin:0 0 2px}
@@ -493,6 +496,7 @@ function articlePanel(a){
   var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+versionTools(a)+bar+approvalBar(a)+"</div>";
   var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["publish","Publish"],["penny","Penny"]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+esc(t[1])+"</button>"}).join("")+"</div>";
+  if(V.focus)h='<div class="fside">'+h+"</div>";
   h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
   return h;
 }
