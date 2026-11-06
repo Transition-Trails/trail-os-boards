@@ -69,6 +69,15 @@ tbody tr.sel{background:#F3F8F5;box-shadow:inset 3px 0 0 var(--green)}
 .list button.item[aria-current="true"]{background:#F3F8F5;box-shadow:inset 3px 0 0 var(--green)}
 .list .k{font-size:12px;font-weight:600;color:var(--teal);display:block}
 .list .t{font-weight:600;color:var(--ink);display:block}
+aside.panel.focus{position:fixed;inset:0;width:auto!important;max-width:none;z-index:40;border:0;box-shadow:none;background:var(--bg)}
+aside.panel.focus{overflow:hidden}
+.panel.focus>.ph,.panel.focus>.tabs{width:100%;max-width:900px;margin-left:auto;margin-right:auto;flex:none}
+.panel.focus>.pb{flex:1 1 auto;min-height:0;overflow:auto;padding:14px max(18px,calc((100% - 864px)/2)) 0}
+.panel.focus .stagebar{display:none}.panel.focus>.ph{padding-top:12px}
+.panel.focus>.ph{border-bottom:0}.panel.focus>.tabs{border-bottom:1px solid var(--line)}
+.panel.focus .tool{position:sticky;top:0;z-index:3}
+.panel.focus .rte{min-height:62vh;max-height:none;font-size:15.5px;line-height:1.7;padding:18px 22px}
+.panel.focus .savebar{position:sticky;bottom:0;background:var(--bg);padding:10px 0;border-top:1px solid var(--line);z-index:3}
 aside.panel{position:relative;width:600px;max-width:100%;flex-shrink:0;border-left:1px solid var(--line);background:var(--surface);overflow:auto;box-shadow:-8px 0 24px rgba(42,46,44,.08);display:flex;flex-direction:column}
 .ph{padding:16px 18px 10px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line)}
 .ph .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -404,9 +413,9 @@ function pickedIds(){return Object.keys(V.picked).filter(function(id){return V.p
 function panelOpen(){return !!(V.sel||(D&&pickedIds().length&&canEdit()))}
 function defaultPw(){return Math.max(520,Math.min(820,Math.round(window.innerWidth*0.5)))}
 function grip(){return '<button type="button" class="grip" id="grip" role="separator" aria-orientation="vertical" aria-label="Resize panel. Use the left and right arrow keys." aria-valuenow="'+(V.pw||defaultPw())+'"></button>'}
-function applyPw(){var p=$("panel"),b=$("body");b.classList.toggle("wide",!!(V.wide&&V.sel&&!p.hidden));p.style.width=V.wide?"":(V.pw||defaultPw())+"px"}
+function applyPw(){var p=$("panel"),b=$("body");if(!V.sel||V.sel.kind!=="article"||p.hidden)V.focus=false;p.classList.toggle("focus",!!V.focus);document.body.classList.toggle("focusing",!!V.focus);b.classList.toggle("wide",!!(V.wide&&V.sel&&!p.hidden));p.style.width=V.wide?"":(V.pw||defaultPw())+"px"}
 function renderPanel(){
-  var p=$("panel");renderPanel0(p);if(!p.hidden&&!V.wide)p.insertAdjacentHTML("afterbegin",grip());applyPw();
+  var p=$("panel");renderPanel0(p);if(!p.hidden&&!V.wide&&!V.focus)p.insertAdjacentHTML("afterbegin",grip());applyPw();
 }
 function renderPanel0(p){
   if(pickedIds().length&&canEdit()){p.hidden=false;p.innerHTML=bulkPanel();return}
@@ -420,7 +429,7 @@ function renderPanel0(p){
   p.hidden=false;p.innerHTML=h;
 }
 function head(kick,title,sub){
-  return '<div class="ph">'+(V.back?'<button type="button" class="linkbtn" id="back" style="align-self:flex-start">\u2190 '+esc(V.back.label)+"</button>":"")+'<div class="row"><div><div class="kick">'+esc(kick)+"</div><h3>"+esc(title)+"</h3>"+(sub?'<div class="note">'+esc(sub)+"</div>":"")+'</div><div class="phbtns"><button type="button" class="x" id="widen" aria-label="'+(V.wide?"Show the list again":"Widen the panel to full width")+'" title="'+(V.wide?"Show the list":"Full width")+'" style="font-size:16px">'+(V.wide?"\u21e5":"\u21e4")+'</button><button type="button" class="x" id="close" aria-label="Close panel">\u00d7</button></div></div>';
+  return '<div class="ph">'+(V.back?'<button type="button" class="linkbtn" id="back" style="align-self:flex-start">\u2190 '+esc(V.back.label)+"</button>":"")+'<div class="row"><div><div class="kick">'+esc(kick)+"</div><h3>"+esc(title)+"</h3>"+(sub?'<div class="note">'+esc(sub)+"</div>":"")+'</div><div class="phbtns">'+(V.sel&&V.sel.kind==="article"?'<button type="button" class="x" id="focusbtn" aria-label="'+(V.focus?"Exit focus mode (Esc)":"Open in focus mode")+'" title="'+(V.focus?"Exit focus mode (Esc)":"Focus mode")+'">'+(V.focus?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M4 14h6v6"/><path d="M10 14l-7 7"/></svg>':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-7 7"/><path d="M10 20H4v-6"/><path d="M4 20l7-7"/></svg>')+"</button>":"")+(V.focus?"":'<button type="button" class="x" id="widen" aria-label="'+(V.wide?"Show the list again":"Widen the panel to full width")+'" title="'+(V.wide?"Show the list":"Full width")+'" style="font-size:16px">'+(V.wide?"\u21e5":"\u21e4")+"</button>")+'<button type="button" class="x" id="close" aria-label="Close panel">\u00d7</button></div></div>';
 }
 function defaultTab(a){if(a.step==="review"&&isMe(a.reviewer))return "review";if(a.step==="penny"&&isMe(a.validator))return "penny";if(a.live.length)return "fix";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
 function articlePanel(a){
@@ -504,7 +513,7 @@ function contentTab(a){
     h+=c.steps.map(function(st,i){return '<div class="step"><div class="stephead"><span>Step '+(i+1)+'</span><span class="btnrow"><button type="button" class="ib" data-smove="'+i+':-1" aria-label="Move step '+(i+1)+' up"'+(i===0||!ed?" disabled":"")+'>\u2191</button><button type="button" class="ib" data-smove="'+i+':1" aria-label="Move step '+(i+1)+' down"'+(i===c.steps.length-1||!ed?" disabled":"")+'>\u2193</button><button type="button" class="ib" data-sdel="'+i+'" aria-label="Remove step '+(i+1)+'"'+(ed?"":" disabled")+'>\u00d7</button></span></div><label class="f">Do this<textarea data-sf="'+i+':instruction"'+dis+">"+esc(st.instruction||"")+'</textarea></label><label class="f">Verify<input type="text" data-sf="'+i+':verifyLine" placeholder="What the reader sees when it worked" value="'+esc(st.verifyLine||"")+'"'+dis+'></label><div class="checks"><label><input type="checkbox" data-sopt="'+i+'"'+(st.isOptional?" checked":"")+dis+">Optional step</label></div></div>"}).join("");
     if(ed)h+='<div class="btnrow"><button type="button" class="btn ghost" id="addstep">Add a step</button></div>';
   }
-  h+='<div class="btnrow"><button type="button" class="btn solid" id="savecontent"'+(!ed||busy["content:"+a.id]?" disabled":"")+">"+(busy["content:"+a.id]?"Saving\u2026":"Save content")+"</button>"+(c.dirty?'<span class="note">Unsaved changes</span>':"")+"</div>";
+  h+='<div class="btnrow savebar"><button type="button" class="btn solid" id="savecontent"'+(!ed||busy["content:"+a.id]?" disabled":"")+">"+(busy["content:"+a.id]?"Saving\u2026":"Save content")+"</button>"+(c.dirty?'<span class="note">Unsaved changes</span>':"")+"</div>";
   if(V.done["content:"+a.id])h+='<p class="ok">Saved as a draft. Send it for approval when it\'s ready.</p>';
   return h;
 }
@@ -928,6 +937,15 @@ function changesBlock(a){
     var sd=diff((c0.steps||[]).map(sk),(c1.steps||[]).map(sk));h+='<div class="sec sm">Steps</div>'+(sd.some(function(x){return x[0]!=="="})?'<div class="dlist">'+diffHtml(sd)+"</div>":'<p class="note" style="margin:0">No changes.</p>')}
   return h+"</div>";
 }
+function setFocus(on,quiet){
+  V.focus=!!on;
+  if(on&&V.tab!=="content"&&V.tab!=="edit")V.tab="content";
+  try{if(on&&document.fullscreenEnabled&&!document.fullscreenElement)document.documentElement.requestFullscreen().catch(function(){});
+    if(!on&&document.fullscreenElement)document.exitFullscreen().catch(function(){})}catch(e){}
+  if(quiet)return;renderPanel();var b=$("focusbtn");if(b)b.focus();
+}
+document.addEventListener("keydown",function(e){if(e.key!=="Escape"||!V.focus||V.linkFor)return;if(document.fullscreenElement)return;e.preventDefault();setFocus(false)});
+document.addEventListener("fullscreenchange",function(){});
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back){V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
@@ -949,7 +967,8 @@ document.addEventListener("click",function(e){
   if(t.dataset.open){openArticle(t.dataset.open);return}
   if(t.dataset.openFrom){var back=V.sel&&V.sel.kind==="question"?{label:"Question "+V.sel.id,sel:V.sel}:V.sel&&V.sel.kind==="page"?{label:"Page",sel:V.sel}:null;openArticle(t.dataset.openFrom,back);return}
   if(t.id==="back"&&V.back){V.sel=V.back.sel;V.back=null;V.tab=null;render();return}
-  if(t.id==="close"){V.sel=null;V.back=null;V.tab=null;V.wide=false;render();return}
+  if(t.id==="focusbtn"){setFocus(!V.focus);return}
+  if(t.id==="close"){if(V.focus)setFocus(false,true);V.sel=null;V.back=null;V.tab=null;V.wide=false;render();return}
   if(t.id==="widen"){V.wide=!V.wide;render();return}
   if(t.id==="grip")return;
   if(t.dataset.reload){delete V.content[t.dataset.reload];render();return}
