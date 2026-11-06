@@ -17,15 +17,15 @@ button{cursor:pointer}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(47,107,63,.35);outline-offset:2px}
 h1,h2,h3{font-family:var(--head);color:var(--ink);margin:0}
 .app{display:flex;flex-direction:column;height:100vh;min-height:620px}
-header.top{background:var(--teal);color:#fff;padding:10px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px}
-header.top h1{color:#fff;font-size:18px;font-weight:700}
-.search{flex:1 1 240px;max-width:420px;display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:0 10px}
-.search input{border:0;outline:0;width:100%;min-height:36px;background:transparent;color:var(--ink)}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;padding:5px 12px;font-family:var(--head);font-size:13px;font-weight:500;min-height:34px}
+header.top{background:var(--teal);color:#fff;padding:6px 14px;display:flex;flex-wrap:nowrap;align-items:center;gap:12px}
+header.top h1{color:#fff;font-size:15px;font-weight:700;white-space:nowrap;flex:none}
+.search{flex:0 1 300px;min-width:160px;display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:0 10px}
+.search input{border:0;outline:0;width:100%;min-height:30px;font-size:13.5px;background:transparent;color:var(--ink)}
+.chips{display:flex;flex-wrap:nowrap;gap:6px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:thin;padding:2px 0}
+.chip{border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;padding:2px 10px;font-family:var(--head);font-size:12.5px;font-weight:500;min-height:28px;white-space:nowrap;flex:none}
 .chip b{font-weight:700}
 .chip[aria-pressed="true"]{background:#fff;color:var(--ink)}
-.asof{font-size:12px;opacity:.9;margin-left:auto}
+.asof{font-size:11.5px;opacity:.85;white-space:nowrap;flex:none}
 .body{flex:1;display:flex;min-height:0}
 nav.rail{width:216px;flex-shrink:0;border-right:1px solid var(--line);background:var(--surface);overflow:auto;padding:12px 8px}
 .rail h4{margin:14px 10px 6px;font-family:var(--head);font-size:11px;letter-spacing:.06em;color:var(--teal);font-weight:600}
@@ -217,6 +217,11 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
  aside.panel{width:auto;border-left:0;border-top:1px solid var(--line);box-shadow:none}
  .asof{margin-left:0}
 }
+@media (max-width:640px){
+ header.top{flex-wrap:wrap;gap:6px 10px}
+ .search{flex:1 1 100%;order:3}
+ .chips{flex:1 1 100%;order:4}
+}
 </style>
 </head>
 <body>
@@ -314,7 +319,7 @@ function decOpen(d){return d.status==="open"}
 /* ---------- render ---------- */
 function render(){
   if(!D)return;$("waiting").hidden=true;$("body").hidden=false;
-  $("asof").textContent="Data as of "+fmtWhen(D.asOf);
+  var aw=fmtWhen(D.asOf);$("asof").textContent="As of "+aw.replace(/^[A-Z][a-z]{2} \d{1,2}, /,"");$("asof").title="Data as of "+aw;
   renderChips();renderRail();renderMain();renderPanel();
 }
 function renderChips(){
@@ -866,13 +871,19 @@ function approvalBar(a){
     tone="p-review";msg="Waiting for approval"+(a.reviewer?" from "+personName(a.reviewer):"");
     if(canBizReview(a)&&V.tab!=="review")btns+='<button type="button" class="btn solid sm" data-tab="review">Review and approve</button>';
   }else if(a.status==="approved"||a.status==="ready-to-publish"){
-    tone="p-done";msg="Approved"+(s.status==="passed"&&s.by?" by "+personName(s.by)+(s.at?" on "+fmtDate(s.at):""):"")+". Next: publish in Salesforce.";
+    tone="p-done";msg="Approved"+(s.status==="passed"&&s.by?" by "+personName(s.by)+(s.at?" on "+fmtDate(s.at):""):"")+". Next: publish in Salesforce.";btns+=sfLink(a);
   }else return "";
   if(canOverride(a)&&!(V.forms["an:"+a.id]||{}).open)btns+='<button type="button" class="btn ghost sm" data-annow="'+esc(a.id)+'">Approve now (superadmin)</button>';
   h='<div class="apbar"><span class="pill '+tone+'">'+esc(msg)+"</span>"+(publishedSibling(a)?'<span class="note">Revision of a published article</span>':"")+btns+"</div>";
   var f=V.forms["an:"+a.id];
-  if(f&&f.open)h+='<div class="box warn anbox"><b>Approve without the independent review?</b><p class="note" style="margin:0">This marks the current version approved and sends it to Salesforce as a draft. It skips the assigned reviewer, the review checklist and the Penny check, and Trail OS records that you did. It doesn\'t publish anything.</p><label class="f">Why you\'re approving it this way<textarea data-an="note" placeholder="At least 10 characters, e.g. Founder approval of a wording fix">'+esc(f.note||"")+'</textarea></label><div class="checks"><label><input type="checkbox" data-an="ok"'+(f.ok?" checked":"")+'>I approve version '+esc(String(a.contentVersion||"").slice(0,8))+" of this article</label></div><div class=\"btnrow\"><button type=\"button\" class=\"btn solid\" data-anconfirm=\""+esc(a.id)+"\""+(busy["an:"+a.id]?" disabled":"")+">"+(busy["an:"+a.id]?"Approving\u2026":"Approve")+'</button><button type="button" class="btn ghost" data-ancancel="'+esc(a.id)+'">Cancel</button></div></div>';
+  if(f&&f.open&&canOverride(a))h+='<div class="box warn anbox"><b>Approve without the independent review?</b><p class="note" style="margin:0">This marks the current version approved and sends it to Salesforce as a draft. It skips the assigned reviewer, the review checklist and the Penny check, and Trail OS records that you did. It doesn\'t publish anything.</p><label class="f">Why you\'re approving it this way<textarea data-an="note" placeholder="At least 10 characters, e.g. Founder approval of a wording fix">'+esc(f.note||"")+'</textarea></label><div class="checks"><label><input type="checkbox" data-an="ok"'+(f.ok?" checked":"")+'>I approve version '+esc(String(a.contentVersion||"").slice(0,8))+" of this article</label></div><div class=\"btnrow\"><button type=\"button\" class=\"btn solid\" data-anconfirm=\""+esc(a.id)+"\""+(busy["an:"+a.id]?" disabled":"")+">"+(busy["an:"+a.id]?"Approving\u2026":"Approve")+'</button><button type="button" class="btn ghost" data-ancancel="'+esc(a.id)+'">Cancel</button></div></div>';
   return h;
+}
+function sfLink(a){
+  var s=a.sf||{},ver=s.draft?"draft":s.online?"online":null;
+  if(!ver&&!a.salesforceRecordId&&!a.linked)return '<span class="note">No Salesforce draft yet'+(canPublish(a)?' \u00b7 <button type="button" class="linkbtn" data-sync="'+esc(a.id)+'">Send it now</button>':"")+"</span>";
+  var num=s.articleNumber||a.sfNumber;
+  return '<button type="button" class="btn ghost sm" data-rec="salesforce" data-id="'+esc(a.id)+'"'+(ver?' data-ver="'+ver+'"':"")+">"+(ver==="draft"?"Open Salesforce draft":"Open in Salesforce")+(num?" #"+esc(num):"")+" \u2197</button>";
 }
 function doSubmit(id){var a=D.by[id];act("submitForReview",{articleId:id,editVersion:a.editVersion},"sub:"+id).then(function(r){if(r.ok)toast(r.message||"Sent for approval.")})}
 function doApproveNow(id){
