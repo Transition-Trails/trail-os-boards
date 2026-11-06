@@ -185,6 +185,7 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .ddel{background:#FBEBEB;border-left:3px solid #C2462B;padding:5px 8px;border-radius:0 6px 6px 0;color:#6B2A1A;text-decoration:line-through;text-decoration-color:rgba(107,42,26,.45)}
 .dsame{font-size:12px;color:var(--body);padding:2px 8px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.autock{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:4px 0}.autock .ok,.autock .err{font-weight:700;width:14px;flex:none;margin:0}
 .sfc{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line)}
 .sfh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
 .vtrack{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:2px 0 4px}
@@ -625,14 +626,37 @@ function sfCard(a){
   h+='<div class="btnrow"><span class="note">'+(s.checkedAt?"Checked in Salesforce "+esc(fmtWhen(s.checkedAt)):"Not checked in Salesforce yet")+'</span><button type="button" class="linkbtn" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"Check now")+"</button></div>";
   return h+"</div>";
 }
-function publishTab(a){return sfCard(a)+publishSteps(a)}
+function publishTab(a){return sfCard(a)+categoryCard(a)+publishSteps(a)}
+var CAT_BADGE={verified:["Category verified","p-done"],unverified:["Category not verified","p-open"],failed:["Draft sync failed","p-open"],not_selected:["No category selected","p-write"]};
+function categoryCard(a){
+  var c=a.categorySync;if(!c||!c.status)return "";
+  var b=CAT_BADGE[c.status]||[c.status,"p-none"],e=c.evidence;
+  var h='<div class="box sfc"><div class="sfh"><div class="sec" style="margin:0">Data category</div><span class="pill '+b[1]+'">'+esc(b[0])+"</span></div>";
+  h+='<div class="kv"><span>Selected in Trail OS</span><b>'+esc(a.category||"None")+"</b></div>";
+  if(e){
+    h+='<div class="kv"><span>Verified in Salesforce</span><b>'+esc(e.path||a.category||"")+"</b></div>";
+    h+='<div class="kv"><span>API names</span><b class="mono">'+esc((e.groupApiName||"")+" \u00b7 "+(e.categoryApiName||""))+"</b></div>";
+    h+='<div class="kv"><span>Salesforce draft</span><b class="mono">'+esc(e.versionId||"")+"</b></div>";
+    h+='<div class="kv"><span>Verified at</span><b>'+esc(fmtWhen(e.verifiedAt))+"</b></div>";
+  }
+  if(c.error)h+='<p class="err" style="margin:0">'+esc(c.error)+"</p>";
+  if(c.message)h+='<p class="note" style="margin:0">'+esc(c.message)+"</p>";
+  if(e)h+='<p class="note" style="margin:0">This was checked when the draft synced. It isn\'t a live check of later changes in Salesforce, and it doesn\'t mean the article is published.</p>';
+  var btns="";
+  if(c.status==="not_selected"&&canEdit(a))btns+='<button type="button" class="btn ghost sm" data-tab="edit">Choose a category on Details</button>';
+  if((c.status==="failed"||c.status==="unverified")&&a.linked&&(a.status==="approved"||a.status==="ready-to-publish")&&canPublish(a)&&a.step!=="syncBlocked")btns+='<button type="button" class="btn ghost sm" data-sync="'+esc(a.id)+'"'+(busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry approved draft sync")+"</button>";
+  if(btns)h+='<div class="btnrow">'+btns+"</div>";
+  return h+"</div>";
+}
 function publishSteps(a){
   if(a.step==="syncBlocked")return '<div class="box warn">No Salesforce draft yet. Fix the field on the Fix tab, then re-sync.</div><div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(!canPublish(a)||busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry Salesforce sync")+"</button></div>";
   if(a.st.i>=3)return a.step=="penny"?'<p class="note">Next: the Penny check, on the Penny tab.</p>':"";
   if(a.st.i<2)return '<p class="note">This article reaches the publish step after business review passes.</p>';
-  var ck=V.checks[a.id]||{},items=a.publishChecks&&a.publishChecks.length?a.publishChecks:["Content in "+((D.typeBy[a.type]||{}).contentField||"Overview"),"Data category assigned","Published in Salesforce","Trail OS shows Published"];
-  var h='<div><div class="note" style="font-weight:600;color:var(--ink)">Data category to assign</div><div class="btnrow"><span class="mono">'+esc(a.category||"None yet: set it on the Edit tab")+"</span>"+(a.category?'<button type="button" class="btn ghost" id="copycat">Copy</button>':"")+"</div></div>";
-  h+='<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Your checklist in Salesforce</legend><div class="checks" style="flex-direction:column;gap:2px">'+items.map(function(t,i){return '<label><input type="checkbox" data-ck="'+i+'"'+(ck[i]?" checked":"")+">"+esc(t)+"</label>"}).join("")+"</div></fieldset>";
+  var ck=V.checks[a.id]||{},items=a.publishChecks&&a.publishChecks.length?a.publishChecks.slice():["Confirm the selected Data Category has verified sync evidence in Trail OS.","Review the Salesforce draft manually.","Publish manually in Salesforce.","Check publication in Trail OS."];
+  var cs=a.categorySync,auto=cs&&/categor/i.test(items[0]||"")?items.shift():null,h="";
+  h+='<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Publishing steps</legend><div class="checks" style="flex-direction:column;gap:2px">';
+  if(auto)h+='<div class="autock"><span class="'+(cs.status==="verified"?"ok":"err")+'" aria-hidden="true">'+(cs.status==="verified"?"\u2713":"!")+"</span><span>"+esc(auto)+' <b>'+(cs.status==="verified"?"Done automatically.":"Not verified yet; see Data category above.")+"</b></span></div>";
+  h+=items.map(function(t,i){return '<label><input type="checkbox" data-ck="'+i+'"'+(ck[i]?" checked":"")+">"+esc(t)+"</label>"}).join("")+"</div></fieldset>";
   h+='<div class="btnrow"><button type="button" class="btn solid" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"I published it: check now")+"</button></div>";
   h+='<p class="note">Publishing is done by a licensed Knowledge user in Salesforce. Trail OS confirms it from Salesforce; ticking the list only helps you keep track.</p>';
   return h;
