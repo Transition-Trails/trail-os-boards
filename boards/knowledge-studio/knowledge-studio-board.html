@@ -153,6 +153,22 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .vbadge{display:inline-flex;align-items:center;min-height:20px;margin:2px 0 0 7px;padding:1px 7px;border:1px solid #cbd9d1;border-radius:999px;background:#edf4ef;color:#284a39;font-size:11px;font-weight:650;line-height:1.2;vertical-align:middle}
 .vbadge.pub{border-color:#d5d2bd;background:#f5f3e9;color:#5c5430}
 .vtools{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:2px 0 4px}.vtools .vbadge{margin:0 4px 0 0}
+@media (min-width:900px){
+ aside.panel.focus{display:grid;grid-template-columns:minmax(260px,300px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"ph pb" "tabs pb"}
+ .panel.focus>.ph{grid-area:ph;max-width:none;margin:0;padding:16px 16px 10px;background:var(--surface);border-right:1px solid var(--line)}
+ .panel.focus>.ph h3{font-size:15px}
+ .panel.focus>.ph .note{font-size:12.5px}
+ .panel.focus>.ph .apbar{flex-direction:column;align-items:stretch}
+ .panel.focus>.ph .apbar .btn{width:100%}
+ .panel.focus>.ph .vtools{flex-direction:column;align-items:flex-start}
+ .panel.focus>.tabs{grid-area:tabs;max-width:none;margin:0;flex-direction:column;align-items:stretch;gap:2px;padding:6px 10px 16px;background:var(--surface);border-right:1px solid var(--line);border-bottom:0;overflow:auto}
+ .panel.focus>.tabs button{text-align:left;border-bottom:0;border-left:3px solid transparent;border-radius:0 6px 6px 0;padding:8px 12px}
+ .panel.focus>.tabs button[aria-selected="true"]{border-left-color:var(--green);background:var(--tint)}
+ .panel.focus>.pb{grid-area:pb;padding:28px max(28px,calc((100% - 820px)/2)) 0;overflow:auto}
+ .panel.focus .rte{min-height:calc(100vh - 300px)}
+}
+.ftitle{font-family:var(--head);font-size:26px;line-height:1.25;color:var(--ink);margin:0 0 2px}
+.panel.focus .pb>.note:first-of-type{font-size:12.5px}
 .apbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
 .btn.sm{min-height:32px;padding:0 12px;font-size:13px}
 .anbox{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -541,6 +557,7 @@ function contentTab(a){
   if(c.loading||c.err){return c.err?'<p class="err">'+esc(c.err)+'</p><div class="btnrow"><button type="button" class="btn ghost" data-reload="'+esc(a.id)+'">Try again</button></div>':'<p class="note">Loading the article content\u2026</p>'}
   var ed=canEdit(a),dis=ed?"":" disabled";
   var h='<p class="note">'+(hasDraftRevision(a)?"This is the published version. Make changes in the draft revision.":grp(a)&&grp(a).draftArticleId===a.id&&grp(a).articleIds.length>1?"You are editing a draft revision. Readers keep the live version until the revision is published.":a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
+  if(V.focus)h='<h2 class="ftitle">'+esc(a.title)+"</h2>"+h;
   h+='<div class="sec">'+esc(c.contentLabel||"Article content")+"</div>";
   if(ed)h+='<div class="tool" role="toolbar" aria-label="Formatting">'+[["bold","B","Bold"],["italic","I","Italic"],["h3","H","Heading"],["ul","\u2022 List","Bulleted list"],["ol","1. List","Numbered list"],["link","Link","Add a link"],["unlink","Unlink","Remove link"]].map(function(b){return '<button type="button" data-fmt="'+b[0]+'" aria-label="'+b[2]+'">'+b[1]+"</button>"}).join("")+"</div>";
   if(V.linkFor===a.id)h+='<div class="linkrow"><input type="text" id="linkurl" placeholder="https://" aria-label="Link address"><button type="button" class="btn solid" id="linkok">Add link</button><button type="button" class="btn ghost" id="linkno">Cancel</button></div>';
