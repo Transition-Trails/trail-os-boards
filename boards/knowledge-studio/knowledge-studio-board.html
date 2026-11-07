@@ -152,6 +152,21 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .ib{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:34px;min-height:32px;font-size:13px}
 .ib:disabled{opacity:.4;cursor:not-allowed}
 .sec{font-family:var(--head);font-weight:600;color:var(--ink);font-size:14px;margin-top:4px}
+.wf{display:flex;flex-direction:column;gap:8px}
+h3.sec{font-size:14px}
+.wf-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0 0}
+.wf-facts>div{min-width:0;padding:6px 8px;background:var(--bg);border-radius:8px}
+.wf-facts dt{font-size:10.5px;color:var(--body);font-weight:600;line-height:1.3}
+.wf-facts dd{margin:2px 0 0}
+.wflink{border:0;background:transparent;padding:0;font:inherit;font-size:12px;font-weight:650;color:var(--ink);text-align:left;cursor:pointer;line-height:1.35;overflow-wrap:anywhere}
+.wflink:hover{text-decoration:underline}
+.wflink.p-done{color:#2F6B3F}.wflink.p-open{color:#8A3B12}.wflink.p-none{color:var(--body)}
+.workflow-sub{display:block;font-size:11.5px;color:var(--body);margin-top:2px;line-height:1.35}
+.apnote{margin:6px 0 0;font-size:12.5px}
+.wfd{font-size:12.5px}.wfd summary{cursor:pointer;color:var(--ink);font-weight:600;padding:4px 0}
+.wf-error{overflow-wrap:anywhere;white-space:pre-wrap;background:var(--warn);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--ink)}
+@media(max-width:640px){.wf-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.panel.focus .fside .wf-facts{grid-template-columns:1fr 1fr}
 .vbadge{display:inline-flex;align-items:center;min-height:20px;margin:2px 0 0 7px;padding:1px 7px;border:1px solid #cbd9d1;border-radius:999px;background:#edf4ef;color:#284a39;font-size:11px;font-weight:650;line-height:1.2;vertical-align:middle}
 .vbadge.pub{border-color:#d5d2bd;background:#f5f3e9;color:#5c5430}
 .vtools{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:2px 0 4px}.vtools .vbadge{margin:0 4px 0 0}
@@ -302,7 +317,7 @@ var tt=null;function toast(msg,bad){var t=$("toast");t.textContent=msg;t.classNa
 
 /* ---------- data ---------- */
 var STAGES=["Write","Review","Publish","Penny"];
-var STEP={write:{i:0,l:"Draft"},review:{i:1,l:"In review"},syncBlocked:{i:2,l:"Sync blocked"},notLinked:{i:2,l:"Live, not linked"},publish:{i:2,l:"Ready to publish"},penny:{i:3,l:"Penny check"},ready:{i:4,l:"Ready for Penny"}};
+var STEP={write:{i:0,l:"Draft"},review:{i:1,l:"In review"},syncBlocked:{i:2,l:"Field fix needed"},notLinked:{i:2,l:"Live, not linked"},publish:{i:2,l:"Ready to publish"},penny:{i:3,l:"Penny check"},ready:{i:4,l:"Ready for Penny"}};
 var FIELDS=[{k:"appliesTo",l:"Applies To",kind:"multi"},{k:"audience",l:"Audience",kind:"select",list:"audiences"},{k:"difficulty",l:"Difficulty",kind:"select",list:"difficulties"},{k:"reviewCycle",l:"Review cycle",kind:"select",list:"reviewCycles"},{k:"department",l:"Owner department",kind:"select",list:"departments"},{k:"estimatedMinutes",l:"Estimated time",kind:"number"},{k:"category",l:"Data category",kind:"category"}];
 var PFIELDS=[{k:"reviewer",l:"Business reviewer",kind:"person"},{k:"validator",l:"Penny validator",kind:"person"}];
 function fieldDef(k){var all=FIELDS.concat(PFIELDS);for(var i=0;i<all.length;i++)if(all[i].k===k)return all[i];return FIELDS[0]}
@@ -366,7 +381,7 @@ function inCat(a){return !V.cat||(a.category&&(a.category===V.cat||a.category.in
 function myRoles(a){var r=[];if(isMe(a.author)||isMe(a.claimedBy))r.push("author");if(isMe(a.reviewer))r.push("business");if(isMe(a.validator))r.push("penny");return r}
 var ROLE_L={author:"Author",business:"Business reviewer",penny:"Penny validator"};
 function returnedToMe(a){var b=rstate(a,"business"),t=rstate(a,"technical");return myRoles(a).indexOf("author")>=0&&((b.status&&b.status!=="passed"&&b.current!==false)||(t.status&&t.status!=="passed"&&t.current!==false))}
-var VIEWS={all:function(){return true},approve:function(a){return awaitingApproval(a)},unsent:function(a){return !!DRAFT_ST[a.status]},ready:function(a){return a.step==="ready"},mine:function(a){return myRoles(a).length>0},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
+var VIEWS={all:function(){return true},approve:function(a){return awaitingApproval(a)},unsent:function(a){return !!DRAFT_ST[a.status]},ready:function(a){return pennyReady(a)},mine:function(a){return myRoles(a).length>0},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
   publish:function(a){return a.st.i===2},penny:function(a){return a.step==="penny"},due:dueSoon,
   myrev:function(a){return isMe(a.reviewer)&&a.step==="review"},
   mytech:function(a){return isMe(a.validator)&&a.step==="penny"},
@@ -391,7 +406,7 @@ function render(){
   renderChips();renderRail();renderMain();renderPanel();
 }
 function renderChips(){
-  var pub=D.pubGroups!=null?D.pubGroups:D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(function(a){return a.st.i>=4}).length;
+  var pub=D.pubGroups!=null?D.pubGroups:D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(pennyReady).length;
   var apn=D.articles.filter(function(a){return awaitingApproval(a)&&canBizReview(a)}).length,mine=countView("myrev")+countView("mytech");var c=(apn?[["approve","<b>"+apn+"</b> for you to approve"]]:[]).concat(mine?[[countView("myrev")?"myrev":"mytech","<b>"+mine+"</b> for you to review"]]:[]).concat([["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]]);
   $("chips").innerHTML=c.map(function(x){return '<button type="button" class="chip" data-view="'+x[0]+'" aria-pressed="'+(V.view===x[0])+'">'+x[1]+"</button>"}).join("");
 }
@@ -448,7 +463,7 @@ function table(rows){
   var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]}),cmp=panelOpen();
   var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
   h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
-    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button>'+versionMark(a)+'<span class="sub">'+esc(typeLabel(a.type))+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span></td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
+    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button>'+versionMark(a)+'<span class="sub">'+esc(typeLabel(a.type))+"</span>"+workflowSub(a)+'<span class="sub">'+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span></td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
   h+="</tbody></table></div>";
   if(rows.length>V.limit)h+='<button type="button" class="btn ghost more" id="more">Show '+Math.min(200,rows.length-V.limit)+" more</button>";
   return h;
@@ -490,15 +505,15 @@ function renderPanel0(p){
 function head(kick,title,sub){
   return '<div class="ph">'+(V.back?'<button type="button" class="linkbtn" id="back" style="align-self:flex-start">\u2190 '+esc(V.back.label)+"</button>":"")+'<div class="row"><div><div class="kick">'+esc(kick)+"</div><h3>"+esc(title)+"</h3>"+(sub?'<div class="note">'+esc(sub)+"</div>":"")+'</div><div class="phbtns">'+(V.sel&&V.sel.kind==="article"?'<button type="button" class="x" id="focusbtn" aria-label="'+(V.focus?"Exit focus mode (Esc)":"Open in focus mode")+'" title="'+(V.focus?"Exit focus mode (Esc)":"Focus mode")+'">'+(V.focus?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M4 14h6v6"/><path d="M10 14l-7 7"/></svg>':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-7 7"/><path d="M10 20H4v-6"/><path d="M4 20l7-7"/></svg>')+"</button>":"")+(V.focus?"":'<button type="button" class="x" id="widen" aria-label="'+(V.wide?"Show the list again":"Widen the panel to full width")+'" title="'+(V.wide?"Show the list":"Full width")+'" style="font-size:16px">'+(V.wide?"\u21e5":"\u21e4")+"</button>")+'<button type="button" class="x" id="close" aria-label="Close panel">\u00d7</button></div></div>';
 }
-function defaultTab(a){if(a.step==="review"&&isMe(a.reviewer))return "review";if(a.step==="penny"&&isMe(a.validator))return "penny";if(a.live.length)return "fix";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
+function defaultTab(a){if(a.step==="review"&&isMe(a.reviewer))return "review";if(a.step==="penny"&&isMe(a.validator))return "penny";if(a.live.length)return "fix";if(wfStatus(a,"approval")==="approved"&&wfPart(a,"delivery")&&wfStatus(a,"delivery")!=="draft_current"&&wfStatus(a,"delivery")!=="live_current")return "sync";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
 function articlePanel(a){
   var tab=V.tab||defaultTab(a);V.tab=tab;
   var bar='<div class="stagebar" aria-label="Stage">'+STAGES.map(function(s,j){var c=j<a.st.i?"d":j===a.st.i?(a.step==="syncBlocked"?"b":"c"):"";return '<span class="'+c+'">'+s+"</span>"}).join("")+"</div>";
-  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+versionTools(a)+bar+approvalBar(a)+"</div>";
-  var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["publish","Publish"],["penny","Penny"]];
+  var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+versionTools(a)+bar+approvalBar(a)+workflowFacts(a)+"</div>";
+  var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["sync","Sync"],["publish","Publish"],["penny","Penny"]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+esc(t[1])+"</button>"}).join("")+"</div>";
   if(V.focus)h='<div class="fside">'+h+"</div>";
-  h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
+  h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,sync:syncTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
   return h;
 }
 function catOptions(sel,blankLabel){
@@ -533,7 +548,7 @@ function fixTab(a){
     var ret=!done&&needsReturn(a,x),ok=ret?canReturnFix(a):ed;
     if(ret){btn="Return and fix";inp+='<div class="box warn" style="font-size:13px">This article is in business review. Fixing it returns it to the author: business review and any Penny validation start over, and someone sends it for business review again before it syncs to Salesforce.</div><label class="f">Why you\'re returning it<textarea data-rn="'+esc(x.id)+'" placeholder="At least 10 characters, e.g. Audience must be a Salesforce value">'+esc(V.forms["rn:"+x.id]||"")+"</textarea></label>"}
     var ro=ret?(ok?"":'<span class="note">'+esc(returnFixWhy(a))+"</span>"):(ok?"":'<span class="note">Only authors and Knowledge staff can fix this.</span>');
-    return '<div class="issue '+esc(x.severity)+(done?" done":"")+'"><span class="meta">'+({block:"Blocks publishing",warn:"Needs fixing",info:"Check"}[x.severity]||"Check")+'</span><div style="color:var(--ink)">'+esc(x.text)+"</div>"+(done?'<span class="ok">Done</span>':(inp+'<div class="btnrow"><button type="button" class="btn '+(x.severity==="info"?"ghost":"solid")+'" data-fix="'+esc(x.id)+'"'+(!ok||isBusy?" disabled":"")+">"+(isBusy?"Saving\u2026":btn)+"</button>"+ro+"</div>"))+"</div>";
+    return '<div class="issue '+esc(x.severity)+(done?" done":"")+'"><span class="meta">'+({block:"Blocks publishing",warn:"Needs fixing",info:"Check"}[x.severity]||"Check")+'</span>'+(x.kind==="other"&&x.field!=="penny"?'<div style="color:var(--ink)">Salesforce delivery needs attention. Check Sync for the status.</div><details class="wfd"><summary>Error details</summary><div class="wf-error">'+esc(x.text)+"</div></details>":'<div style="color:var(--ink)">'+esc(x.text)+"</div>")+(done?'<span class="ok">Done</span>':(inp+'<div class="btnrow"><button type="button" class="btn '+(x.severity==="info"?"ghost":"solid")+'" data-fix="'+esc(x.id)+'"'+(!ok||isBusy?" disabled":"")+">"+(isBusy?"Saving\u2026":btn)+"</button>"+ro+"</div>"))+"</div>";
   }).join("");
 }
 function editTab(a){
@@ -605,16 +620,15 @@ function verTrack(a){
   return '<div class="vtrack" role="img" aria-label="'+esc((live?"Published "+live+" time"+(live===1?"":"s")+". ":"Never published. ")+(dr?"A draft is open.":""))+'">'+dots.join('<i aria-hidden="true"></i>')+"</div>";
 }
 function sfCard(a){
-  var k=sfState(a),s=a.sf||{},h='<div class="box sfc"><div class="sfh"><div class="sec" style="margin:0">In Salesforce</div>'+sfBadge(a)+"</div>";
+  var k=sfState(a),s=a.sf||{},h='<div class="box sfc"><div class="sfh"><div class="sec" style="margin:0">In Salesforce \u00b7 published history</div>'+sfBadge(a)+"</div>";
   if(k==="none"){
-    h+='<p class="note">'+(a.step==="syncBlocked"?"Trail OS hasn\'t confirmed a Salesforce record for this article. The last sync was blocked, so if a Salesforce draft already exists it was left as it was and doesn\'t have these changes yet.":(a.status==="published_revision_in_draft"?"Trail OS has a revision in progress that hasn\'t reached Salesforce yet.":"Trail OS hasn\'t confirmed a Salesforce record for this article.")+" Trail OS sends a Salesforce draft when business review passes.")+"</p>";
+    h+='<p class="note">Trail OS hasn\'t confirmed a Salesforce record for this article. Salesforce delivery starts automatically after approval; check Sync for its status.</p>';
     return h+"</div>";
   }
   if(k==="known"){
-    h+='<p class="note">Trail OS has a Salesforce record for this article but hasn\'t read its publishing history yet. Check now to see whether it\'s a first publish, how many times it has been published, or whether a draft is open.</p>';
-    if(a.step==="syncBlocked")h+='<p class="err" style="margin:0">The last sync was blocked, so the Salesforce record doesn\'t have the latest Trail OS changes yet. It was left as it was.</p>';
+    h+='<p class="note">Trail OS has a Salesforce record for this article but hasn\'t read its publishing history yet. Check Salesforce status to see whether it\'s a first publish, how many times it has been published, or whether a draft is open.</p>';
     h+='<div class="btnrow"><button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce'+(a.sfNumber?" #"+esc(a.sfNumber):"")+' \u2197</button></div>';
-    h+='<div class="btnrow"><span class="note">Not checked in Salesforce yet</span><button type="button" class="linkbtn" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"Check now")+"</button></div>";
+    h+='<p class="note" style="margin:0">Not checked in Salesforce yet. Use Check Salesforce status below.</p>';
     return h+"</div>";
   }
   if(k==="unlinked")return h+'<p class="note">This article is live in Salesforce but Trail OS hasn\'t linked it. Link it with its article number on the Fix tab.</p></div>';
@@ -628,13 +642,13 @@ function sfCard(a){
     h+='<div class="kv"><span>Draft</span><b>'+(s.draft.lastModifiedAt?"Last changed "+esc(fmtWhen(s.draft.lastModifiedAt))+(s.draft.lastModifiedBy?" by "+esc(s.draft.lastModifiedBy):""):"Open")+"</b></div>";
     h+='<p class="note">'+(k==="editing"?"Readers and Penny still see version "+esc(s.online?s.online.versionNumber:"")+" until this draft is published. Publishing it makes it version "+esc((s.online?s.online.versionNumber:0)+1)+".":"This is the first version. Nobody can read it until it's published.")+"</p>";
   }
-  if(a.step==="syncBlocked")h+='<p class="err" style="margin:0">The last sync was blocked, so '+(s.draft?"this draft":"Salesforce")+' doesn\'t have the latest Trail OS changes yet. It was left as it was.</p>';
-  if(a.status==="published_revision_in_draft"&&!s.draft)h+='<p class="note">Trail OS has a revision in progress that hasn\'t reached Salesforce yet. It becomes a Salesforce draft when business review passes.</p>';
+  if(s.draft&&wfStatus(a,"delivery")!=="draft_current"&&wfStatus(a,"delivery")!=="live_current")h+='<p class="note" style="margin:0">This shows what Salesforce holds. It may not include the latest Trail OS changes; check Sync for delivery.</p>';
+  h+=historyNote(a);
   h+='<div class="btnrow">'+(s.online?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'" data-ver="online">Open live article \u2197</button>':"")+(s.draft?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'" data-ver="draft">Open draft \u2197</button>':"")+(!s.online&&!s.draft?'<button type="button" class="btn ghost" data-rec="salesforce" data-id="'+esc(a.id)+'">Open in Salesforce \u2197</button>':"")+"</div>";
-  h+='<div class="btnrow"><span class="note">'+(s.checkedAt?"Checked in Salesforce "+esc(fmtWhen(s.checkedAt)):"Not checked in Salesforce yet")+'</span><button type="button" class="linkbtn" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"Check now")+"</button></div>";
+  h+='<p class="note" style="margin:0">'+(s.checkedAt?"Salesforce history read "+esc(fmtWhen(s.checkedAt)):"Salesforce history not read yet")+"</p>";
   return h+"</div>";
 }
-function publishTab(a){return sfCard(a)+categoryCard(a)+publishSteps(a)}
+function publishTab(a){return sfCard(a)+categoryCard(a)+publicationBlock(a)}
 var CAT_BADGE={verified:["Category verified","p-done"],unverified:["Category not verified","p-open"],failed:["Draft sync failed","p-open"],not_selected:["No category selected","p-write"]};
 function categoryCard(a){
   var c=a.categorySync;if(!c||!c.status)return "";
@@ -647,29 +661,18 @@ function categoryCard(a){
     h+='<div class="kv"><span>Salesforce draft</span><b class="mono">'+esc(e.versionId||"")+"</b></div>";
     h+='<div class="kv"><span>Verified at</span><b>'+esc(fmtWhen(e.verifiedAt))+"</b></div>";
   }
-  if(c.error)h+='<p class="err" style="margin:0">'+esc(c.error)+"</p>";
   if(c.message)h+='<p class="note" style="margin:0">'+esc(c.message)+"</p>";
+  if(c.error)h+='<details class="wfd"><summary>Error details</summary><div class="wf-error">'+esc(c.error)+'</div></details>';
   if(e)h+='<p class="note" style="margin:0">This was checked when the draft synced. It isn\'t a live check of later changes in Salesforce, and it doesn\'t mean the article is published.</p>';
   var btns="";
   if(c.status==="not_selected"&&canEdit(a))btns+='<button type="button" class="btn ghost sm" data-tab="edit">Choose a category on Details</button>';
-  if((c.status==="failed"||c.status==="unverified")&&a.linked&&(a.status==="approved"||a.status==="ready-to-publish")&&canPublish(a)&&a.step!=="syncBlocked")btns+='<button type="button" class="btn ghost sm" data-sync="'+esc(a.id)+'"'+(busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry approved draft sync")+"</button>";
+  if(c.status==="failed"||c.status==="unverified")btns+='<button type="button" class="btn ghost sm" data-tab="sync">Check Sync</button>';
   if(btns)h+='<div class="btnrow">'+btns+"</div>";
   return h+"</div>";
 }
-function publishSteps(a){
-  if(a.step==="syncBlocked")return '<div class="box warn">Sync blocked. Fix the field on the Fix tab, then retry the sync.</div><div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(!canPublish(a)||busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry Salesforce sync")+"</button></div>";
-  if(a.st.i>=3)return a.step=="penny"?'<p class="note">Next: the Penny check, on the Penny tab.</p>':"";
-  if(a.st.i<2)return '<p class="note">This article reaches the publish step after business review passes.</p>';
-  var ck=V.checks[a.id]||{},items=a.publishChecks&&a.publishChecks.length?a.publishChecks.slice():["Confirm the selected Data Category has verified sync evidence in Trail OS.","Review the Salesforce draft manually.","Publish manually in Salesforce.","Check publication in Trail OS."];
-  var cs=a.categorySync,auto=cs&&/categor/i.test(items[0]||"")?items.shift():null,h="";
-  h+='<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Publishing steps</legend><div class="checks" style="flex-direction:column;gap:2px">';
-  if(auto)h+='<div class="autock"><span class="'+(cs.status==="verified"?"ok":"err")+'" aria-hidden="true">'+(cs.status==="verified"?"\u2713":"!")+"</span><span>"+esc(auto)+' <b>'+(cs.status==="verified"?"Done automatically.":"Not verified yet; see Data category above.")+"</b></span></div>";
-  h+=items.map(function(t,i){return '<label><input type="checkbox" data-ck="'+i+'"'+(ck[i]?" checked":"")+">"+esc(t)+"</label>"}).join("")+"</div></fieldset>";
-  h+='<div class="btnrow"><button type="button" class="btn solid" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"I published it: check now")+"</button></div>";
-  h+='<p class="note">Publishing is done by a licensed Knowledge user in Salesforce. Trail OS confirms it from Salesforce; ticking the list only helps you keep track.</p>';
-  return h;
+function pennyTab(a){
+  return '<section class="box sfc wf" aria-labelledby="penny-h"><div class="sfh"><h3 class="sec" id="penny-h" style="margin:0">Penny readiness</h3>'+wfPill(a,"penny")+'</div><p class="note" style="margin:0">Business approval or Salesforce publication on their own never make an article ready for Penny. It also needs technical validation, below.</p></section>'+techForm(a);
 }
-function pennyTab(a){return techForm(a)}
 function bulkPanel(){
   var ids=pickedIds(),b=V.bulk,fd=fieldDef(b.field);
   var h='<div class="ph"><div class="row"><div><div class="kick">Bulk edit</div><h3>'+ids.length+' selected</h3></div><button type="button" class="btn ghost" id="bclear">Clear</button></div></div><div class="pb">';
@@ -792,7 +795,7 @@ function checkRows(kind,a,list){
 function ensureContent(a){var c=V.content[a.id];if(!c){V.content[a.id]=c={loading:true};setTimeout(function(){loadContent(a.id)},0)}return c}
 function reviewTab(a){
   var h=changesBlock(a)+assignBlock(a),s=rstate(a,"business"),t=rsText(s);
-  h+='<div class="sec">Business review</div><div class="btnrow"><span class="pill '+t[1]+'">'+esc(t[0])+"</span></div>";
+  h+='<div class="sec">Business review</div><div class="kv"><span>Business approval</span><b>'+esc(wfLabel(a,"approval"))+'</b></div><div class="btnrow"><span class="pill '+t[1]+'">'+esc(t[0])+"</span></div>";
   if(s.findings&&s.status!=="passed")h+='<blockquote>'+esc(s.findings)+"</blockquote>";
   if(a.step==="write")return h+'<p class="note">This is a draft. When it\'s ready, send it for approval with the button at the top.</p>';
   if(a.step!=="review")return h+'<p class="note">'+(s.status==="passed"?"Business review is done for this version. If someone edits the content, it comes back here for review.":"Business review happens while the article is in review.")+"</p>";
@@ -815,14 +818,14 @@ function reviewTab(a){
     h+="</div>";
   }
   h+='<div class="btnrow"><button type="button" class="btn solid" data-br="passed"'+(busy[key]?" disabled":"")+'>Pass</button><button type="button" class="btn ghost" data-br="needs_revision"'+(busy[key]?" disabled":"")+'>Return to author</button><button type="button" class="btn ghost" data-br="blocked"'+(busy[key]?" disabled":"")+">Blocked</button></div>";
-  h+='<p class="note">Passing sends a draft to Salesforce for publishing. Returning or blocking sends it back to the author.</p>';
+  h+='<p class="note">Passing records business approval. Salesforce delivery starts automatically after approval; check Sync for its status. Returning or blocking sends it back to the author.</p>';
   return h;
 }
 function techForm(a){
   var s=rstate(a,"technical"),t=rsText(s),h='<div class="sec">Technical review</div><div class="kv"><span>Assigned to</span><b>'+esc(a.validator?personName(a.validator):"Not assigned")+'</b></div><div class="btnrow"><span class="pill '+t[1]+'">'+esc(t[0])+"</span></div>";
   if(s.findings&&s.status!=="passed")h+='<blockquote>'+esc(s.findings)+"</blockquote>";
   if(a.st.i<3)return h+'<p class="note">The Penny check unlocks when the article is published in Salesforce, because Penny can only cite published articles.</p>';
-  if(a.step==="ready"&&s.current!==false)return h+'<p class="ok">Validated'+(a.validatedAt?" on "+esc(fmtDate(a.validatedAt)):"")+". Penny can answer from it.</p>";
+  if(a.step==="ready"&&s.current!==false)return h+(pennyReady(a)?'<p class="ok">Validated'+(a.validatedAt?" on "+esc(fmtDate(a.validatedAt)):"")+". Penny readiness: "+esc(wfLabel(a,"penny"))+".</p>":'<p class="note">Technical review is recorded. Penny readiness: '+esc(wfLabel(a,"penny"))+".</p>");
   if(!canValidate(a))return h+'<p class="note">'+(ownArticle(a)?"You wrote or claimed this article, so someone else does the technical review.":"Only staff or the assigned technical reviewer can record the technical review.")+"</p>";
   var f=frm("tr:"+a.id),key="tr:"+a.id;
   if(f.env===undefined)f.env="Production";if(f.app===undefined)f.app=D.appVersion||"";if(f.persona===undefined)f.persona="Learner";
@@ -854,7 +857,7 @@ function doBizReview(disp){
     if(!f.sign){toast("Tick the sign-off box to pass a policy.",true);return}
     p.policySignoff={ruleStatement:pf.ruleStatement,effectiveDate:pf.effectiveDate,waiverAuthority:pf.waiverAuthority,authority:me()};
   }
-  act("submitBusinessReview",p,"br:"+a.id).then(function(r){if(r.ok){delete V.forms["br:"+a.id];toast(r.message||(disp==="passed"?"Passed. Trail OS is sending the draft to Salesforce.":"Sent back to the author."))}});
+  act("submitBusinessReview",p,"br:"+a.id).then(function(r){if(r.ok){delete V.forms["br:"+a.id];toast(r.message||(disp==="passed"?"Approved. Salesforce delivery starts automatically; check Sync for its status.":"Sent back to the author."))}});
 }
 function doTechReview(disp){
   var a=D.by[V.sel.id],f=frm("tr:"+a.id),checks=collectChecks("tr",a,techChecks()),findings=(f.findings||"").trim();
@@ -891,7 +894,7 @@ var STG=[{k:"draft",l:"Draft",c:"#ECEAE4",v:"review"},{k:"inreview",l:"In review
 var QST=[{k:"gap",l:"No article",c:"#C2462B"}].concat([{k:"writing",l:"Being written",c:"#93BDD0"},{k:"publishing",l:"Publishing",c:"#5590A9"},{k:"penny",l:"Needs Penny check",c:"#255F6D"},{k:"ready",l:"Penny can answer",c:"#3E9A55"}]);
 var ISSUE_L={applies_to_blank:"Applies To is blank",needs_category:"No active data category",not_linked:"Not linked to Salesforce",sync_rejected:"Salesforce rejected a value",sf_diff:"Differs from Salesforce",sync_blocked:"Sync blocked"};
 function issueLabel(k){return ISSUE_L[k]||String(k).replace(/_/g," ").replace(/^./,function(c){return c.toUpperCase()})}
-function stageIdx(a){return a.st.i>=4?4:a.st.i===3?3:a.st.i===2?2:a.step==="review"?1:0}
+function stageIdx(a){return a.st.i>=4&&pennyReady(a)?4:a.st.i>=3?3:a.st.i===3?3:a.st.i===2?2:a.step==="review"?1:0}
 function qIdx(q){var best=-1;(q.articleIds||[]).forEach(function(id){var a=D.by[id];if(a){var i=stageIdx(a);i=i<=1?1:i;if(i>best)best=i}});return best<0?0:best}
 function pct(n,t){return t?Math.round(100*n/t):0}
 function segBar(parts,label,cls){
@@ -916,7 +919,7 @@ function overview(){
   var parts=STG.map(function(s,i){return {k:s.k,l:s.l,c:s.c,n:st[i],go:s.v}});
   var sb=A.filter(function(a){return a.step==="syncBlocked"}).length,nl=A.filter(function(a){return a.step==="notLinked"}).length;
   h+='<section class="card ovc"><div class="ovh"><h3>Where the articles are</h3><span class="note">'+n+" articles</span></div>"+segBar(parts,"Articles by stage","big")+legend(parts)+
-    ((sb||nl)?'<p class="note">Publishing includes <b>'+sb+'</b> with the Salesforce sync blocked and <b>'+nl+"</b> live in Salesforce but not linked.</p>":"")+"</section>";
+    ((sb||nl)?'<p class="note">Publishing includes <b>'+sb+'</b> that need a field fix before Salesforce accepts them and <b>'+nl+"</b> live in Salesforce but not linked.</p>":"")+"</section>";
   var kinds={};A.forEach(function(a){a.live.forEach(function(x){kinds[x.kind]=(kinds[x.kind]||0)+1})});
   var ks=Object.keys(kinds).sort(function(a,b){return kinds[b]-kinds[a]}),mx=ks.length?kinds[ks[0]]:0;
   h+='<section class="card ovc"><div class="ovh"><h3>What needs fixing</h3><span class="note">open issues by kind \u00b7 tap a row to see the articles</span></div>'+
@@ -962,27 +965,24 @@ function approverText(a){
   return a.reviewer?personName(a.reviewer):"Needs a reviewer";
 }
 function approvalBar(a){
-  var s=rstate(a,"business"),h="",btns="",msg="",tone="";
+  var h="",btns="",msg,tone,ap=wfPart(a,"approval"),st=wfStatus(a,"approval");
   var wc=workingCopy(a);
-  if(wc)return '<div class="apbar"><span class="note">Readers see this version. Changes go in the draft revision.</span></div>';
-  if(DRAFT_ST[a.status]){
-    tone="p-write";msg=s.status&&s.status!=="passed"&&s.current!==false?"Returned to the author":"Draft, not sent for approval";
-    if(canSubmit(a))btns+='<button type="button" class="btn solid sm" data-submit="'+esc(a.id)+'"'+(busy["sub:"+a.id]?" disabled":"")+">"+(busy["sub:"+a.id]?"Sending\u2026":"Send for approval")+"</button>";
-  }else if(awaitingApproval(a)){
-    tone="p-review";msg="Waiting for approval"+(a.reviewer?" from "+personName(a.reviewer):"");
-    if(canBizReview(a)&&V.tab!=="review")btns+='<button type="button" class="btn solid sm" data-tab="review">Review and approve</button>';
-  }else if(a.status==="approved"||a.status==="ready-to-publish"){
-    tone="p-done";msg="Approved"+(s.status==="passed"&&s.by?" by "+personName(s.by)+(s.at?" on "+fmtDate(s.at):""):"")+". Next: publish in Salesforce.";btns+=sfLink(a);
-  }else return "";
-  if(canOverride(a)&&!(V.forms["an:"+a.id]||{}).open)btns+='<button type="button" class="btn ghost sm" data-annow="'+esc(a.id)+'">Approve now (superadmin)</button>';
+  if(wc)return '<div class="apbar"><span class="note">Readers see this published version. Newer changes are in the draft revision.</span></div>';
+  msg=ap&&ap.label?ap.label:"Approval: not confirmed";tone=wfTone(a,"approval");
+  if(st==="awaiting_approval"&&a.reviewer)msg+=" \u00b7 "+personName(a.reviewer);
+  if((st==="draft"||st==="changes_requested")&&canSubmit(a))btns+='<button type="button" class="btn solid sm" data-submit="'+esc(a.id)+'"'+(busy["sub:"+a.id]?" disabled":"")+">"+(busy["sub:"+a.id]?"Sending\u2026":"Send for approval")+"</button>";
+  if(st==="awaiting_approval"&&canBizReview(a)&&V.tab!=="review")btns+='<button type="button" class="btn solid sm" data-tab="review">Review and approve</button>';
+  if(st==="approved")btns+=sfLink(a);
+  if(st!=="approved"&&canOverride(a)&&!(V.forms["an:"+a.id]||{}).open)btns+='<button type="button" class="btn ghost sm" data-annow="'+esc(a.id)+'">Approve now (superadmin)</button>';
   h='<div class="apbar"><span class="pill '+tone+'">'+esc(msg)+"</span>"+(publishedSibling(a)?'<span class="note">Revision of a published article</span>':"")+btns+"</div>";
+  if(st==="approved")h+='<p class="note apnote">Salesforce delivery starts automatically after approval; check <button type="button" class="linkbtn" data-tab="sync">Sync</button> for its status.</p>';
   var f=V.forms["an:"+a.id];
-  if(f&&f.open&&canOverride(a))h+='<div class="box warn anbox"><b>Approve without the independent review?</b><p class="note" style="margin:0">This marks the current version approved and sends it to Salesforce as a draft. It skips the assigned reviewer, the review checklist and the Penny check, and Trail OS records that you did. It doesn\'t publish anything.</p><label class="f">Why you\'re approving it this way<textarea data-an="note" placeholder="At least 10 characters, e.g. Founder approval of a wording fix">'+esc(f.note||"")+'</textarea></label><div class="checks"><label><input type="checkbox" data-an="ok"'+(f.ok?" checked":"")+'>I approve version '+esc(String(a.contentVersion||"").slice(0,8))+" of this article</label></div><div class=\"btnrow\"><button type=\"button\" class=\"btn solid\" data-anconfirm=\""+esc(a.id)+"\""+(busy["an:"+a.id]?" disabled":"")+">"+(busy["an:"+a.id]?"Approving\u2026":"Approve")+'</button><button type="button" class="btn ghost" data-ancancel="'+esc(a.id)+'">Cancel</button></div></div>';
+  if(f&&f.open&&canOverride(a))h+='<div class="box warn anbox"><b>Approve without the independent review?</b><p class="note" style="margin:0">This records your approval for the current version and skips the assigned reviewer and review checklist. Trail OS records that you did. Salesforce delivery then starts automatically; it doesn\'t publish anything, and it doesn\'t make the article ready for Penny.</p><label class="f">Why you\'re approving it this way<textarea data-an="note" placeholder="At least 10 characters, e.g. Founder approval of a wording fix">'+esc(f.note||"")+'</textarea></label><div class="checks"><label><input type="checkbox" data-an="ok"'+(f.ok?" checked":"")+'>I approve version '+esc(String(a.contentVersion||"").slice(0,8))+" of this article</label></div><div class=\"btnrow\"><button type=\"button\" class=\"btn solid\" data-anconfirm=\""+esc(a.id)+"\""+(busy["an:"+a.id]?" disabled":"")+">"+(busy["an:"+a.id]?"Approving\u2026":"Approve")+'</button><button type="button" class="btn ghost" data-ancancel="'+esc(a.id)+'">Cancel</button></div></div>';
   return h;
 }
 function sfLink(a){
   var s=a.sf||{},ver=s.draft?"draft":s.online?"online":null;
-  if(!ver&&!a.salesforceRecordId&&!a.linked)return '<span class="note">No Salesforce record confirmed yet'+(canPublish(a)?' \u00b7 <button type="button" class="linkbtn" data-sync="'+esc(a.id)+'">Send it now</button>':"")+"</span>";
+  if(!ver&&!a.salesforceRecordId&&!a.linked)return '<span class="note">No Salesforce record confirmed yet'+"</span>";
   var num=s.articleNumber||a.sfNumber;
   return '<button type="button" class="btn ghost sm" data-rec="salesforce" data-id="'+esc(a.id)+'"'+(ver?' data-ver="'+ver+'"':"")+">"+(ver==="draft"?"Open Salesforce draft":"Open in Salesforce")+(num?" #"+esc(num):"")+" \u2197</button>";
 }
@@ -991,7 +991,7 @@ function doApproveNow(id){
   var a=D.by[id],f=V.forms["an:"+id]||{},note=String(f.note||"").trim();
   if(note.length<10){toast("Say why you're approving it this way, in 10 characters or more.",true);return}
   if(!f.ok){toast("Tick the box to confirm.",true);return}
-  act("approveNow",{articleId:id,contentVersion:a.contentVersion,confirmed:true,note:note},"an:"+id).then(function(r){if(r.ok){delete V.forms["an:"+id];toast(r.message||"Approved. Trail OS is sending the draft to Salesforce.")}});
+  act("approveNow",{articleId:id,contentVersion:a.contentVersion,confirmed:true,note:note},"an:"+id).then(function(r){if(r.ok){delete V.forms["an:"+id];toast(r.message||"Approved. Salesforce delivery starts automatically; check Sync for its status.")}});
 }
 /* what changed */
 var CMP_FIELDS=[["title","Title"],["summary","Summary"],["type","Type"],["audience","Audience"],["appliesTo","Applies To"],["department","Owner department"],["difficulty","Difficulty"],["reviewCycle","Review cycle"],["estimatedMinutes","Estimated time"],["category","Data category"]];
@@ -1038,6 +1038,67 @@ function setFocus(on,quiet){
 }
 document.addEventListener("keydown",function(e){if(e.key!=="Escape"||!V.focus||V.linkFor)return;if(document.fullscreenElement)return;e.preventDefault();setFocus(false)});
 document.addEventListener("fullscreenchange",function(){});
+/* ---------- workflow facts (v1.15): approval, delivery, publication, Penny are separate ---------- */
+function workflowOf(a){return a&&a.workflow&&typeof a.workflow==="object"?a.workflow:null}
+function wfPart(a,k){var w=workflowOf(a);return w&&w[k]&&typeof w[k]==="object"?w[k]:null}
+function wfLabel(a,k){var x=wfPart(a,k);return x&&x.label?x.label:"Not confirmed"}
+function wfStatus(a,k){var x=wfPart(a,k);return x&&x.status?x.status:"unknown"}
+function pennyReady(a){return wfStatus(a,"penny")==="ready"}
+var DELIVERY_ACTIVE={queued:1,syncing:1,running:1,retry:1};
+var WF_TONE={approval:{approved:"p-done",awaiting_approval:"p-review",changes_requested:"p-open",draft:"p-write"},
+  delivery:{draft_current:"p-done",live_current:"p-done",queued:"p-review",syncing:"p-review",running:"p-review",retry:"p-review",needs_attention:"p-open",not_verified:"p-open",not_approved:"p-write"},
+  publication:{published:"p-done",published_with_draft:"p-review",draft:"p-review",archived:"p-write",history_not_read:"p-none",unconfirmed:"p-none"},
+  penny:{ready:"p-done",technical_pending:"p-review",business_pending:"p-write",review_required:"p-open"}};
+function wfTone(a,k){return (WF_TONE[k]||{})[wfStatus(a,k)]||"p-none"}
+function wfPill(a,k){return '<span class="pill '+wfTone(a,k)+'">'+esc(wfLabel(a,k))+"</span>"}
+function workflowFacts(a){
+  var rows=[["approval","Business approval","review"],["delivery","Salesforce delivery","sync"],["publication","Salesforce publication","publish"],["penny","Penny readiness","penny"]];
+  return '<dl class="wf-facts" aria-label="Workflow for this working revision">'+rows.map(function(r){
+    return '<div><dt>'+r[1]+'</dt><dd><button type="button" class="wflink '+wfTone(a,r[0])+'" data-tab="'+r[2]+'">'+esc(wfLabel(a,r[0]))+"</button></dd></div>"}).join("")+"</dl>";
+}
+function workflowSub(a){var w=workflowOf(a);return w?'<span class="workflow-sub">'+esc(wfLabel(a,"approval")+" \u00b7 "+wfLabel(a,"delivery"))+"</span>":""}
+function syncTab(a){
+  var d=wfPart(a,"delivery"),st=wfStatus(a,"delivery"),active=!!DELIVERY_ACTIVE[st];
+  var h='<section class="box sfc wf" aria-labelledby="sync-h"><div class="sfh"><h3 class="sec" id="sync-h" style="margin:0">Salesforce delivery</h3>'+wfPill(a,"delivery")+"</div>";
+  h+='<div class="kv"><span>Business approval</span><b>'+esc(wfLabel(a,"approval"))+"</b></div>";
+  if(!d){
+    h+='<p class="note" style="margin:0">Trail OS hasn\'t sent a delivery status for this revision, so delivery is not confirmed. No sync action is offered until it does.</p>';
+    return h+"</section>";
+  }
+  if(d.message)h+='<p class="note" style="margin:0">'+esc(d.message)+"</p>";
+  if(d.verifiedAt)h+='<div class="kv"><span>Delivery confirmed</span><b>'+esc(fmtWhen(d.verifiedAt))+"</b></div>";
+  if(d.versionId)h+='<div class="kv"><span>Salesforce version</span><b class="mono">'+esc(d.versionId)+"</b></div>";
+  if(d.nextAttemptAt)h+='<div class="kv"><span>Next automatic attempt</span><b>'+esc(fmtWhen(d.nextAttemptAt))+"</b></div>";
+  if(active)h+='<p class="note" style="margin:0">Delivery runs automatically. You can leave this page while it runs and come back here for the result.</p>';
+  if(d.error)h+='<details class="wfd"><summary>Error details</summary>'+(d.attemptedAt?'<p class="note" style="margin:6px 0">Attempted: '+esc(fmtWhen(d.attemptedAt))+"</p>":"")+'<div class="wf-error">'+esc(d.error)+"</div></details>";
+  if(d.canRetry===true&&!active&&canPublish(a))h+='<div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry sync")+"</button></div>";
+  h+='<p class="note" style="margin:0">Delivery puts the approved revision into a Salesforce draft. It never publishes; publishing is on the Publish tab.</p>';
+  return h+"</section>";
+}
+function publicationBlock(a){
+  var p=wfPart(a,"publication"),h='<section class="box sfc wf" aria-labelledby="pub-h"><div class="sfh"><h3 class="sec" id="pub-h" style="margin:0">Salesforce publication</h3>'+wfPill(a,"publication")+"</div>";
+  if(p&&p.checkedAt)h+='<div class="kv"><span>Last checked</span><b>'+esc(fmtWhen(p.checkedAt))+"</b></div>";
+  if(p&&p.canPublishLatest===true&&canPublish(a)){
+    var ck=V.checks[a.id]||{},items=a.publishChecks&&a.publishChecks.length?a.publishChecks.slice():["Review the Salesforce draft manually.","Publish manually in Salesforce.","Check publication in Trail OS."];
+    var cs=a.categorySync,auto=cs&&/categor/i.test(items[0]||"")?items.shift():null;
+    h+='<fieldset style="border:0;padding:0;margin:0"><legend class="note" style="font-weight:600;color:var(--ink)">Publish the latest revision</legend><div class="checks" style="flex-direction:column;gap:2px">';
+    if(auto)h+='<div class="autock"><span class="'+(cs.status==="verified"?"ok":"err")+'" aria-hidden="true">'+(cs.status==="verified"?"\u2713":"!")+"</span><span>"+esc(auto)+' <b>'+(cs.status==="verified"?"Done automatically.":"Not verified yet; see Data category above.")+"</b></span></div>";
+    h+=items.map(function(t,i){return '<label><input type="checkbox" data-ck="'+i+'"'+(ck[i]?" checked":"")+">"+esc(t)+"</label>"}).join("")+"</div></fieldset>";
+    h+='<p class="note" style="margin:0">Publishing is a manual action by an authorized, licensed Knowledge user in Salesforce. Ticks are only for your own tracking; they are not evidence that anything was published.</p>';
+  }else{
+    var st=wfStatus(a,"publication"),why=!p?"Trail OS hasn\'t sent a publication status for this revision.":
+      p.canPublishLatest===true?"Your role can\'t publish. An authorized, licensed Knowledge user publishes in Salesforce.":
+      "The publishing checklist appears once Trail OS confirms the latest approved revision is in the Salesforce draft. Check Sync for delivery.";
+    h+='<p class="note" style="margin:0">'+esc(why)+"</p>";
+  }
+  h+='<div class="btnrow"><button type="button" class="btn ghost" data-pubcheck="'+esc(a.id)+'"'+(!canPublish(a)||busy["pub:"+a.id]?" disabled":"")+">"+(busy["pub:"+a.id]?"Checking\u2026":"Check Salesforce status")+'</button></div><p class="note" style="margin:0">Check Salesforce status is read-only. It refreshes what Trail OS knows; it doesn\'t deliver edits or publish the article.</p>';
+  return h+"</section>";
+}
+function historyNote(a){
+  var s=a.sf||{};if(!s.online)return "";
+  if(wfStatus(a,"delivery")==="live_current")return "";
+  return '<p class="note" style="margin:0">This is published history. Readers may still see the live version above while newer edits in this working revision wait for approval, delivery or publication.</p>';
+}
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back,exact){V.pin=exact?id:null;if(!exact&&D.repOf&&D.repOf[id])id=D.repOf[id];V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
@@ -1090,8 +1151,8 @@ document.addEventListener("click",function(e){
   if(t.dataset.rec){var op={type:t.dataset.rec,id:t.dataset.id};if(t.dataset.ver)op.version=t.dataset.ver;act("openRecord",op);return}
   if(t.dataset.fix){doFix(t.dataset.fix);return}
   if(t.id==="savedraft"){doSave();return}
-  if(t.dataset.sync){var sid=t.dataset.sync;act("retrySync",{articleId:sid},"sync:"+sid).then(function(r){if(r.ok)toast(r.message||"Sent to Salesforce again.")});return}
-  if(t.dataset.pubcheck){var pid=t.dataset.pubcheck;act("checkPublication",{articleId:pid},"pub:"+pid).then(function(r){if(r.ok)toast(r.message||"Checked Salesforce.")});return}
+  if(t.dataset.sync){var sid=t.dataset.sync;act("retrySync",{articleId:sid},"sync:"+sid).then(function(r){if(r.ok)toast(r.message||"Retry requested. Check Sync for the delivery status.")});return}
+  if(t.dataset.pubcheck){var pid=t.dataset.pubcheck;act("checkPublication",{articleId:pid},"pub:"+pid).then(function(r){if(r.ok)toast(r.message||"Salesforce status checked. Nothing was delivered or published.")});return}
   if(t.dataset.pc){doPenny(t.dataset.pc);return}
   if(t.dataset.br){doBizReview(t.dataset.br);return}
   if(t.dataset.tr){doTechReview(t.dataset.tr);return}
