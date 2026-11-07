@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tt:board" content="content-studio">
+<meta name="tt:board-version" content="1">
+<meta name="tt:contract-version" content="1">
+<title>Content Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--green:#2f6b3f;--green700:#245531;--green100:#e6f0ea;--teal:#2f6f7e;--sky100:#edf5f8;--amber:#f5a623;--amber100:#fff3e0;--amber300:#ffd08a;--amber800:#b37400;--light:#fafaf7;--gray:#e2e4e1;--slate:#4a4f4d;--mid:#686e6c;--ink:#2a2e2c;--white:#fff;--crit:#a93f2f;--crit100:#fbeae6;--shadow:0 6px 16px rgba(42,46,44,.08);--shadowCard:0 12px 28px rgba(42,46,44,.10);--ring:0 0 0 3px rgba(47,107,63,.15)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--light);color:var(--slate);font:15px/1.5 'Open Sans',Roboto,system-ui,sans-serif}
+h1,h2,h3{font-family:Poppins,system-ui,sans-serif;color:var(--ink);margin:0;line-height:1.25}
+h1{font-size:26px;font-weight:600}h2{font-size:18px;font-weight:600}h3{font-size:15px;font-weight:600}
+button,input,select,textarea{font:inherit;color:var(--ink)}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:none;box-shadow:var(--ring);border-color:var(--green)}
+.mono{font-family:Menlo,'Courier New',monospace;font-size:12px;color:var(--mid)}
+.muted{color:var(--mid)}.small{font-size:13px}.tiny{font-size:12px}
+.head{background:var(--white);border-bottom:1px solid var(--gray);padding:18px 24px 14px;display:flex;flex-direction:column;gap:12px}
+.headrow{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--teal)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--gray);background:var(--white);font-weight:600;font-size:14px}
+.tab[aria-current="page"]{background:var(--green);border-color:var(--green);color:var(--white)}
+.tab .n{display:inline-block;min-width:22px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--amber100);color:var(--ink);font-size:12px}
+.tab[aria-current="page"] .n{background:var(--white)}
+.wrap{padding:20px 24px 48px;display:flex;flex-direction:column;gap:16px;max-width:1600px;margin:0 auto}
+.row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.side{flex:1 1 300px;max-width:400px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--white);border:1px solid var(--gray);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.tile{background:var(--white);border:1px solid var(--gray);border-radius:22px;padding:18px;text-align:left;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
+.tile .v{font-family:Poppins,system-ui,sans-serif;font-size:32px;font-weight:600;color:var(--ink);line-height:1.1}
+.tile .l{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mid)}
+.cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.cell{border:1px solid var(--gray);border-radius:14px;background:var(--light);padding:12px;text-align:left}
+.cell b{display:block;font-family:Poppins,system-ui,sans-serif;font-size:22px;color:var(--ink)}
+.att{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1px solid var(--gray);border-radius:14px;background:var(--light);padding:12px 14px;width:100%}
+.att b{color:var(--ink);display:block}
+.bar{display:block;height:8px;border-radius:999px;background:var(--green100)}.bar i{display:block;height:8px;border-radius:999px;background:var(--green)}
+.topicbtn{display:flex;flex-direction:column;gap:6px;border:0;background:none;padding:6px 0;text-align:left;width:100%;min-height:44px}
+.topicbtn span.t{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--ink);flex-wrap:wrap}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--ink)}
+input[type=text],input[type=url],input[type=search],input[type=date],select,textarea{min-height:44px;padding:0 12px;border:1.5px solid var(--gray);border-radius:14px;background:var(--white);font-weight:400;max-width:100%}
+textarea{padding:10px 12px;resize:vertical}
+.chip{min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--gray);background:var(--white);font-weight:600;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--white)}
+.note{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;border-radius:14px;background:var(--sky100);color:var(--ink);font-size:14px}
+.board{overflow-x:auto;padding-bottom:6px}
+.cols{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:12px;min-width:1340px}
+.col{background:var(--sky100);border-radius:22px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.col h3{display:flex;justify-content:space-between;padding:4px 6px}
+.icard{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--white);border:1.5px solid var(--gray);border-radius:14px;padding:12px;width:100%}
+.icard:hover{box-shadow:var(--shadowCard);transform:translateY(-2px);transition:.15s}
+.icard .t{font-weight:600;color:var(--ink);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--green100);color:var(--green700);font-weight:600;font-size:12px}
+.pill.s{background:var(--sky100);color:var(--ink)}
+.pill.w{background:var(--amber100);color:var(--ink)}
+.flag{display:block;padding:4px 10px;border-radius:8px;background:var(--amber100);color:var(--ink);font-size:12px}
+.who{display:flex;gap:6px;align-items:center;font-size:13px}
+.btn{min-height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--green);color:var(--white);font-weight:700}
+.btn:hover{background:var(--green700)}
+.btn[disabled]{background:var(--gray);color:var(--slate);cursor:not-allowed}
+.btn.amber{background:var(--amber);color:var(--ink);box-shadow:0 2px 8px rgba(245,166,35,.35)}.btn.amber:hover{background:#e0961a}
+.btn2{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--teal);background:var(--white);color:var(--teal);font-weight:600}
+.btn2:hover{background:var(--sky100)}
+.btn2[disabled]{border-color:var(--gray);color:var(--mid);background:var(--white);cursor:not-allowed}
+.linkbtn{border:0;background:none;padding:0;color:var(--green);font-weight:600;text-decoration:underline;text-align:left;min-height:32px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th{text-align:left;font-size:12px;color:var(--mid);font-weight:700;padding:8px;border-bottom:1px solid var(--gray)}
+td{padding:10px 8px;border-bottom:1px solid var(--gray);color:var(--ink);vertical-align:top}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.avatar{width:40px;height:40px;border-radius:999px;background:var(--teal);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:Poppins,sans-serif;font-weight:600;flex:0 0 auto}
+.segs{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:3px}
+.segs i{display:block;height:6px;border-radius:999px;background:var(--gray)}
+.segs i.d{background:var(--green)}.segs i.c{background:var(--amber)}
+.vrow{display:grid;grid-template-columns:84px minmax(0,1fr) 190px;gap:14px;align-items:center;text-align:left;background:var(--white);border:1.5px solid var(--gray);border-radius:14px;padding:12px 14px;width:100%}
+.station{border:1.5px solid var(--gray);border-radius:22px;background:var(--white);padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.station.now{border-color:var(--amber);box-shadow:var(--shadowCard)}
+.shead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center}
+.num{width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-family:Poppins,sans-serif;font-weight:600;font-size:14px;background:var(--gray);color:var(--ink);flex:0 0 auto}
+.station.done .num{background:var(--green);color:var(--white)}.station.now .num{background:var(--amber)}
+.outs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--ink)}
+.prompt{width:100%;min-height:170px;font-family:Menlo,'Courier New',monospace;font-size:12px;line-height:1.5;background:var(--light)}
+dl.facts{margin:0;display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 12px;font-size:14px}
+dl.facts dt{color:var(--mid)}dl.facts dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.linkrow{display:flex;justify-content:space-between;gap:12px;font-size:14px;align-items:center;min-height:32px}
+.crumbs{display:flex;flex-wrap:wrap;gap:8px;font-size:14px;align-items:center}
+.check{display:flex;gap:10px;align-items:center;min-height:40px;font-size:14px;color:var(--ink)}
+.check input{width:20px;height:20px;accent-color:var(--green)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(560px,calc(100% - 32px));padding:12px 18px;border-radius:14px;background:var(--ink);color:var(--white);font-size:14px;box-shadow:var(--shadowCard);z-index:10}
+.toast.err{background:var(--crit)}
+.wait{max-width:560px;margin:80px auto;padding:24px;text-align:center}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+details summary{cursor:pointer;color:var(--green);font-weight:600;min-height:32px}
+@media (max-width:720px){
+ .head{padding:14px 16px 12px}.wrap{padding:16px 16px 40px}
+ h1{font-size:22px}
+ .vrow{grid-template-columns:64px minmax(0,1fr)}.vrow .prog{grid-column:1 / -1}
+ .side{max-width:none}
+ dl.facts{grid-template-columns:110px minmax(0,1fr)}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="wait card"><h2>Content Studio</h2><p>Waiting for Trail OS to send the board data.</p></div></div>
+<div id="live" class="sr" aria-live="polite"></div>
+<script>
+(function(){
+"use strict";
+var BOARD="content-studio",BOARD_VERSION=1,CONTRACT=1;
+var STATUSES=["Idea","Not Started","In Progress","Ready for Review","Ready to Publish","Published"];
+var PROD=["Not Started","In Progress","Ready for Review","Ready to Publish"];
+var QA=[["build","Build plays correctly from start to finish"],["captions","Captions are present and accurate"],["privacy","No personal accounts, emails or passwords on screen"],["links","All links open the intended destination"],["presentation","Ready to publish: Penny says Transition Trails, never TT"]];
+var STATIONS=[
+ {n:"Build plan ready",who:"Staff",k:"plan"},
+ {n:"Record the build",who:"Volunteer, on this board",k:"record"},
+ {n:"Review the recording",who:"Staff",k:"gateRec"},
+ {n:"Script and written guide",who:"Volunteer in Claude, step 1 of 5",k:"claude",step:1},
+ {n:"Approve the script",who:"Staff",k:"gateScript"},
+ {n:"Penny audio",who:"Volunteer in Claude, step 2 of 5",k:"claude",step:2},
+ {n:"Thumbnail",who:"Volunteer in Claude, step 3 of 5",k:"claude",step:3},
+ {n:"Video and Descript",who:"Volunteer in Claude, step 4 of 5",k:"claude",step:4},
+ {n:"Trail OS article draft",who:"Volunteer in Claude, step 5 of 5",k:"claude",step:5},
+ {n:"Final review",who:"Staff",k:"gateFinal"},
+ {n:"Publish on YouTube",who:"Staff",k:"publish"}
+];
+var N=STATIONS.length;
+var S={data:null,view:null,sel:null,topic:"all",fmt:"all",q:"",quick:"",checks:{},drafts:{},busy:false,toast:null,from:null};
+var pending={},seq=0;
+
+function send(msg){try{parent.postMessage(msg,"*")}catch(e){}}
+function act(name,payload){
+ return new Promise(function(res){
+  var id="a"+(++seq)+"-"+Date.now();
+  var t=setTimeout(function(){delete pending[id];res({ok:false,code:"timeout"})},20000);
+  pending[id]={res:res,t:t};
+  send({type:"action",id:id,name:name,payload:payload});
+ });
+}
+window.addEventListener("message",function(ev){
+ if(ev.source!==parent)return;
+ var m=ev.data;if(!m||typeof m!=="object")return;
+ if(m.type==="data"){
+  if(!m.data||m.data.contractVersion!==CONTRACT){S.data=null;renderWait("This board needs data contract version "+CONTRACT+". Ask an admin to check the Content Studio board version.");return}
+  S.data=m.data;render();
+ }
+ else if(m.type==="result"&&pending[m.id]){var p=pending[m.id];clearTimeout(p.t);delete pending[m.id];p.res(m)}
+});
+send({type:"ready",board:BOARD,boardVersion:BOARD_VERSION,contractVersion:CONTRACT});
+
+function pl(n,one,many){return n+" "+(n===1?one:many)}
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function fd(d){if(!d)return "Not set";var m=String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return esc(d);return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m[2]-1]+" "+(+m[3])+", "+m[1]}
+function today(){var a=S.data&&S.data.asOf?String(S.data.asOf).slice(0,10):new Date().toISOString().slice(0,10);return a}
+function V(){return (S.data&&S.data.viewer)||{}}
+function staff(){var v=V();return !!(v.isStaff||v.isManager)}
+function items(){return (S.data&&S.data.items)||[]}
+function byId(id){var a=items();for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];return null}
+function code(it){var m=String(it.title||"").match(/^(FT27|FT)-W(\d{2})-([A-Z])\b/i);return m?{code:m[0].toUpperCase(),week:+m[2],series:m[1].toUpperCase()}:null}
+function isBwm(it){return !!code(it)&&/foundations trail/i.test(it.topic||"")}
+function shortTitle(it){return String(it.title||"").replace(/^(FT27|FT)-W\d{2}-[A-Z]\s*[|:–—-]?\s*/i,"")||it.title}
+function inProd(it){return PROD.indexOf(it.status)>=0}
+function vol(it){return it.case&&it.case.volunteer?it.case.volunteer:null}
+function mine(it){var v=vol(it);return !!(v&&V().contactId&&v.contactId===V().contactId)}
+function stale(p){return p.status!=="Published"&&p.plannedDate&&p.plannedDate<today()}
+function staleCount(it){return (it.publications||[]).filter(stale).length}
+function validDescript(u){try{var x=new URL(u);if(!/(^|\.)descript\.com$/i.test(x.hostname))return false;var p=x.pathname.replace(/\/+$/,"");return /^\/view\/[^/]+$/i.test(p)||/^\/[0-9a-f-]{20,}\/[^/]+$/i.test(p)}catch(e){return false}}
+function https(u){try{return new URL(u).protocol==="https:"}catch(e){return false}}
+function station(it){
+ var st=it.status,after=function(list){return list.indexOf(st)>=0};
+ var yt=(it.publications||[]).some(function(p){return /youtube/i.test(p.platform||"")&&p.status==="Published"});
+ var done=[!!(it.summary&&String(it.summary).trim()),!!it.rawRecordingUrl&&it.recordingReview!=="Pickup Required"&&it.recordingReview!=="Rebuild Required",it.recordingReview==="Accepted",!!it.pennyNarrationUrl&&(it.pennyScriptStatus==="In Review"||it.pennyScriptStatus==="Approved"),it.pennyScriptStatus==="Approved",!!it.hasNarrationHash,!!it.thumbnailUrl,validDescript(it.descriptUrl||"")&&Number(it.length)>0,after(["Ready for Review","Ready to Publish","Published"]),after(["Ready to Publish","Published"]),st==="Published"&&yt];
+ var cur=done.indexOf(false);return {done:done,cur:cur<0?N:cur,count:done.filter(Boolean).length};
+}
+function waitingOn(it){if(!isBwm(it))return null;var s=station(it);if(s.cur>=N)return "done";var k=STATIONS[s.cur].k;return (k==="plan"||k==="gateRec"||k==="gateScript"||k==="gateFinal"||k==="publish")?"staff":"volunteer"}
+function flags(it){var f=[];var n=staleCount(it);if(n)f.push(n+(n===1?" publication still says Scheduled after its date":" publications still say Scheduled after their date"));
+ var same=items().filter(function(x){return x.title===it.title}).length;if(same>1)f.push("Another item has the same title");
+ if(it.status==="Published"&&!(it.publications||[]).length)f.push("Published, but no publication record");
+ if(isBwm(it)&&!it.courseActivity&&station(it).cur>=9)f.push("No Video Lesson activity linked for this week");
+ if((it.requests||[]).length&&!vol(it))f.push((it.requests.length===1?"1 volunteer asked":"Volunteers asked")+" to take this");return f}
+
+/* ---------- prompts ---------- */
+function prompt(it,step){
+ var c=code(it),name=(c?c.code+" | ":"")+shortTitle(it);
+ var names=["","script and written guide","Penny audio","thumbnail","video and Descript","Trail OS article draft"];
+ var head="Use the Build With Me video skill, Claude step "+step+" of 5: "+names[step]+".\n\nContent Item: "+(it.number||it.id)+" \""+name+"\". Read it in Salesforce first. If this step is already done, tell me and stop.\n\n";
+ var body=["",
+  "Check that Recording Review is Accepted; stop if it isn\u2019t.\nRaw recording: "+(it.rawRecordingUrl||"[link]")+"\nExtract the script from my recording and turn it into Penny’s script. Penny: voice only.\nStop when the script and written guide are in Drive and Penny Script Status is In Review.",
+  "Check that Penny Script Status is Approved; stop if it isn’t. Generate Penny’s audio on eleven_v4 from the approved script. Give me the ElevenLabs credit estimate and wait for my go.\nSave the ElevenLabs flow link in Content Details, then stop.",
+  "Make the title slide and thumbnail from the How To Training Canva template. Show it to me, save Thumbnail Design Location, then stop.",
+  "Get Penny’s audio from the ElevenLabs flow in Content Details and cut my recording to match each scene, with the thumbnail first. Upload the final to a Descript project.\nSave Descript Project URL, Length and the scene start times in Content Details, then stop.",
+  "Create the learner-task article draft in Trail OS, using the scene start times in Content Details for the step timestamps. Fill the rest of the Content Item and set Status to Ready for Review. Staff do the final review."][step];
+ return head+body;
+}
+
+/* ---------- actions ---------- */
+function run(name,payload,okMsg){
+ if(S.busy)return;S.busy=true;render();
+ act(name,payload).then(function(r){
+  S.busy=false;
+  if(r&&r.ok){toast(okMsg||"Saved.",false)}
+  else toast((r&&r.message)||(r&&r.code==="timeout"?"Trail OS didn’t answer in time. Refresh before trying again.":r&&r.code==="stale"?"Someone changed this item. The board has the latest; check and try again.":"That didn’t save."),true);
+  render();
+ });
+}
+function toast(msg,err){S.toast={msg:msg,err:err};document.getElementById("live").textContent=msg;clearTimeout(S.tt);S.tt=setTimeout(function(){S.toast=null;render()},5000)}
+function openLink(url){if(!url)return;act("openRecord",{type:"link",url:url})}
+
+/* ---------- views ---------- */
+function go(view,sel){if(view==="record"){S.from=S.view}S.view=view;S.sel=sel||null;S.checks={};render();try{window.scrollTo(0,0)}catch(e){}}
+function tabs(){
+ var t=staff()?[["overview","Overview"],["pipeline","Pipeline"],["bwm","Build With Me"],["publishing","Publishing"],["volunteers","Volunteers"],["idea","Suggest an idea"]]:[["mine","My work"],["open","Open items"],["idea","Suggest an idea"]];
+ var n={mine:items().filter(function(i){return mine(i)&&waitingOn(i)==="volunteer"}).length};
+ var cur=S.view==="record"?S.from:S.view;
+ return '<nav class="tabs" aria-label="Content Studio">'+t.map(function(x){return '<button type="button" class="tab" data-go="'+x[0]+'"'+(cur===x[0]?' aria-current="page"':'')+'>'+esc(x[1])+(n[x[0]]?'<span class="n">'+n[x[0]]+'</span>':'')+'</button>'}).join("")+'</nav>';
+}
+function header(){
+ var v=V();
+ return '<header class="head"><div class="headrow"><div><div class="eyebrow">Penny · Create</div><h1>Content Studio</h1><div class="small muted">'+(staff()?"Everything we make, from idea to published.":"Signed in as "+esc(v.name||v.email)+". You see the items whose Case names you as the volunteer.")+'</div></div><div class="small muted">Data as of '+esc(fd(today()))+'</div></div>'+tabs()+'</header>';
+}
+function render(){
+ if(!S.data)return;
+ if(!S.view)S.view=staff()?"overview":"mine";
+ var body="";
+ try{
+  body={overview:vOverview,pipeline:vPipeline,bwm:vBwm,publishing:vPublishing,volunteers:vVolunteers,mine:vMine,open:vOpen,idea:vIdea,record:vRecord}[S.view]();
+ }catch(e){body='<div class="card"><h2>Something went wrong showing this view.</h2><p class="small">'+esc(e&&e.message)+'</p></div>'}
+ var notices=(S.data.notices||[]).map(function(n){return '<div class="note">ⓘ '+esc(n)+'</div>'}).join("");
+ document.getElementById("app").innerHTML=header()+'<div class="wrap">'+notices+body+'</div>'+(S.toast?'<div class="toast'+(S.toast.err?" err":"")+'" role="status">'+esc(S.toast.msg)+'</div>':'');
+}
+function renderWait(msg){document.getElementById("app").innerHTML='<div class="wait card"><h2>Content Studio</h2><p>'+esc(msg)+'</p></div>'}
+
+function quickDefs(){return {
+ novol:["No volunteer yet",function(i){return inProd(i)&&!vol(i)}],
+ staffwait:["Waiting on staff",function(i){return waitingOn(i)==="staff"||(!isBwm(i)&&i.status==="Ready for Review")}],
+ nodue:["No due date",function(i){return inProd(i)&&!i.dueDate}],
+ tidy:["Records to tidy up",function(i){return flags(i).length>0}]
+}}
+function filtered(){
+ var q=S.q.trim().toLowerCase(),qd=quickDefs()[S.quick];
+ return items().filter(function(i){
+  if(S.topic!=="all"&&i.topicId!==S.topic)return false;
+  if(S.fmt!=="all"&&(i.format||"No format")!==S.fmt)return false;
+  if(q&&((i.title||"")+" "+(i.number||"")).toLowerCase().indexOf(q)<0)return false;
+  if(qd&&!qd[1](i))return false;return true});
+}
+function filterBar(){
+ var topics=(S.data.topics||[]).slice().sort(function(a,b){return a.title.localeCompare(b.title)});
+ var fmts=["all"];items().forEach(function(i){var f=i.format||"No format";if(fmts.indexOf(f)<0)fmts.push(f)});
+ var qd=quickDefs();
+ return '<div class="filters"><label class="f" style="flex:1 1 220px">Search<input type="search" data-in="q" value="'+esc(S.q)+'" placeholder="Title or CI number"></label>'+
+ '<label class="f" style="flex:0 1 260px">Topic<select data-in="topic"><option value="all">All topics</option>'+topics.map(function(t){return '<option value="'+esc(t.id)+'"'+(S.topic===t.id?" selected":"")+'>'+esc(t.title)+'</option>'}).join("")+'</select></label>'+
+ '<div class="tabs" role="group" aria-label="Format">'+fmts.map(function(f){return '<button type="button" class="chip" data-fmt="'+esc(f)+'" aria-pressed="'+(S.fmt===f)+'">'+esc(f==="all"?"All formats":f)+'</button>'}).join("")+'</div></div>'+
+ '<div class="tabs" role="group" aria-label="Needs a person">'+Object.keys(qd).map(function(k){var n=items().filter(qd[k][1]).length;return '<button type="button" class="chip" data-quick="'+k+'" aria-pressed="'+(S.quick===k)+'">'+esc(qd[k][0])+' ('+n+')</button>'}).join("")+'</div>';
+}
+
+function vOverview(){
+ var a=items(),prod=a.filter(inProd),nov=prod.filter(function(i){return !vol(i)});
+ var sw=a.filter(quickDefs().staffwait[1]).length,st=0;a.forEach(function(i){st+=staleCount(i)});
+ var tiles=[["In production",prod.length,"Not Started through Ready to Publish","pipeline",""],["No volunteer yet",nov.length,"In production with no Case volunteer","pipeline","novol"],["Waiting on staff",sw,"Script approvals, reviews and publishing","pipeline","staffwait"],["Publications to confirm",st,"Still Scheduled after the planned date","publishing",""]];
+ var h='<div class="tiles">'+tiles.map(function(t){return '<button type="button" class="tile" data-go="'+t[3]+'" data-q2="'+t[4]+'"><span class="l">'+t[0]+'</span><span class="v">'+t[1]+'</span><span class="small">'+t[2]+'</span></button>'}).join("")+'</div>';
+ h+='<section class="card"><h2>Where everything is</h2><div class="cells">'+STATUSES.map(function(s){return '<button type="button" class="cell" data-go="pipeline"><b>'+a.filter(function(i){return i.status===s}).length+'</b>'+esc(s)+'</button>'}).join("")+'</div></section>';
+ var att=[];
+ if(nov.length)att.push([pl(nov.length,"item","items")+" in production "+(nov.length===1?"has":"have")+" no volunteer","Pick a volunteer on each one. Series videos share their series Case.","pipeline","novol"]);
+ if(sw)att.push([pl(sw,"item is","items are")+" waiting on staff","Scripts to approve, final reviews and videos to publish.","pipeline","staffwait"]);
+ if(st)att.push([pl(st,"publication still says","publications still say")+" Scheduled","Their planned dates have passed. Confirm each went out, or set a new date.","publishing",""]);
+ var nd=prod.filter(function(i){return !i.dueDate}).length;if(nd)att.push([pl(nd,"item","items")+" in production "+(nd===1?"has":"have")+" no due date","Add dates for anything that has to be ready for a cohort.","pipeline","nodue"]);
+ var tidy=a.filter(function(i){return flags(i).length}).length;if(tidy)att.push([pl(tidy,"record needs","records need")+" tidying","Duplicates, missing publication records or open requests.","pipeline","tidy"]);
+ var topics={};a.forEach(function(i){var k=i.topic||"No topic";topics[k]=topics[k]||{n:0,p:0,d:0,id:i.topicId};topics[k].n++;if(inProd(i))topics[k].p++;if(i.status==="Published")topics[k].d++});
+ var tk=Object.keys(topics).sort(function(x,y){return topics[y].n-topics[x].n}),max=tk.length?topics[tk[0]].n:1;
+ h+='<div class="row"><section class="card" style="flex:1 1 340px"><h2>What needs a person</h2>'+(att.length?att.map(function(x){return '<button type="button" class="att" data-go="'+x[2]+'" data-q2="'+x[3]+'"><span aria-hidden="true">⚠</span><span><b>'+esc(x[0])+'</b><span class="small">'+esc(x[1])+'</span></span></button>'}).join(""):'<p>Nothing needs a person right now.</p>')+'</section>';
+ h+='<section class="card" style="flex:1 1 340px"><h2>By topic</h2>'+tk.map(function(k){var t=topics[k];return '<button type="button" class="topicbtn" data-topic="'+esc(t.id||"")+'"><span class="t"><b>'+esc(k)+'</b><span>'+pl(t.n,'item','items')+' · '+t.p+' in production · '+t.d+' published</span></span><span class="bar"><i style="width:'+Math.max(4,Math.round(t.n/max*100))+'%"></i></span></button>'}).join("")+'</section></div>';
+ return h;
+}
+function icard(i){
+ var v=vol(i),f=flags(i),c=code(i),s=isBwm(i)?station(i):null;
+ return '<button type="button" class="icard" data-open="'+esc(i.id)+'"><span class="mono">'+esc(i.number||"")+(c?" · "+esc(c.code):"")+'</span><span class="t">'+esc(c?shortTitle(i):i.title)+'</span><span class="meta"><span class="pill">'+esc(i.format||"No format")+'</span><span>'+esc(i.topic||"")+'</span></span>'+
+ (s?'<span class="small">Station '+Math.min(s.cur+1,N)+' of '+N+': '+esc(s.cur<N?STATIONS[s.cur].n:"Published")+'</span>':'')+
+ '<span class="who" style="color:'+(v?"var(--ink)":"var(--mid)")+'">'+icon("user")+esc(v?v.name:"No volunteer")+'</span>'+f.map(function(x){return '<span class="flag">⚠ '+esc(x)+'</span>'}).join("")+'</button>';
+}
+function vPipeline(){
+ var list=filtered(),qd=quickDefs()[S.quick];
+ var h=filterBar();
+ if(qd)h+='<div class="note">Showing only: <b>'+esc(qd[0])+'</b><button type="button" class="btn2" data-quick="">Show everything</button></div>';
+ h+='<div class="board"><div class="cols">'+STATUSES.map(function(s){var c=list.filter(function(i){return i.status===s});return '<section class="col" aria-label="'+esc(s)+'"><h3><span>'+esc(s)+'</span><span>'+c.length+'</span></h3>'+(c.length?c.map(icard).join(""):'<p class="small muted" style="text-align:center;padding:12px">Nothing here</p>')+'</section>'}).join("")+'</div></div>';
+ return h;
+}
+function segs(it){var s=station(it);return '<span class="segs" aria-hidden="true">'+s.done.map(function(d,i){return '<i class="'+(d?"d":i===s.cur?"c":"")+'"></i>'}).join("")+'</span>'}
+function vBwm(){
+ var list=items().filter(isBwm).sort(function(a,b){var x=code(a),y=code(b);return x.series===y.series?(x.code<y.code?-1:1):(x.series==="FT27"?-1:1)});
+ var f=S.bwmf||"all";
+ var shown=list.filter(function(i){var w=waitingOn(i);return f==="all"||(f==="staff"&&w==="staff")||(f==="started"&&station(i).cur>1)});
+ var rec=list.filter(function(i){return !!i.rawRecordingUrl}).length,rv=list.filter(function(i){return station(i).cur===2}).length,sc=list.filter(function(i){return station(i).cur===4}).length,fr=list.filter(function(i){return station(i).cur===9}).length,pub=list.filter(function(i){return station(i).cur>=N}).length;
+ var h='<div class="tiles">'+[["Recorded",rec+" of "+list.length,"Raw recording linked"],["Recordings to review",rv,"Waiting on staff"],["Scripts to approve",sc,"Waiting on staff"],["Final reviews",fr,"Waiting on staff"],["Published",pub,"Live on YouTube"]].map(function(t){return '<div class="tile"><span class="l">'+t[0]+'</span><span class="v">'+t[1]+'</span><span class="small">'+t[2]+'</span></div>'}).join("")+'</div>';
+ h+='<div class="tabs" role="group" aria-label="Show">'+[["staff","Waiting on staff"],["started","Started"],["all","All "+list.length]].map(function(x){return '<button type="button" class="chip" data-bwmf="'+x[0]+'" aria-pressed="'+(f===x[0])+'">'+esc(x[1])+'</button>'}).join("")+'</div>';
+ var weeks={},order=[];shown.forEach(function(i){var c=code(i),k=c.series+"-"+c.week;if(!weeks[k]){weeks[k]={label:(c.series==="FT"?"Pilot · ":"")+(c.week===0?"Week 0 · Before day one":"Week "+c.week),list:[]};order.push(k)}weeks[k].list.push(i)});
+ if(!order.length)h+='<div class="card"><p>Nothing to show here.</p></div>';
+ order.forEach(function(k){h+='<section style="display:flex;flex-direction:column;gap:8px"><h2 style="font-size:16px">'+esc(weeks[k].label)+'</h2>'+weeks[k].list.map(function(i){var s=station(i),c=code(i),v=vol(i);return '<button type="button" class="vrow" data-open="'+esc(i.id)+'"><span class="mono" style="color:var(--ink)">'+esc(c.code)+'</span><span style="min-width:0"><span style="display:block;font-weight:600;color:var(--ink)">'+esc(shortTitle(i))+'</span><span class="small">'+(s.cur<N?"Next: "+esc(STATIONS[s.cur].n)+" · "+(STATIONS[s.cur].who.indexOf("Staff")===0?"Staff":esc(v?v.name:"No volunteer")):"Published")+'</span></span><span class="prog" style="display:flex;flex-direction:column;gap:6px">'+segs(i)+'<span class="tiny">'+s.count+' of '+N+' stations</span></span></button>'}).join("")+'</section>'});
+ return h;
+}
+function vPublishing(){
+ var rows=[];filtered().forEach(function(i){(i.publications||[]).forEach(function(p){rows.push({i:i,p:p,s:stale(p)})})});
+ rows.sort(function(a,b){if(a.s!==b.s)return a.s?-1:1;return String(b.p.plannedDate||"").localeCompare(String(a.p.plannedDate||""))});
+ var h=filterBar()+'<section class="card"><h2>Publishing</h2><p class="small">Content Item Publication records, oldest unconfirmed first. Buffer schedules social posts; this list is where we confirm they went out.</p><div class="tablewrap"><table><thead><tr><th>Content item</th><th>Platform</th><th>Planned</th><th>Status</th><th>Check</th></tr></thead><tbody>';
+ h+=rows.map(function(r){var p=r.p;return '<tr><td><button type="button" class="linkbtn" data-open="'+esc(r.i.id)+'">'+esc(r.i.title)+'</button></td><td>'+esc(p.platform||"")+'</td><td style="white-space:nowrap">'+fd(p.plannedDate)+'</td><td>'+esc(p.status||"")+'</td><td>'+(r.s?'⚠ '+(p.publishedDate?"Has a published date; status not updated":"Date passed")+(staff()?'<div class="actions" style="margin-top:6px"><button type="button" class="btn2" data-confirm="'+esc(p.id)+'">It went out</button><button type="button" class="btn2" data-resched="'+esc(p.id)+'">New date</button></div>':''):(p.status==="Published"?"✓ Published "+fd(p.publishedDate):"On schedule"))+'</td></tr>'}).join("");
+ h+='</tbody></table></div>'+(rows.length?'':'<p class="muted">No publications match these filters.</p>')+'</section>';
+ if(S.resched){var p0=null;items().forEach(function(i){(i.publications||[]).forEach(function(p){if(p.id===S.resched)p0=p})});
+  if(p0)h+='<section class="card" aria-label="New planned date"><h2>New planned date for '+esc(p0.platform||"this publication")+'</h2><label class="f">Planned date<input type="date" data-in="reschedDate" value="'+esc(S.reschedDate||"")+'"></label><div class="actions"><button type="button" class="btn" data-dosched="1"'+(S.reschedDate?"":" disabled")+'>Save date</button><button type="button" class="btn2" data-cancelsched="1">Cancel</button></div></section>'}
+ return h;
+}
+function vVolunteers(){
+ var nov=items().filter(function(i){return inProd(i)&&!vol(i)}).length;
+ var vs={};items().forEach(function(i){var v=vol(i);if(v){vs[v.contactId]=vs[v.contactId]||{name:v.name,list:[]};vs[v.contactId].list.push(i)}});
+ (S.data.volunteers||[]).forEach(function(v){vs[v.contactId]=vs[v.contactId]||{name:v.name,list:[]}});
+ var keys=Object.keys(vs).sort(function(a,b){return vs[b].list.length-vs[a].list.length||vs[a].name.localeCompare(vs[b].name)});
+ var h='<div class="note"><span><b>'+nov+' items in production</b> have no volunteer yet.</span><button type="button" class="btn2" data-go="pipeline" data-q2="novol">See them</button></div>';
+ var req=items().filter(function(i){return (i.requests||[]).length&&!vol(i)});
+ if(req.length)h+='<section class="card"><h2>Volunteers asking for work</h2>'+req.map(function(i){return '<button type="button" class="att" data-open="'+esc(i.id)+'"><span><b>'+esc(i.title)+'</b><span class="small">'+esc(i.requests.map(function(r){return r.name||r.email}).join(", "))+' asked to take this</span></span></button>'}).join("")+'</section>';
+ h+='<div class="vgrid">'+keys.map(function(k){var v=vs[k];var ini=String(v.name||"?").split(/\s+/).map(function(p){return p[0]}).join("").slice(0,2);return '<section class="card"><div style="display:flex;gap:12px;align-items:center"><span class="avatar" aria-hidden="true">'+esc(ini)+'</span><span><h3>'+esc(v.name)+'</h3><span class="small muted">'+(v.list.length===1?"1 item":v.list.length+" items")+'</span></span></div>'+(v.list.length?v.list.map(function(i){return '<button type="button" class="att" data-open="'+esc(i.id)+'"><span><b>'+esc(i.title)+'</b><span class="small">'+esc(i.status)+'</span></span></button>'}).join(""):'<p class="small muted">No content assigned.</p>')+'</section>'}).join("")+'</div>';
+ return h;
+}
+function vMine(){
+ var list=items().filter(mine);
+ if(!list.length)return '<div class="card"><h2>Nothing assigned to you yet</h2><p>Look at Open items to ask for one, or suggest an idea.</p><div class="actions"><button type="button" class="btn2" data-go="open">Open items</button></div></div>';
+ return list.map(function(i){var s=isBwm(i)?station(i):null,w=waitingOn(i);
+  return '<button type="button" class="vrow" data-open="'+esc(i.id)+'" style="grid-template-columns:minmax(0,1fr) 200px"><span style="min-width:0"><span class="mono">'+esc(i.number||"")+' · '+esc(i.topic||"")+' · '+esc(i.format||"")+'</span><span style="display:block;font-weight:600;color:var(--ink)">'+esc(i.title)+'</span><span class="small">'+(s?(s.cur<N?(w==="volunteer"?"Your turn: ":"Waiting on staff: ")+esc(STATIONS[s.cur].n):"Published"):"Status: "+esc(i.status))+'</span></span><span class="prog" style="display:flex;flex-direction:column;gap:6px">'+(s?segs(i)+'<span class="tiny">'+s.count+' of '+N+' stations</span>':'<span class="pill s">'+esc(i.status)+'</span>')+'</span></button>'}).join("");
+}
+function vOpen(){
+ var list=(S.data.openItems||[]);
+ return '<section class="card"><h2>Open items</h2><p class="small">Items in production that no one has yet. Asking sends a note to staff, who assign it.</p>'+(list.length?list.map(function(o){return '<div class="att" style="justify-content:space-between;flex-wrap:wrap"><span><b>'+esc(o.title)+'</b><span class="small">'+esc(o.topic||"")+' · '+esc(o.format||"")+'</span></span><button type="button" class="btn2" data-ask="'+esc(o.id)+'"'+(o.requested?" disabled":"")+'>'+(o.requested?"✓ Asked":"Ask to take this")+'</button></div>'}).join(""):'<p class="muted">Nothing open right now.</p>')+'</section>';
+}
+function vIdea(){
+ var d=S.drafts.idea||{},topics=(S.data.topics||[]).slice().sort(function(a,b){return a.title.localeCompare(b.title)});
+ var ok=(d.title||"").trim().length>3&&d.topicId;
+ return '<section class="card" style="max-width:720px"><h2>Suggest an idea</h2><p class="small">It becomes a Content Item with status Idea. Staff decide what moves into production.</p>'+
+ '<label class="f">Working title<input type="text" data-idea="title" value="'+esc(d.title||"")+'" maxlength="255"></label>'+
+ '<div class="row" style="gap:12px"><label class="f" style="flex:1 1 220px">Topic<select data-idea="topicId"><option value="">Choose a topic</option>'+topics.map(function(t){return '<option value="'+esc(t.id)+'"'+(d.topicId===t.id?" selected":"")+'>'+esc(t.title)+'</option>'}).join("")+'</select></label>'+
+ '<label class="f" style="flex:1 1 180px">Format<select data-idea="format">'+["Article","Video","Audio","Infographic","Checklist","eBook","Course","Tango"].map(function(f){return '<option'+((d.format||"Article")===f?" selected":"")+'>'+f+'</option>'}).join("")+'</select></label></div>'+
+ '<label class="f">Why it matters to the reader<textarea rows="4" data-idea="summary" maxlength="2000">'+esc(d.summary||"")+'</textarea></label>'+
+ '<div class="actions"><button type="button" class="btn" data-sendidea="1"'+(ok&&!S.busy?"":" disabled")+'>Send idea</button></div></section>';
+}
+
+/* ---------- record ---------- */
+function vRecord(){
+ var it=byId(S.sel);if(!it)return '<div class="card"><h2>This item isn’t on your board</h2><p>It may have been reassigned or removed.</p><div class="actions"><button type="button" class="btn2" data-back="1">Back</button></div></div>';
+ var c=code(it),bw=isBwm(it),s=bw?station(it):null,v=vol(it),me=mine(it),st=staff();
+ var h='<div class="crumbs"><button type="button" class="linkbtn" data-back="1">← Back</button><span class="mono">'+esc(it.number||"")+(c?" · "+esc(c.code):"")+'</span></div>';
+ h+='<div class="card" style="gap:8px"><h1 style="overflow-wrap:anywhere">'+esc(it.title)+'</h1><div class="meta" style="font-size:13px"><span class="pill">'+esc(it.format||"No format")+'</span><span>'+esc(it.topic||"")+'</span><span class="pill s">Status: '+esc(it.status)+'</span>'+(v?'<span>Volunteer: '+esc(v.name)+'</span>':'')+'</div>'+(s?'<div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">'+segs(it)+'<span class="small">'+(s.cur<N?s.count+" of "+N+" stations done · Next: "+esc(STATIONS[s.cur].n):"Published. All "+N+" stations done.")+'</span>'+(s.cur<N?'<div class="actions"><button type="button" class="btn2" data-jump="st'+s.cur+'">Go to the current station</button></div>':'')+'</div>':'')+flags(it).map(function(x){return '<span class="flag">⚠ '+esc(x)+'</span>'}).join("")+'</div>';
+ h+='<div class="row"><div class="main">'+(bw?stations(it,s,me,st):simpleFlow(it,me,st))+'</div><aside class="side">'+sideCards(it,st)+'</aside></div>';
+ return h;
+}
+function sHead(i,cls,title,who){return '<section class="station '+cls+'" id="st'+i+'" tabindex="-1"><div class="shead"><div style="display:flex;gap:12px;align-items:center;min-width:0"><span class="num" aria-hidden="true">'+(i+1)+'</span><span style="min-width:0"><h2>'+esc(title)+'</h2><span class="small">'+esc(who)+'</span></span></div><span class="small" style="font-weight:700;color:var(--ink)">'+(cls==="done"?"✓ Done":cls==="now"?"Now":"")+'</span></div>'}
+function stations(it,s,me,st){
+ var canWork=me||st,ver=it.version,h="";
+ STATIONS.forEach(function(x,i){
+  var cls=s.done[i]?"done":i===s.cur?"now":"later",now=i===s.cur;
+  h+=sHead(i,cls,x.n,x.who);
+  if(x.k==="plan"){h+='<p style="margin:0;padding:10px 12px;border-radius:14px;background:var(--light);border:1px solid var(--gray);color:var(--ink);white-space:pre-wrap">'+(it.summary?esc(it.summary):"No Summary yet. Staff add the build plan to the Content Item Summary.")+'</p>'}
+  if(x.k==="record"){
+   h+='<ul class="small" style="margin:0;padding-left:20px"><li>Record in the Trailhead Pantry Dallas org, using your Transition Trails Chrome profile.</li><li>Talk through what you’re doing. Penny replaces your voice later.</li><li>Keep personal accounts, other email addresses and password tools off screen.</li></ul>';
+   if(it.recordingReview==="Pickup Required"||it.recordingReview==="Rebuild Required")h+='<div class="flag" style="font-size:14px">\u26a0 '+esc(it.recordingReview==="Rebuild Required"?"Staff asked for a new recording":"Staff asked for pickups")+(it.recordingReviewNote?': '+esc(it.recordingReviewNote):'')+'. Save the new link when it\u2019s ready.</div>';
+   if(it.rawRecordingUrl)h+='<div class="linkrow"><span class="muted">Raw recording</span><button type="button" class="linkbtn" data-link="'+esc(it.rawRecordingUrl)+'">Open</button></div>';
+   if(canWork&&(now||it.rawRecordingUrl)){var d=S.drafts["rec"+it.id];d=d==null?"":d;var ok=https(d);
+    h+='<div class="actions" style="align-items:flex-end"><label class="f" style="flex:1 1 260px">'+(it.rawRecordingUrl?"Replace the recording link":"Raw recording link (Descript or Google Drive)")+'<input type="url" data-draft="rec'+esc(it.id)+'" value="'+esc(d)+'" placeholder="https://"></label><button type="button" class="btn" data-saverec="'+esc(it.id)+'"'+(ok&&!S.busy?"":" disabled")+'>Save recording</button></div>'}
+  }
+  if(x.k==="claude"){
+   var outs={1:[[3,"Drive folder, Penny script doc and written guide","Content Location, Penny Narration Location"],[3,"Ready for staff","Penny Script Status = In Review"]],2:[[5,"Penny audio, all scenes","Penny Narration Script Hash"],[5,"ElevenLabs flow link","Content Details"]],3:[[6,"Canva title slide and thumbnail","Thumbnail Design Location"]],4:[[7,"Final video in Descript","Descript Project URL"],[7,"Length and scene start times","Length, Content Details"]],5:[[8,"Learner-task article draft","Trail OS"],[8,"Ready for staff","Status = Ready for Review"]]}[x.step];
+   h+='<ul class="outs">'+outs.map(function(o){return '<li>'+(s.done[o[0]]?"✓":"○")+' <b>'+esc(o[1])+'</b> <span class="muted">· fills '+esc(o[2])+'</span></li>'}).join("")+'</ul>';
+   if(now&&canWork){var p=prompt(it,x.step);
+    h+='<label class="f">Prompt for Claude<textarea class="prompt" readonly id="pr'+x.step+'">'+esc(p)+'</textarea></label><div class="actions"><button type="button" class="btn amber" data-copy="pr'+x.step+'">Copy prompt →</button><span class="small">Paste it in your Claude app. This station turns done when Claude fills the fields above.</span></div>'}
+   else if(now)h+='<p class="note" style="margin:0">With the volunteer.</p>';
+  }
+  if(x.k==="gateRec"){
+   h+='<p class="small" style="margin:0">Trail OS posts in the Build With Me Slack channel when a recording is saved. Watch it, then accept it, ask for pickups (a few re-takes), or ask for a new recording.</p>';
+   if(it.rawRecordingUrl)h+='<div class="linkrow"><span class="muted">Raw recording</span><button type="button" class="linkbtn" data-link="'+esc(it.rawRecordingUrl)+'">Open</button></div>';
+   if(now&&st&&V().canApprove)h+=noteBox(it,"rec")+'<div class="actions"><button type="button" class="btn" data-review="Accepted" data-rid="'+esc(it.id)+'"'+(S.busy?" disabled":"")+'>Accept recording</button><button type="button" class="btn2" data-review="Pickup Required" data-rid="'+esc(it.id)+'"'+(noteOk(it,"rec")?"":" disabled")+'>Needs pickups</button><button type="button" class="btn2" data-review="Rebuild Required" data-rid="'+esc(it.id)+'"'+(noteOk(it,"rec")?"":" disabled")+'>Record again</button></div>';
+   else if(now)h+='<p class="note" style="margin:0">With staff. The answer shows here and in the Slack channel.</p>';
+  }
+  if(x.k==="gateScript"){
+   h+='<p class="small" style="margin:0">Read the Penny script and written guide in the Drive folder. Approving lets the volunteer generate audio, which spends ElevenLabs credits.</p>';
+   if(it.pennyNarrationUrl)h+='<div class="linkrow"><span class="muted">Penny script doc</span><button type="button" class="linkbtn" data-link="'+esc(it.pennyNarrationUrl)+'">Open</button></div>';
+   if(now&&st&&V().canApprove)h+=noteBox(it,"script")+'<div class="actions"><button type="button" class="btn" data-approvescript="'+esc(it.id)+'"'+(S.busy?" disabled":"")+'>Approve script</button><button type="button" class="btn2" data-returnscript="'+esc(it.id)+'"'+(noteOk(it,"script")?"":" disabled")+'>Send back with this note</button></div>';
+   else if(now)h+='<p class="note" style="margin:0">With staff. It moves on here when they approve it.</p>';
+  }
+  if(x.k==="gateFinal"){
+   h+='<p class="small" style="margin:0">Watch the final in Descript and read the article draft in Trail OS, then check each item.</p>';
+   if(it.descriptUrl)h+='<div class="linkrow"><span class="muted">Descript project</span><button type="button" class="linkbtn" data-link="'+esc(it.descriptUrl)+'">Open</button></div>';
+   if(now&&st&&V().canApprove){var all=QA.every(function(q){return S.checks[q[0]]});
+    h+='<fieldset style="border:0;margin:0;padding:0"><legend class="sr">Final review checks</legend>'+QA.map(function(q){return '<label class="check"><input type="checkbox" data-qa="'+q[0]+'"'+(S.checks[q[0]]?" checked":"")+'>'+esc(q[1])+'</label>'}).join("")+'</fieldset>'+noteBox(it,"final")+'<div class="actions"><button type="button" class="btn" data-approvefinal="'+esc(it.id)+'"'+(all&&!S.busy?"":" disabled")+'>Approve for publishing</button><button type="button" class="btn2" data-returnfinal="'+esc(it.id)+'"'+(noteOk(it,"final")?"":" disabled")+'>Send back with this note</button></div>'}
+   else if(now)h+='<p class="note" style="margin:0">With staff.</p>';
+  }
+  if(x.k==="publish"){
+   h+='<p class="small" style="margin:0">Upload the final to the Transition Trails YouTube channel as Unlisted, then paste the link here. Trail OS records the publication, adds the link to the week\u2019s Video Lesson activity and the Trail OS article, and marks the item Published.</p>';
+   if(now&&st&&V().canPublish){var d2=S.drafts["yt"+it.id]||"",ok2=https(d2);
+    h+='<div class="actions" style="align-items:flex-end"><label class="f" style="flex:1 1 260px">YouTube link<input type="url" data-draft="yt'+esc(it.id)+'" value="'+esc(d2)+'" placeholder="https://youtu.be/"></label><button type="button" class="btn" data-publish="'+esc(it.id)+'"'+(ok2&&!S.busy?"":" disabled")+'>Record as published</button></div>'}
+   else if(now)h+='<p class="note" style="margin:0">With staff.</p>';
+  }
+  h+='</section>';
+ });
+ return h;
+}
+function noteBox(it,k){var d=S.drafts["note"+k+it.id]||"";return '<label class="f">Note for the volunteer (needed to send back)<textarea rows="2" data-draft="note'+k+esc(it.id)+'" maxlength="2000">'+esc(d)+'</textarea></label>'}
+function noteOk(it,k){return (S.drafts["note"+k+it.id]||"").trim().length>2&&!S.busy}
+function simpleFlow(it,me,st){
+ var h='<section class="card"><h2>Status</h2><p class="small">This item moves by its Status. '+(st?"Staff can set any status.":"You can start it and send it for review. Staff approve and publish.")+'</p>';
+ if(st){h+='<div class="actions" style="align-items:flex-end"><label class="f">Status<select data-draft="status'+esc(it.id)+'">'+STATUSES.map(function(s){var cur=S.drafts["status"+it.id]||it.status;return '<option'+(cur===s?" selected":"")+'>'+esc(s)+'</option>'}).join("")+'</select></label><button type="button" class="btn" data-setstatus="'+esc(it.id)+'"'+((S.drafts["status"+it.id]&&S.drafts["status"+it.id]!==it.status&&!S.busy)?"":" disabled")+'>Save status</button></div>'}
+ else if(me){var nx=it.status==="Not Started"?["In Progress","Start work"]:it.status==="In Progress"?["Ready for Review","Send for review"]:null;
+  h+=nx?'<div class="actions"><button type="button" class="btn" data-vstatus="'+esc(it.id)+'" data-to="'+esc(nx[0])+'"'+(S.busy?" disabled":"")+'>'+esc(nx[1])+'</button></div>':'<p class="note" style="margin:0">'+(it.status==="Ready for Review"?"With staff for review.":"Nothing for you to do right now.")+'</p>'}
+ h+='</section>';
+ if(it.summary)h+='<section class="card"><h2>Summary</h2><p style="margin:0;white-space:pre-wrap">'+esc(it.summary)+'</p></section>';
+ return h;
+}
+function sideCards(it,st){
+ var v=vol(it),h='<section class="card"><h2>Who is doing it</h2>';
+ if(st&&V().canAssign){var sel=S.drafts["vol"+it.id];sel=sel==null?(v?v.contactId:""):sel;
+  var ser=it.case&&it.case.scope==="series";
+  h+='<label class="f">'+(ser?"Volunteer for the whole series":"Volunteer (Contact)")+'<select data-draft="vol'+esc(it.id)+'"><option value="">No volunteer</option>'+(S.data.volunteers||[]).map(function(x){return '<option value="'+esc(x.contactId)+'"'+(sel===x.contactId?" selected":"")+'>'+esc(x.name)+'</option>'}).join("")+'</select></label>'+(ser?'<p class="small" style="margin:0">This sets Volunteer Assigned on the series Case, so it changes the volunteer for every video in the series.</p>':'')+'<div class="actions"><button type="button" class="btn2" data-assign="'+esc(it.id)+'"'+(sel!==(v?v.contactId:"")&&!S.busy&&(it.case||!isBwm(it))?"":" disabled")+'>Save volunteer</button></div>'}
+ else h+='<p style="margin:0;color:var(--ink)">'+esc(v?v.name:"No volunteer yet")+'</p>';
+ h+='<p class="small" style="margin:0">'+(it.case?(it.case.scope==="series"?'Series Case ':'Case ')+esc(it.case.caseNumber||"")+(it.case.subject?' · '+esc(it.case.subject):'')+' · <button type="button" class="linkbtn" data-case="'+esc(it.case.id)+'">Open Case</button>':(isBwm(it)?'Not in the series yet. Link this item to its Build With Me week Product in Salesforce so it joins the series Case.':'No Case yet. Picking a volunteer creates one.'))+'</p>';
+ if((it.requests||[]).length)h+='<p class="small" style="margin:0">Asked to take it: '+esc(it.requests.map(function(r){return r.name||r.email}).join(", "))+'</p>';
+ h+='</section>';
+ h+='<section class="card"><h2>The record</h2><dl class="facts"><dt>Status</dt><dd>'+esc(it.status)+'</dd><dt>Format</dt><dd>'+esc(it.format||"Not set")+'</dd><dt>Topic</dt><dd>'+esc(it.topic||"Not set")+'</dd><dt>Pillars</dt><dd>'+esc((it.pillars||[]).join(", ")||"Not set")+'</dd><dt>Objective</dt><dd>'+esc(it.objective||"Not set")+'</dd><dt>Due date</dt><dd>'+fd(it.dueDate)+'</dd>'+(isBwm(it)?'<dt>Penny script</dt><dd>'+esc(it.pennyScriptStatus||"Not started")+'</dd><dt>Length</dt><dd>'+(it.length?esc(it.length)+" min":"Not yet")+'</dd>':'')+'</dl><div class="actions"><button type="button" class="btn2" data-item="'+esc(it.id)+'">Open full record in Trail OS</button></div></section>';
+ var links=[["Files (Drive folder)",it.contentLocationUrl],["Raw recording",it.rawRecordingUrl],["Penny script doc",it.pennyNarrationUrl],["Thumbnail (Canva)",it.thumbnailUrl],["Descript",it.descriptUrl]];
+ var ca=it.courseActivity;
+ h+='<section class="card"><h2>Files and links</h2>'+(isBwm(it)?'<div class="linkrow"><span class="muted">Week activity</span><span style="text-align:right">'+(ca?esc(ca.name)+(ca.module?' \u00b7 '+esc(ca.module):''):'Not linked')+'</span></div>':'')+links.map(function(l){return '<div class="linkrow"><span class="muted">'+esc(l[0])+'</span>'+(l[1]?'<button type="button" class="linkbtn" data-link="'+esc(l[1])+'">Open</button>':'<span>Not yet</span>')+'</div>'}).join("")+'</section>';
+ var pubs=it.publications||[];
+ h+='<section class="card"><h2>Publications</h2>'+(pubs.length?pubs.map(function(p){return '<div style="border:1px solid var(--gray);border-radius:14px;padding:10px 12px;font-size:14px"><b style="color:var(--ink)">'+esc(p.platform||"")+'</b><div>'+esc(p.status||"")+' · planned '+fd(p.plannedDate)+(p.publishedDate?" · published "+fd(p.publishedDate):"")+(stale(p)?" · ⚠ date passed":"")+'</div>'+(p.url?'<button type="button" class="linkbtn" data-link="'+esc(p.url)+'">Open</button>':'')+'</div>'}).join(""):'<p class="small muted" style="margin:0">None yet.</p>')+'</section>';
+ return h;
+}
+
+function icon(n){if(n==="user")return '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';return ""}
+
+/* ---------- events ---------- */
+document.addEventListener("click",function(e){
+ var b=e.target.closest("button");if(!b||b.disabled)return;var d=b.dataset;
+ if(d.go!==undefined){S.quick=d.q2||"";if(d.go!=="pipeline"&&d.go!=="publishing")S.quick="";go(d.go);return}
+ if(d.open){go("record",d.open);return}
+ if(d.back){go(S.from||(staff()?"pipeline":"mine"));return}
+ if(d.fmt!==undefined){S.fmt=d.fmt;render();return}
+ if(d.quick!==undefined){S.quick=S.quick===d.quick?"":d.quick;render();return}
+ if(d.bwmf){S.bwmf=d.bwmf;render();return}
+ if(d.topic!==undefined){S.topic=d.topic||"all";S.quick="";go("pipeline");return}
+ if(d.jump){var el=document.getElementById(d.jump);if(el){el.scrollIntoView({behavior:"smooth",block:"start"});el.focus({preventScroll:true})}return}
+ if(d.link){openLink(d.link);return}
+ if(d["case"]){act("openRecord",{type:"case",id:d["case"]});return}
+ if(d.item){act("openRecord",{type:"contentItem",id:d.item});return}
+ if(d.copy){var ta=document.getElementById(d.copy);if(!ta)return;var txt=ta.value,done=function(){toast("Copied. Paste it in Claude.",false);render()};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,function(){fallback()});return}}catch(x){}
+  fallback();
+  function fallback(){ta.focus();ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(x){}if(ok)done();else toast("Select the prompt and press Ctrl+C (Cmd+C on a Mac).",true)}
+  return}
+ var it=byId(d.saverec||d.approvescript||d.returnscript||d.approvefinal||d.returnfinal||d.publish||d.assign||d.setstatus||d.vstatus||"");
+ if(d.saverec&&it){run("saveRecording",{itemId:it.id,url:S.drafts["rec"+it.id].trim(),version:it.version},"Recording saved. Trail OS posted it in Slack for review.");S.drafts["rec"+it.id]="";return}
+ if(d.approvescript&&it){run("approveScript",{itemId:it.id,version:it.version},"Script approved. The volunteer can generate audio.");return}
+ if(d.returnscript&&it){run("returnScript",{itemId:it.id,note:S.drafts["notescript"+it.id].trim(),version:it.version},"Sent back with your note.");S.drafts["notescript"+it.id]="";return}
+ if(d.approvefinal&&it){run("approveFinal",{itemId:it.id,checks:QA.map(function(q){return q[0]}),version:it.version},"Approved for publishing.");S.checks={};return}
+ if(d.returnfinal&&it){run("returnFinal",{itemId:it.id,note:S.drafts["notefinal"+it.id].trim(),version:it.version},"Sent back with your note.");S.drafts["notefinal"+it.id]="";return}
+ if(d.publish&&it){run("recordPublished",{itemId:it.id,platform:"YouTube",url:S.drafts["yt"+it.id].trim(),version:it.version},"Recorded as published.");S.drafts["yt"+it.id]="";return}
+ if(d.assign&&it){var c=S.drafts["vol"+it.id]||null;run("assignVolunteer",{itemId:it.id,contactId:c,caseId:it.case?it.case.id:null},c?"Volunteer saved.":"Volunteer cleared.");delete S.drafts["vol"+it.id];return}
+ if(d.setstatus&&it){run("setStatus",{itemId:it.id,status:S.drafts["status"+it.id],version:it.version},"Status saved.");delete S.drafts["status"+it.id];return}
+ if(d.vstatus&&it){run("setStatus",{itemId:it.id,status:d.to,version:it.version},"Saved.");return}
+ if(d.review&&d.rid){var ri=byId(d.rid);if(!ri)return;run("reviewRecording",{itemId:ri.id,outcome:d.review,note:(S.drafts["noterec"+ri.id]||"").trim(),version:ri.version},d.review==="Accepted"?"Recording accepted.":"Sent back with your note.");S.drafts["noterec"+ri.id]="";return}
+ if(d.ask){run("requestItem",{itemId:d.ask},"Sent. Staff will let you know.");return}
+ if(d.sendidea){var idea=S.drafts.idea||{};run("submitIdea",{title:(idea.title||"").trim(),topicId:idea.topicId,format:idea.format||"Article",summary:(idea.summary||"").trim()},"Idea sent. It shows on the staff board as an Idea.");S.drafts.idea={};return}
+ if(d.confirm){run("confirmPublication",{publicationId:d.confirm,outcome:"published"},"Marked as published.");return}
+ if(d.resched){S.resched=d.resched;S.reschedDate="";render();return}
+ if(d.cancelsched){S.resched=null;render();return}
+ if(d.dosched){run("confirmPublication",{publicationId:S.resched,outcome:"reschedule",plannedDate:S.reschedDate},"New date saved.");S.resched=null;return}
+});
+function onField(e){
+ var t=e.target,d=t.dataset;if(!d)return;var keep=e.type==="input"&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA");
+ if(d["in"]){if(d["in"]==="q")S.q=t.value;else if(d["in"]==="topic")S.topic=t.value;else if(d["in"]==="reschedDate")S.reschedDate=t.value}
+ else if(d.draft!==undefined)S.drafts[d.draft]=t.value;
+ else if(d.idea){S.drafts.idea=S.drafts.idea||{};S.drafts.idea[d.idea]=t.value}
+ else if(d.qa){S.checks[d.qa]=t.checked}
+ else return;
+ if(keep){var id=t.getAttribute("data-in")||t.getAttribute("data-draft")||t.getAttribute("data-idea"),pos=t.selectionStart;render();var n=document.querySelector('[data-in="'+id+'"],[data-draft="'+id+'"],[data-idea="'+id+'"]');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}}
+ else render();
+}
+document.addEventListener("input",onField);
+document.addEventListener("change",function(e){if(e.target.tagName==="SELECT"||e.target.type==="checkbox"||e.target.type==="date")onField(e)});
+})();
+</script>
+</body>
+</html>
