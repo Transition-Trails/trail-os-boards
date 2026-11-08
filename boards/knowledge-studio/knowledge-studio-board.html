@@ -133,7 +133,7 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .waiting{margin:40px auto;max-width:520px;text-align:center;padding:28px}
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:9;max-width:90vw}
 .toast.bad{background:#8A3B12}
-.failbox{position:fixed;bottom:16px;right:16px;left:auto;max-width:min(420px,calc(100vw - 32px));background:#fff;border:1px solid #C9A88B;border-left:4px solid #8A3B12;border-radius:10px;padding:10px 12px;z-index:10;box-shadow:0 6px 24px rgba(0,0,0,.15);display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.failbox{position:fixed;bottom:16px;left:16px;right:auto;max-width:min(420px,calc(100vw - 32px));background:#fff;border:1px solid #C9A88B;border-left:4px solid #8A3B12;border-radius:10px;padding:10px 12px;z-index:10;box-shadow:0 6px 24px rgba(0,0,0,.15);display:flex;gap:10px;align-items:flex-start;font-size:13px}
 .failbox[hidden]{display:none}.fbtxt{min-width:0;flex:1;overflow-wrap:anywhere}
 .gd{border-radius:10px;padding:8px 12px;margin:8px 0 4px;background:var(--bg);border-left:4px solid #5590A9;font-size:13px;overflow-wrap:anywhere}
 .gd-success{border-left-color:#3E9A55}.gd-warning{border-left-color:#C08A1E;background:var(--warn)}.gd-error{border-left-color:#8A3B12;background:var(--warn)}
@@ -315,8 +315,8 @@ function send(m){parent.postMessage(m,"*")}
 function act(name,payload,key){
   var id="a"+(++seq);busy[key||id]=true;render();
   return new Promise(function(res){
-    var t=null;function arm(){clearTimeout(t);t=setTimeout(function(){delete pending[id];delete busy[key||id];showFailure({message:"This request could not be completed.",nextStep:"Refresh status and follow the article\u2019s current next step.",details:"No answer from Trail OS within 20 seconds ("+name+")."});render();res({ok:false,code:"timeout"})},20000)}
-    arm();pending[id]=function(m){clearTimeout(t);delete busy[key||id];if(!m.ok){if(FAIL_PASS[m.code])toast(m.message||"That didn't save.",true);else showFailure(failFromResult(m))}render();res(m)};
+    var t=null;function arm(){clearTimeout(t);t=setTimeout(function(){delete pending[id];delete busy[key||id];showFailure({message:"This request could not be completed.",nextStep:"Refresh status and follow the article\u2019s current next step.",details:"No answer from Trail OS within 26 seconds ("+name+")."});render();res({ok:false,code:"timeout"})},26000)}
+    arm();pending[id]=function(m){clearTimeout(t);delete busy[key||id];if(!m.ok){if(FAIL_PASS[m.code])toast(m.message||"That didn't save.",true);else if(!HOST_NOTIFIES[name])showFailure(failFromResult(m))}render();res(m)};
     pending[id].keepAlive=arm;
     send({type:"action",id:id,name:name,payload:payload});
   });
@@ -1393,6 +1393,8 @@ function updateGuidance(){
 setInterval(function(){if(D&&dataStale()!==lastStale)updateGuidance()},10000);
 /* failures stay visible until dismissed */
 var FAIL_PASS={preview_only:1,cancelled:1};
+/* Trail OS shows its own notice for failed requests it runs; the board only reports what the host does not */
+var HOST_NOTIFIES={};["loadContent","saveContent","checkCurrentPreflight","submitForReview","approveNow","assignReviewers","bulkAssign","submitBusinessReview","submitTechnicalReview","fixIssue","returnAndFixIssue","saveDraft","retrySync","checkPublication","recordPennyCheck","bulkUpdate","signPolicy","answerDecision","mapPage","startArticle","createArticle","loadArticleWork","setArticleTags","assignArticleWork","claimWriting","previewPublishedCategoryRepair","confirmPublishedCategoryRepair"].forEach(function(n){HOST_NOTIFIES[n]=1});
 function showFailure(f){
   V.fail=f;var el=$("failbox");if(!el)return;
   el.innerHTML='<div class="fbtxt"><p class="gdmsg">'+esc(f.message)+"</p>"+(f.nextStep?'<p class="gdnext">'+esc(f.nextStep)+"</p>":"")+(f.details?'<details class="wfd"><summary>Details for support</summary><div class="wf-error">'+esc(f.details)+"</div></details>":"")+'</div><button type="button" class="btn ghost sm" id="faildismiss">Dismiss</button>';
