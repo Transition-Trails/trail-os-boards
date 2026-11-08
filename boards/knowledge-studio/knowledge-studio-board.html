@@ -257,6 +257,11 @@ h3.sec{font-size:14px}
 .roles{display:flex;flex-wrap:wrap;gap:4px}
 .pill.p-role{background:var(--tint);color:var(--teal)}
 .asg{display:flex;flex-direction:column;gap:8px}
+.wrs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;margin-bottom:10px}.wrs .f{flex:1 1 180px;margin:0}.wrs select{min-height:36px}
+.tagset{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.tagc{display:inline-flex;align-items:center;gap:2px;font-size:12.5px;border-radius:999px;background:var(--tint);color:var(--ink);padding:2px 4px 2px 10px;max-width:100%;word-break:break-all}.tagc button{border:0;background:transparent;min-width:28px;min-height:28px;border-radius:999px;cursor:pointer;color:var(--ink)}.tagc.ro{padding:2px 10px}
+.tagrow{display:flex;gap:6px}.tagrow input{flex:1;min-width:0}
+.cmprow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.help ol{margin:6px 0 4px;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .kv{display:flex;gap:10px;font-size:13.5px}.kv span{min-width:120px;color:var(--body)}.kv b{color:var(--ink);font-weight:600}
 .ckrow{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:start;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
 .ckrow input{margin-top:6px;width:100%}
@@ -313,8 +318,9 @@ window.addEventListener("message",function(e){
   if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);followRevision();if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab=V.pendingTab||"edit";V.pendingOpen=null;V.pendingTab=null}render()}
   else if(m.type==="actionPending"&&pending[m.id]&&pending[m.id].keepAlive){pending[m.id].keepAlive()}
   else if(m.type==="result"&&pending[m.id]){var r=pending[m.id];delete pending[m.id];r(m)}
+  else if(m.type==="publicationComparisonReturn"&&typeof m.articleId==="string"){comparisonReturned(m.articleId)}
 });
-send({type:"ready",board:BOARD,boardVersion:BOARD_VERSION,contractVersion:CONTRACT});
+send({type:"ready",board:BOARD,boardVersion:BOARD_VERSION,contractVersion:CONTRACT,capabilities:["publicationComparisonReturn"]});
 setTimeout(function(){if(!D)showWait("Trail OS hasn't sent Knowledge data yet. Reload the page; if this stays, tell an admin.")},6000);
 function showWait(msg){$("waitmsg").textContent=msg;$("waiting").hidden=false;$("body").hidden=true}
 var tt=null;function toast(msg,bad){var t=$("toast");t.textContent=msg;t.className="toast"+(bad?" bad":"");t.hidden=false;clearTimeout(tt);tt=setTimeout(function(){t.hidden=true},4500)}
@@ -512,7 +518,7 @@ function renderPanel0(p){
 function head(kick,title,sub){
   return '<div class="ph">'+(V.back?'<button type="button" class="linkbtn" id="back" style="align-self:flex-start">\u2190 '+esc(V.back.label)+"</button>":"")+'<div class="row"><div><div class="kick">'+esc(kick)+"</div><h3>"+esc(title)+"</h3>"+(sub?'<div class="note">'+esc(sub)+"</div>":"")+'</div><div class="phbtns">'+(V.sel&&V.sel.kind==="article"?'<button type="button" class="x" id="focusbtn" aria-label="'+(V.focus?"Exit focus mode (Esc)":"Open in focus mode")+'" title="'+(V.focus?"Exit focus mode (Esc)":"Focus mode")+'">'+(V.focus?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M4 14h6v6"/><path d="M10 14l-7 7"/></svg>':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-7 7"/><path d="M10 20H4v-6"/><path d="M4 20l7-7"/></svg>')+"</button>":"")+(V.focus?"":'<button type="button" class="x" id="widen" aria-label="'+(V.wide?"Show the list again":"Widen the panel to full width")+'" title="'+(V.wide?"Show the list":"Full width")+'" style="font-size:16px">'+(V.wide?"\u21e5":"\u21e4")+"</button>")+'<button type="button" class="x" id="close" aria-label="Close panel">\u00d7</button></div></div>';
 }
-function defaultTab(a){if(a.step==="review"&&isMe(a.reviewer))return "review";if(a.step==="penny"&&isMe(a.validator))return "penny";if(a.live.length)return "fix";if(wfStatus(a,"approval")==="approved"&&wfPart(a,"delivery")&&wfStatus(a,"delivery")!=="draft_current"&&wfStatus(a,"delivery")!=="live_current")return "sync";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
+function defaultTab(a){if(canClaim(a))return "content";if(a.step==="review"&&isMe(a.reviewer))return "review";if(a.step==="penny"&&isMe(a.validator))return "penny";if(a.live.length)return "fix";if(wfStatus(a,"approval")==="approved"&&wfPart(a,"delivery")&&wfStatus(a,"delivery")!=="draft_current"&&wfStatus(a,"delivery")!=="live_current")return "sync";if(a.st.i===2)return "publish";if(a.st.i===3)return "penny";return "edit"}
 function articlePanel(a){
   var tab=V.tab||defaultTab(a);V.tab=tab;
   var bar='<div class="stagebar" aria-label="Stage">'+STAGES.map(function(s,j){var c=j<a.st.i?"d":j===a.st.i?(a.step==="syncBlocked"?"b":"c"):"";return '<span class="'+c+'">'+s+"</span>"}).join("")+"</div>";
@@ -574,17 +580,18 @@ function editTab(a){
   h+='<div class="btnrow"><button type="button" class="btn solid" id="savedraft"'+(!ed||busy["edit:"+a.id]?" disabled":"")+">"+(busy["edit:"+a.id]?"Saving\u2026":"Save draft")+'</button></div>';
   h+='<p class="note">'+(hasDraftRevision(a)?"This is the published version. Make changes in the draft revision.":a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
   if(V.done["edit:"+a.id])h+='<p class="ok">Saved as a draft. Send it for approval when it\'s ready.</p>';
-  return h;
+  return h+tagsBlock(a);
 }
 var STEP_TYPES={"procedure":1,"learner-task":1};
 var TYPE_FIELDS={troubleshooting:[["symptom","Symptom the reader sees","textarea"]],policy:[["ruleStatement","Rule statement (Penny quotes this word for word)","textarea"],["effectiveDate","Effective date","date"],["waiverAuthority","Who can grant an exception","text"]]};
 function contentTab(a){
   var c=V.content[a.id];
   if(!c){V.content[a.id]=c={loading:true};setTimeout(function(){loadContent(a.id)},0)}
-  if(c.loading||c.err){return c.err?'<p class="err">'+esc(c.err)+'</p><div class="btnrow"><button type="button" class="btn ghost" data-reload="'+esc(a.id)+'">Try again</button></div>':'<p class="note">Loading the article content\u2026</p>'}
+  if(c.loading||c.err){return writerStrip(a)+(c.err?'<p class="err">'+esc(c.err)+'</p><div class="btnrow"><button type="button" class="btn ghost" data-reload="'+esc(a.id)+'">Try again</button></div>':'<p class="note">Loading the article content\u2026</p>')}
   var ed=canEdit(a),dis=ed?"":" disabled";
   var h='<p class="note">'+(hasDraftRevision(a)?"This is the published version. Make changes in the draft revision.":grp(a)&&grp(a).draftArticleId===a.id&&grp(a).articleIds.length>1?"You are editing a draft revision. Readers keep the live version until the revision is published.":a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
   if(isCorrections(a))h=findingsBox(a)+h;
+  h=writerStrip(a)+h;
   if(V.focus)h='<h2 class="ftitle">'+esc(a.title)+"</h2>"+h;
   h+='<div class="sec">'+esc(c.contentLabel||"Article content")+"</div>";
   if(ed)h+='<div class="tool" role="toolbar" aria-label="Formatting">'+[["bold","B","Bold"],["italic","I","Italic"],["h3","H","Heading"],["ul","\u2022 List","Bulleted list"],["ol","1. List","Numbered list"],["link","Link","Add a link"],["unlink","Unlink","Remove link"]].map(function(b){return '<button type="button" data-fmt="'+b[0]+'" aria-label="'+b[2]+'">'+b[1]+"</button>"}).join("")+"</div>";
@@ -656,7 +663,7 @@ function sfCard(a){
   h+='<p class="note" style="margin:0">'+(s.checkedAt?"Salesforce history read "+esc(fmtWhen(s.checkedAt)):"Salesforce history not read yet")+"</p>";
   return h+"</div>";
 }
-function publishTab(a){return sfCard(a)+categoryCard(a)+publicationBlock(a)}
+function publishTab(a){return compareRow(a)+sfCard(a)+categoryCard(a)+publicationBlock(a)+pubHelp()}
 var CAT_BADGE={verified:["Category verified","p-done"],unverified:["Category not verified","p-open"],failed:["Draft sync failed","p-open"],not_selected:["No category selected","p-write"]};
 function categoryCard(a){
   var c=a.categorySync;if(!c||!c.status)return "";
@@ -783,9 +790,9 @@ function frm(k){return V.forms[k]=V.forms[k]||{}}
 function assignBlock(a){
   var curW=writerOf(a)||"",f=frm("as:"+a.id),wr=f.author!==undefined?f.author:curW,rv=f.reviewer!==undefined?f.reviewer:a.reviewer,vd=f.validator!==undefined?f.validator:a.validator,due=f.dueDate!==undefined?f.dueDate:((a.assignment&&a.assignment.dueDate)||"");
   var wq=writing(a),canW=!!(wq&&wq.status!=="not_applicable");
-  var h='<div class="box asg"><div class="sec" style="margin:0">Who works on it</div>';
+  var h='<div class="box asg"><div class="sec" style="margin:0">Reviewers</div>';canW=false;
   if(!canAssign()){
-    h+=(canW?'<div class="kv"><span>Writer</span><b>'+esc(curW?personName(curW):"Unassigned")+"</b></div>":"")+'<div class="kv"><span>Business review</span><b>'+esc(a.reviewer?personName(a.reviewer):"Not assigned")+'</b></div><div class="kv"><span>Penny validator</span><b>'+esc(a.validator?personName(a.validator):"Not assigned")+"</b></div>"+(due?'<div class="kv"><span>Due</span><b>'+esc(fmtDate(due))+"</b></div>":"")+'<p class="note">A Knowledge Manager assigns reviewers.</p></div>';
+    h+=(canW?'<div class="kv"><span>Writer</span><b>'+esc(curW?personName(curW):"Unassigned")+"</b></div>":"")+'<div class="kv"><span>Business review</span><b>'+esc(a.reviewer?personName(a.reviewer):"Not assigned")+'</b></div><div class="kv"><span>Penny validator</span><b>'+esc(a.validator?personName(a.validator):"Not assigned")+"</b></div>"+(due?'<div class="kv"><span>Due</span><b>'+esc(fmtDate(due))+"</b></div>":"")+'<p class="note">A Knowledge Manager assigns reviewers. The writer is shown on Content.</p></div>';
     return h;
   }
   var el=eligible(a);
@@ -984,7 +991,7 @@ function approvalBar(a){
   msg=ap&&ap.label?ap.label:"Approval: not confirmed";tone=wfTone(a,"approval");
   if(isCorrections(a)){msg="Needs changes \u00b7 "+(writing(a).assignee?personName(writing(a).assignee):"Unassigned");tone="p-open"}
   else if(writing(a)&&writing(a).status==="unassigned"&&(st==="draft"||st==="unknown"))msg="Draft \u00b7 Unassigned";
-  if(canClaim(a))btns+='<button type="button" class="btn solid sm" data-claim="'+esc(a.id)+'"'+(busy["claim:"+a.id]?" disabled":"")+">"+(busy["claim:"+a.id]?"Claiming\u2026":"Claim writing")+"</button>";
+  if(canClaim(a)&&V.tab!=="content")btns+='<button type="button" class="btn ghost sm" data-tab="content">Claim on Content</button>';
   if(st==="awaiting_approval"&&a.reviewer)msg+=" \u00b7 "+personName(a.reviewer);
   if((st==="draft"||st==="changes_requested")&&canSubmit(a))btns+='<button type="button" class="btn solid sm" data-submit="'+esc(a.id)+'"'+(busy["sub:"+a.id]?" disabled":"")+">"+(busy["sub:"+a.id]?"Sending\u2026":"Send for approval")+"</button>";
   if(st==="awaiting_approval"&&canBizReview(a)&&V.tab!=="review")btns+='<button type="button" class="btn solid sm" data-tab="review">Review and approve</button>';
@@ -1052,6 +1059,7 @@ function setFocus(on,quiet){
     if(!on&&document.fullscreenElement)document.exitFullscreen().catch(function(){})}catch(e){}
   if(quiet)return;renderPanel();var b=$("focusbtn");if(b)b.focus();
 }
+document.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target&&e.target.dataset&&e.target.dataset.taginput){e.preventDefault();tagAdd(e.target.dataset.taginput)}});
 document.addEventListener("keydown",function(e){if(e.key!=="Escape"||!V.focus||V.linkFor)return;if(document.fullscreenElement)return;e.preventDefault();setFocus(false)});
 document.addEventListener("fullscreenchange",function(){});
 /* ---------- workflow facts (v1.15): approval, delivery, publication, Penny are separate ---------- */
@@ -1089,7 +1097,7 @@ function syncTab(a){
   if(d.error)h+='<details class="wfd"><summary>Error details</summary>'+(d.attemptedAt?'<p class="note" style="margin:6px 0">Attempted: '+esc(fmtWhen(d.attemptedAt))+"</p>":"")+'<div class="wf-error">'+esc(d.error)+"</div></details>";
   if(d.canRetry===true&&!active&&canPublish(a))h+='<div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry sync")+"</button></div>";
   h+='<p class="note" style="margin:0">Delivery puts the approved revision into a Salesforce draft. It never publishes; publishing is on the Publish tab.</p>';
-  return h+"</section>";
+  return h+"</section>"+pubHelp();
 }
 function publicationBlock(a){
   var p=wfPart(a,"publication"),h='<section class="box sfc wf" aria-labelledby="pub-h"><div class="sfh"><h3 class="sec" id="pub-h" style="margin:0">Salesforce publication</h3>'+wfPill(a,"publication")+"</div>";
@@ -1198,6 +1206,91 @@ function doClaim(id){
     });
   });
 }
+/* ---------- article work in the article (v1.18) ---------- */
+V.tagEd=V.tagEd||{};
+function writerStrip(a){
+  var w=writing(a);if(!w||w.status==="not_applicable")return "";
+  var cur=writerOf(a)||"",h='<div class="box wrs" aria-label="Writer"><span class="pill '+(w.status==="unassigned"?"p-open":"p-role")+'">'+esc(writingLabel(a))+"</span>";
+  if(canClaim(a)&&w.status==="unassigned")h+='<button type="button" class="btn solid sm" data-claim="'+esc(a.id)+'"'+(busy["claim:"+a.id]?" disabled":"")+">"+(busy["claim:"+a.id]?"Claiming\u2026":"Claim writing")+"</button>";
+  if(canAssign()){
+    var f=frm("wr:"+a.id),sel=f.author!==undefined?f.author:cur,changed=sel!==cur;
+    h+='<label class="f"><span class="sr">Writer</span><select data-wrsel="'+esc(a.id)+'" aria-label="Writer">'+personOpts(writerChoices(a),sel).replace(">No one</option>",">Unassigned</option>")+"</select></label>";
+    if(changed)h+='<button type="button" class="btn solid sm" data-wrsave="'+esc(a.id)+'"'+(busy["wr:"+a.id]?" disabled":"")+">"+(busy["wr:"+a.id]?"Saving\u2026":"Save writer")+"</button>";
+  }
+  return h+"</div>";
+}
+function doWriter(id){
+  var a=D.by[id],f=frm("wr:"+id),cur=writerOf(a)||"";
+  if(f.author===undefined||f.author===cur){toast("Nothing has changed.");return}
+  if(f.author&&(f.author===lc(a.reviewer)||f.author===lc(a.validator))){toast("A reviewer can't also be the writer.",true);return}
+  act("assignArticleWork",{articleId:id,expectedRevision:(a.assignment&&a.assignment.revision)||null,author:f.author||null},"wr:"+id).then(function(r){if(r.ok){delete V.forms["wr:"+id];toast(r.message||"Writer saved.")}});
+}
+function tagsBlock(a){
+  var e=V.tagEd[a.id],known=Array.isArray(a.tags)?a.tags:null;
+  var h='<div class="box" style="margin-top:12px"><div class="sfh"><div class="sec" style="margin:0">Trail OS tags</div>'+(e&&e.tags?'<span class="note">'+e.tags.length+"/30</span>":"")+"</div>";
+  if(!e){
+    h+=known&&known.length?'<div class="tagset">'+known.map(function(t){return '<span class="tagc ro">'+esc(t)+"</span>"}).join("")+"</div>":'<p class="note" style="margin:4px 0">'+(known?"No tags yet.":"Open the editor to see this article\u2019s tags.")+"</p>";
+    h+='<div class="btnrow"><button type="button" class="btn ghost sm" data-tagedit="'+esc(a.id)+'">Edit tags</button></div>';
+  }else if(e.loading)h+='<p class="note">Loading tags\u2026</p>';
+  else if(e.err)h+='<p class="err">'+esc(e.err)+'</p><div class="btnrow"><button type="button" class="btn ghost sm" data-tagedit="'+esc(a.id)+'">Try again</button><button type="button" class="btn ghost sm" data-tagcancel="'+esc(a.id)+'">Close</button></div>';
+  else{
+    var dis=e.saving?" disabled":"";
+    h+='<div class="tagset">'+(e.tags.length?e.tags.map(function(t,i){return '<span class="tagc">'+esc(t)+'<button type="button" data-tagdel="'+esc(a.id)+"|"+i+'" aria-label="Remove '+esc(t)+'"'+dis+">\u00d7</button></span>"}).join(""):'<span class="note">No tags.</span>')+"</div>";
+    h+='<div class="tagrow"><input type="text" maxlength="60" data-taginput="'+esc(a.id)+'" value="'+esc(e.input||"")+'" placeholder="Add a tag" aria-label="New tag"'+dis+'><button type="button" class="btn ghost sm" data-tagadd="'+esc(a.id)+'"'+(!(e.input||"").trim()||e.tags.length>=30||e.saving?" disabled":"")+">Add</button></div>";
+    h+='<div class="btnrow"><button type="button" class="btn solid sm" data-tagsave="'+esc(a.id)+'"'+dis+">"+(e.saving?"Saving\u2026":"Save tags")+'</button><button type="button" class="btn ghost sm" data-tagcancel="'+esc(a.id)+'"'+dis+">Cancel</button></div>";
+  }
+  return h+'<p class="note" style="margin:4px 0 0">Tags are local to Trail OS. They aren\u2019t Salesforce data categories.</p></div>';
+}
+function tagEdit(id){
+  var e=V.tagEd[id]={loading:true};keepScroll(renderPanel);
+  act("loadArticleWork",{articleId:id},"tags:"+id).then(function(r){
+    if(V.tagEd[id]!==e)return;
+    if(!r.ok){e.loading=false;e.err=r.code==="preview_only"?"Preview only: tags can\u2019t be loaded or saved here.":(r.message||"Tags couldn\u2019t be loaded.");keepScroll(renderPanel);return}
+    var d=r.data||{},seen={};
+    e.tags=(Array.isArray(d.tags)?d.tags:[]).map(function(t){return String(t).trim()}).filter(function(t){var k=t.toLowerCase();if(!t||seen[k])return false;seen[k]=1;return true}).slice(0,30);
+    e.rev=d.tagsRevision==null?null:d.tagsRevision;e.loading=false;e.input="";keepScroll(renderPanel);
+    var inp=document.querySelector('[data-taginput="'+id+'"]');if(inp)inp.focus();
+  });
+}
+function tagAdd(id){
+  var e=V.tagEd[id];if(!e||!e.tags||e.saving)return;
+  var t=String(e.input||"").replace(/[<>]/g,"").trim().slice(0,60);
+  if(!t)return;
+  if(e.tags.length>=30){toast("An article can have up to 30 tags.",true);return}
+  if(e.tags.some(function(x){return x.toLowerCase()===t.toLowerCase()})){toast("That tag is already on this article.");return}
+  e.tags.push(t);e.input="";keepScroll(renderPanel);
+  var inp=document.querySelector('[data-taginput="'+id+'"]');if(inp)inp.focus();
+}
+function tagSave(id){
+  var e=V.tagEd[id];if(!e||!e.tags||e.saving)return;
+  e.saving=true;keepScroll(renderPanel);
+  act("setArticleTags",{articleId:id,expectedRevision:e.rev,tags:e.tags.slice()},"tagsave:"+id).then(function(r){
+    if(V.tagEd[id]!==e)return;
+    e.saving=false;
+    if(r.ok){delete V.tagEd[id];toast(r.message||"Tags saved.");keepScroll(renderPanel)}
+    else{if(r.code==="preview_only")e.err="Preview only: tags can\u2019t be saved here.";keepScroll(renderPanel)}
+  });
+}
+function compareRow(a){
+  var k=sfState(a);
+  if(k==="none")return "";
+  return '<div class="cmprow"><span class="note">See field by field how this article differs from what\u2019s live in Salesforce.</span><button type="button" class="btn ghost sm" data-compare="'+esc(a.id)+'"'+(busy["cmp:"+a.id]?" disabled":"")+">Compare with Salesforce</button></div>";
+}
+function doCompare(id){act("openPublicationComparison",{articleId:id},"cmp:"+id)}
+function comparisonReturned(id){
+  if(!D||!D.by[id])return;
+  if(!(V.sel&&V.sel.kind==="article"&&V.sel.id===id)){V.sel={kind:"article",id:id};V.back=null}
+  V.tab="publish";render();
+  var b=document.querySelector('[data-compare="'+id+'"]');if(b){try{b.focus()}catch(err){}}
+}
+function pubHelp(){
+  return '<details class="wfd help"><summary>How publishing works</summary><ol>'+
+  "<li>Approval queues the Salesforce draft sync. It adds and verifies the selected data category and keeps existing ones. Don\u2019t add categories by hand.</li>"+
+  "<li>Queued work is checked about every five minutes. Temporary failures retry on their own; mapping and version conflicts need attention on Sync.</li>"+
+  "<li>Wait until Sync shows the content and category delivered, then review the Salesforce draft.</li>"+
+  "<li>A licensed Knowledge user publishes it manually in Salesforce.</li>"+
+  "<li>Come back and use Check Salesforce status. Checklist ticks aren\u2019t evidence of publication.</li></ol></details>";
+}
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back,exact){V.pin=exact?id:null;if(!exact&&D.repOf&&D.repOf[id])id=D.repOf[id];V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
@@ -1260,6 +1353,13 @@ document.addEventListener("click",function(e){
   if(t.dataset.br){doBizReview(t.dataset.br);return}
   if(t.dataset.tr){doTechReview(t.dataset.tr);return}
   if(t.dataset.asg){doAssign(t.dataset.asg);return}
+  if(t.dataset.wrsave){doWriter(t.dataset.wrsave);return}
+  if(t.dataset.tagedit){tagEdit(t.dataset.tagedit);return}
+  if(t.dataset.tagadd){tagAdd(t.dataset.tagadd);return}
+  if(t.dataset.tagdel){var td=t.dataset.tagdel.split("|");var te=V.tagEd[td[0]];if(te){te.tags.splice(+td[1],1);keepScroll(renderPanel)}return}
+  if(t.dataset.tagsave){tagSave(t.dataset.tagsave);return}
+  if(t.dataset.tagcancel){delete V.tagEd[t.dataset.tagcancel];keepScroll(renderPanel);return}
+  if(t.dataset.compare){doCompare(t.dataset.compare);return}
   if(t.dataset.ff&&t.type==="checkbox"){formInput(t,false);return}
   if(t.id==="bapply"){doBulk();return}
   if(t.dataset.decide){doDecide(t.dataset.decide);return}
@@ -1269,6 +1369,7 @@ document.addEventListener("click",function(e){
 document.addEventListener("input",function(e){
   var t=e.target;if(!D)return;
   if(t.id==="rte"){captureBody();return}
+  if(t.dataset&&t.dataset.taginput){var ti=V.tagEd[t.dataset.taginput];if(ti){ti.input=t.value;var tb=document.querySelector('[data-tagadd="'+t.dataset.taginput+'"]');if(tb)tb.disabled=!t.value.trim()||ti.tags.length>=30||!!ti.saving}return}
   if(t.id==="nt-title"){var nf=newForm();nf.title=t.value;var cb=$("nt-create");if(cb)cb.disabled=!(t.value.trim()&&nf.type&&nf.aud&&(D.lists.audiences||[]).length)||!!busy["new"];return}
   if(t.dataset&&t.dataset.an==="note"&&V.sel){(V.forms["an:"+V.sel.id]=V.forms["an:"+V.sel.id]||{}).note=t.value;return}
   if(t.dataset&&t.dataset.rn){V.forms["rn:"+t.dataset.rn]=t.value;return}
@@ -1284,6 +1385,7 @@ document.addEventListener("input",function(e){
 document.addEventListener("change",function(e){
   var t=e.target;if(!D)return;
   if(t.id==="nt-type"||t.id==="nt-aud"||t.id==="nt-title"||t.id==="nt-writer"){var nf2=newForm();if(t.id==="nt-type")nf2.type=t.value;else if(t.id==="nt-aud")nf2.aud=t.value;else if(t.id==="nt-writer")nf2.writer=t.value;else nf2.title=t.value;keepScroll(renderPanel);return}
+  if(t.dataset&&t.dataset.wrsel){frm("wr:"+t.dataset.wrsel).author=lc(t.value);keepScroll(renderPanel);return}
   if(t.dataset&&t.dataset.ff){formInput(t,t.tagName==="SELECT"||t.type==="date");return}
   if(t.id==="bdue"){V.bulk.due=t.value;return}
   if(t.id==="bfield"){V.bulk.field=t.value;V.bulk.value="";V.bulk.vals={};render();return}
