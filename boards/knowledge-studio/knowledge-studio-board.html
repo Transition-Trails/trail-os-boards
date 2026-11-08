@@ -220,6 +220,21 @@ h3.sec{font-size:14px}
 .vdot.draft{background:#fff;border:1.5px dashed var(--amber);color:var(--ink)}
 .vmore{font-size:12px;color:var(--body);padding:0 4px}
 .ov{display:flex;flex-direction:column;gap:14px}
+.pbtop{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}.pbtop>div:first-child{flex:0 0 auto}
+.pbnum{font-family:var(--head);font-size:34px;font-weight:600;color:var(--ink);margin:0;line-height:1.1}.pbnum small{font-size:18px;color:var(--body)}.pbnum.na{font-size:20px;color:var(--body)}
+.pbg{position:relative;flex:1 1 220px;min-width:180px;height:16px;background:#ECEAE4;border-radius:8px;margin:6px 0 18px}
+.pbfill{height:100%;background:#5590A9;border-radius:8px}.pbnum.ok+p{color:#2E7A44}
+.pbm{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}.pbm.fl{background:#C2462B}
+.pbl{position:absolute;top:22px;transform:translateX(-50%);font-size:11.5px;color:var(--body)}
+.pbstats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}
+.pbareas{display:grid;gap:6px}.pba{display:grid;grid-template-columns:90px 1fr auto;gap:8px;align-items:center;font-size:12.5px}
+.pbt{height:8px;background:#ECEAE4;border-radius:4px;overflow:hidden}.pbt i{display:block;height:100%;background:#255F6D}.pbv{color:var(--body);white-space:nowrap}
+.pbtrend svg{width:100%;max-width:420px;height:auto;display:block}.pbtrend .ln{fill:none;stroke:#255F6D;stroke-width:2}.pbtrend .tg{stroke:#8A8780;stroke-dasharray:4 3}.pbtrend .pt{fill:#255F6D}.pbtrend .ax{font-size:10px;fill:#8A8780}.pbtrend .lv{font-size:11px;font-weight:700;fill:#255F6D}
+.qb{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:1px;border:1px solid transparent}
+.qb.q-strong{background:#E3F1E6;color:#2E7A44}.qb.q-needs_work{background:#E6F0F4;color:#255F6D}.qb.q-below_floor{background:#FBE8E2;color:#9A3412}.qb.qw{background:#fff;border-style:dashed;border-color:currentColor}
+.qhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.qbig{font-family:var(--head);font-size:30px;font-weight:600;color:var(--ink)}.qbig small{font-size:15px;color:var(--body)}
+.qmiss{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}.qmiss li{display:flex;gap:10px;align-items:flex-start;overflow-wrap:anywhere}
+.qp{flex:0 0 auto;min-width:34px;text-align:center;font-weight:700;font-size:12.5px;background:var(--bg);border-radius:6px;padding:2px 4px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .tile{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
 .tile:hover{border-color:var(--teal)}
@@ -404,11 +419,14 @@ var VIEWS={all:function(){return true},writeOpen:function(a){var w=writing(a);re
   myrev:function(a){return isMe(a.reviewer)&&a.step==="review"},
   mytech:function(a){return isMe(a.validator)&&a.step==="penny"},
   needrev:function(a){return a.step==="review"&&!a.reviewer},
-  needtech:function(a){return a.step==="penny"&&!a.validator}};
+  needtech:function(a){return a.step==="penny"&&!a.validator},
+  lowq:function(a){var c=qCountedFor(a);return !!(c&&qOf(c).score<qFloor())}};
 function viewRows(view){
   var f=viewFn(view);
   var mr=view==="mine"&&V.mrole&&V.mrole!=="all"?V.mrole:null;
-  return D.articles.filter(function(a){return f(a)&&inCat(a)&&matchQ(a)&&(!mr||myRoles(a).indexOf(mr)>=0)});
+  var out=D.articles.filter(function(a){return f(a)&&inCat(a)&&matchQ(a)&&(!mr||myRoles(a).indexOf(mr)>=0)});
+  if(view==="lowq")out.sort(function(x,y){return qOf(qCountedFor(x)).score-qOf(qCountedFor(y)).score});
+  return out;
 }
 function viewFn(v){var f=VIEWS[v];if(f)return f;if(v.indexOf("miss:")===0){var k=v.slice(5);return function(a){return a.linked&&blank(a,k)}}if(v.indexOf("iss:")===0){var ik=v.slice(4);return function(a){return a.live.some(function(x){return x.kind===ik})}}return function(){return false}}
 function countView(v){return D.articles.filter(viewFn(v)).length}
@@ -445,7 +463,7 @@ function renderRail(){
 }
 function viewTitle(){
   if(V.cat)return V.cat.split(" \u203a ").slice(1).join(" \u203a ")||V.cat;
-  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",overview:"Knowledge health",writeOpen:"Available to write",fixOpen:"Needs changes \u00b7 unassigned",mywriting:"My writing",approve:"Waiting for approval",unsent:"Drafts not sent for approval",ready:"Ready for Penny",mine:"My articles",myrev:"My business reviews",mytech:"My Penny validations",needrev:"Needs a business reviewer",needtech:"Needs a Penny validator",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
+  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",overview:"Knowledge health",writeOpen:"Available to write",fixOpen:"Needs changes \u00b7 unassigned",mywriting:"My writing",approve:"Waiting for approval",unsent:"Drafts not sent for approval",ready:"Ready for Penny",mine:"My articles",myrev:"My business reviews",mytech:"My Penny validations",needrev:"Needs a business reviewer",needtech:"Needs a Penny validator",lowq:"Below the quality floor",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
   if(V.view==="questions"&&V.qaud)return "Reader questions: "+V.qaud;if(t)return t;if(V.view.indexOf("iss:")===0)return "Fix: "+issueLabel(V.view.slice(4));if(V.view.indexOf("miss:")===0)return "Missing "+fieldDef(V.view.slice(5)).l;return "Articles";
 }
 function renderMain(){
@@ -483,7 +501,7 @@ function table(rows){
   var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]}),cmp=panelOpen();
   var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
   h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
-    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button>'+versionMark(a)+'<span class="sub">'+esc(typeLabel(a.type))+"</span>"+workflowSub(a)+'<span class="sub">'+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span></td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
+    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button>'+qBadge(a)+versionMark(a)+'<span class="sub">'+esc(typeLabel(a.type))+"</span>"+workflowSub(a)+'<span class="sub">'+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span></td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
   h+="</tbody></table></div>";
   if(rows.length>V.limit)h+='<button type="button" class="btn ghost more" id="more">Show '+Math.min(200,rows.length-V.limit)+" more</button>";
   return h;
@@ -531,10 +549,10 @@ function articlePanel(a){
   var tab=V.tab||defaultTab(a);V.tab=tab;
   var bar='<div class="stagebar" aria-label="Stage">'+STAGES.map(function(s,j){var c=j<a.st.i?"d":j===a.st.i?(a.step==="syncBlocked"?"b":"c"):"";return '<span class="'+c+'">'+s+"</span>"}).join("")+"</div>";
   var h=head(typeLabel(a.type)+(a.sfNumber?" \u00b7 #"+a.sfNumber:""),a.title,assignSub(a))+versionTools(a)+bar+approvalBar(a)+workflowFacts(a)+"</div>";
-  var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["sync","Sync"],["publish","Publish"],["penny","Penny"]];
+  var tabs=[["fix","Fix \u00b7 "+a.live.length],["content","Content"],["edit","Details"],["review","Review"],["sync","Sync"],["publish","Publish"],["penny","Penny"],["quality","Quality"+(qOf(a)?" \u00b7 "+Math.round(qOf(a).score):"")]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+esc(t[1])+"</button>"}).join("")+"</div>";
   if(V.focus)h='<div class="fside">'+h+"</div>";
-  h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,sync:syncTab,publish:publishTab,penny:pennyTab}[tab])(a)+"</div>";
+  h+='<div class="pb">'+({fix:fixTab,content:contentTab,edit:editTab,review:reviewTab,sync:syncTab,publish:publishTab,penny:pennyTab,quality:qualityTab}[tab])(a)+"</div>";
   return h;
 }
 function catOptions(sel,blankLabel){
@@ -937,7 +955,7 @@ function overview(){
   var live=st[3]+st[4],fix=countView("fix"),blockN=A.filter(function(a){return a.live.some(function(x){return x.severity==="block"})}).length;
   var qs=D.questions,qc=[0,0,0,0,0];qs.forEach(function(q){qc[qIdx(q)]++});
   var needRev=countView("needrev"),needTech=countView("needtech"),inRev=st[1];
-  var h='<div class="ov">';
+  var h='<div class="ov">'+pennyBrainCard();
   h+='<div class="tiles">'+
     tile("penny","Ready for Penny",st[4],live,live?pct(st[4],live)+"% of live articles":"Nothing is live yet",st[4]===0&&live?"bad":"")+
     tile("fix","Need a fix",fix,n,blockN+" blocking publishing or sync",fix>n/2?"bad":"")+
@@ -1404,6 +1422,63 @@ function failFromResult(m){
   if(m.feedback&&typeof m.feedback==="object"&&m.feedback.message)return {message:String(m.feedback.message),nextStep:m.feedback.nextStep?String(m.feedback.nextStep):"",details:m.feedback.details?String(m.feedback.details):""};
   var det=[m.code?"Code: "+m.code:"",m.message||""].filter(Boolean).join("\n");
   return {message:"This request could not be completed.",nextStep:"Refresh status and follow the article\u2019s current next step.",details:det};
+}
+/* ---------- Penny's Brain quality (v1.21) ---------- */
+var Q_NOTE="Quality measures progress. Approval, Salesforce publication, and Penny readiness have separate checks.";
+var Q_AREAS=[["content","Content"],["findability","Findability"],["trust","Trust"],["freshness","Freshness"],["delivery","Delivery"]];
+var Q_BAND={strong:"Strong",needs_work:"Needs work",below_floor:"Below floor"};
+function qOf(a){var q=a&&a.quality;return q&&typeof q==="object"&&typeof q.score==="number"?q:null}
+function pb(){var p=D&&D.pennyBrain;return p&&typeof p==="object"?p:null}
+function qFloor(){var p=pb();return p&&typeof p.floor==="number"?p.floor:60}
+function qTarget(){var p=pb();return p&&typeof p.target==="number"?p.target:80}
+function qCountedFor(a){var q=qOf(a);if(q&&q.counted)return a;var s=publishedSibling(a);return s&&qOf(s)&&qOf(s).counted?s:null}
+function qBadge(a){
+  var q=qOf(a);if(!q)return "";
+  var work=!q.counted,t=work?"Working score for this version. Not counted in Penny's Brain.":"Quality score, counted in Penny's Brain";
+  return ' <span class="qb q-'+esc(q.band||"")+(work?" qw":"")+'" title="'+esc(t)+'"><span class="sr">'+(work?"Working quality score ":"Quality score ")+"</span>"+esc(String(Math.round(q.score)))+"</span>";
+}
+function fmtDay(d){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d||"");if(!m)return d||"";return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m[2]-1]+" "+(+m[3])}
+function pbTrend(hist){
+  var pts=(hist||[]).filter(function(x){return x&&typeof x.score==="number"&&/^\d{4}-\d{2}-\d{2}/.test(x.date||"")});
+  if(pts.length<2)return '<p class="note" style="margin:0">'+(pts.length?"The trend starts "+esc(fmtDay(pts[0].date))+". Trail OS saves one point a day.":"No trend saved yet.")+"</p>";
+  var sc=pts.map(function(p){return p.score}),tq=qTarget(),lo=Math.max(0,Math.floor(Math.min.apply(null,sc.concat([qFloor()]))-5)),hi=Math.min(100,Math.ceil(Math.max.apply(null,sc.concat([tq]))+5)),W=420,H=90,n=pts.length,x=function(i){return 30+(W-70)*i/(n-1)},y=function(v){return H-10-(H-20)*(v-lo)/(hi-lo)};
+  var path=pts.map(function(p,i){return (i?"L":"M")+x(i).toFixed(1)+" "+y(p.score).toFixed(1)}).join(" ");
+  var t=qTarget();
+  var last=pts[n-1],first=pts[0];
+  return '<figure class="pbtrend" style="margin:0"><svg viewBox="0 0 '+W+" "+H+'" role="img" aria-label="Penny\u2019s Brain from '+esc(fmtDay(first.date))+" ("+first.score+"%) to "+esc(fmtDay(last.date))+" ("+last.score+'%)"><line x1="30" x2="'+(W-40)+'" y1="'+y(t).toFixed(1)+'" y2="'+y(t).toFixed(1)+'" class="tg"/><text x="26" y="'+(y(t)+4).toFixed(1)+'" class="ax" text-anchor="end">'+t+'</text><text x="26" y="'+(y(lo)+4).toFixed(1)+'" class="ax" text-anchor="end">'+lo+'</text><text x="'+(x(n-1)+8).toFixed(1)+'" y="'+(y(last.score)+4).toFixed(1)+'" class="lv">'+last.score+'%</text><path d="'+path+'" class="ln"/>'+pts.map(function(p,i){return '<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.score).toFixed(1)+'" r="'+(i===n-1?3.5:2)+'" class="pt"><title>'+esc(fmtDay(p.date))+": "+p.score+"%</title></circle>"}).join("")+'</svg><figcaption class="note">'+esc(fmtDay(first.date))+" to "+esc(fmtDay(last.date))+" \u00b7 dashed line is the "+t+"% target</figcaption></figure>";
+}
+function pennyBrainCard(){
+  var p=pb();
+  var h='<section class="card ovc pbc" aria-labelledby="pb-h"><div class="ovh"><h3 id="pb-h">Penny\u2019s Brain</h3><span class="note">quality of the published articles Penny reads</span></div>';
+  if(!p||p.score==null||typeof p.score!=="number")return h+'<p class="pbnum na">Not scored yet</p><p class="note" style="margin:0">'+esc(Q_NOTE)+"</p></section>";
+  var t=qTarget(),f=qFloor(),s=p.score,ok=s>=t;
+  h+='<div class="pbtop"><div><p class="pbnum'+(ok?" ok":"")+'">'+esc(s.toFixed(1))+'<small>%</small></p><p class="note" style="margin:0">Target '+t+"% \u00b7 "+(ok?"on target":(t-s).toFixed(1)+" points to go")+"</p></div>";
+  h+='<div class="pbg" role="img" aria-label="'+esc(s.toFixed(1))+"% of 100. Target "+t+"%, floor "+f+'%."><div class="pbfill" style="width:'+Math.max(0,Math.min(100,s))+'%"></div><i class="pbm fl" style="left:'+f+'%" title="Floor '+f+'%"></i><i class="pbm tg" style="left:'+t+'%" title="Target '+t+'%"></i><span class="pbl" style="left:'+f+'%">'+f+'</span><span class="pbl" style="left:'+t+'%">'+t+"</span></div></div>";
+  h+='<div class="pbstats"><span><b>'+(p.counted||0)+"</b> published articles counted</span>"+(p.belowFloor?'<button type="button" class="linkbtn" data-view="lowq"><b>'+p.belowFloor+"</b> below "+f+"</button>":"<span><b>0</b> below "+f+"</span>")+"</div>";
+  var ar=p.areas||{};
+  h+='<div class="pbareas">'+Q_AREAS.map(function(k){var mx={content:25,findability:20,trust:25,freshness:15,delivery:15}[k[0]],v=typeof ar[k[0]]==="number"?ar[k[0]]:null;
+    return '<div class="pba"><span class="pbn">'+esc(k[1])+'</span><span class="pbt"><i style="width:'+(v==null?0:Math.round(100*v/mx))+'%"></i></span><span class="pbv">'+(v==null?"\u2013":esc(v.toFixed(1)))+" of "+mx+"</span></div>"}).join("")+"</div>";
+  h+=pbTrend(p.history);
+  return h+'<p class="note" style="margin:0">Average points earned in each area. '+esc(Q_NOTE)+"</p></section>";
+}
+var Q_GO={summary:"content",body:"content",type_fields:"content",category:"edit",applies_to:"edit",audience:"edit",business_review:"review",policy_signoff:"review",technical_validation:"penny",publication:"publish",blocking_issues:"fix"};
+var TAB_L={fix:"Fix",content:"Content",edit:"Details",review:"Review",sync:"Sync",publish:"Publish",penny:"Penny"};
+function qualityTab(a){
+  var q=qOf(a);
+  if(!q)return '<p class="pbnum na" style="font-size:20px">Not scored yet</p><p class="note">'+esc(Q_NOTE)+"</p>";
+  var cs=qCountedFor(a),h='<div class="qhead"><span class="qbig q-'+esc(q.band||"")+'">'+esc(String(Math.round(q.score)))+'<small>/100</small></span><span class="pill '+(q.band==="strong"?"p-done":q.band==="below_floor"?"p-open":"p-review")+'">'+esc(Q_BAND[q.band]||q.band||"")+"</span></div>";
+  if(q.counted)h+='<p class="note" style="margin:0">This published version counts toward Penny\u2019s Brain.</p>';
+  else h+='<p class="note" style="margin:0">Working score for this version. It is not counted in Penny\u2019s Brain'+(cs&&cs.id!==a.id?"; the published version counts at <b>"+esc(String(Math.round(qOf(cs).score)))+"</b> until this revision is published.":".")+"</p>";
+  var ar=q.areas||{};
+  h+='<div class="pbareas">'+Q_AREAS.map(function(k){var x=ar[k[0]]||{},e=typeof x.earned==="number"?x.earned:null,m=x.max||0;
+    return '<div class="pba"><span class="pbn">'+esc(k[1])+'</span><span class="pbt"><i style="width:'+(e==null||!m?0:Math.round(100*e/m))+'%"></i></span><span class="pbv">'+(e==null?"\u2013":e)+" of "+m+"</span></div>"}).join("")+"</div>";
+  var ms=(q.missing||[]).slice();
+  h+='<div class="sec">Missing points'+(ms.length?" \u00b7 "+ms.reduce(function(s,x){return s+(x.points||0)},0):"")+"</div>";
+  if(!ms.length)h+='<p class="ok">Nothing missing.</p>';
+  else h+='<ul class="qmiss">'+ms.map(function(x){var go=Q_GO[x.code];
+    return '<li><span class="qp">+'+esc(String(x.points||0))+'</span><div><b>'+esc(x.label||x.code||"")+'</b><div class="note">'+esc(x.action||"")+"</div>"+(go&&go!==V.tab?'<button type="button" class="linkbtn" data-tab="'+go+'">Go to '+TAB_L[go]+"</button>":"")+"</div></li>"}).join("")+"</ul>";
+  if(q.computedAt)h+='<p class="note" style="margin:0">Scored '+esc(fmtWhen(q.computedAt))+". Follow the guidance at the top for the article\u2019s operational next step; a quality note is never an instruction to retry.</p>";
+  return h+'<p class="note" style="margin:0">'+esc(Q_NOTE)+"</p>";
 }
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back,exact){V.pin=exact?id:null;if(!exact&&D.repOf&&D.repOf[id])id=D.repOf[id];V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
