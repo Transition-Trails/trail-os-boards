@@ -154,6 +154,7 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .sec{font-family:var(--head);font-weight:600;color:var(--ink);font-size:14px;margin-top:4px}
 .newbtn{flex:none;border:0;background:#fff;color:var(--teal);font-family:var(--head);font-weight:700;font-size:12.5px;border-radius:999px;padding:0 12px;min-height:28px;white-space:nowrap;cursor:pointer}
 .newbtn:hover{background:var(--tint)}.newbtn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.findings{display:flex;flex-direction:column;gap:6px;font-size:13px}.findings blockquote{margin:2px 0 0}
 .wf{display:flex;flex-direction:column;gap:8px}
 h3.sec{font-size:14px}
 .wf-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0 0}
@@ -381,10 +382,10 @@ function blank(a,k){var v=a[k];return v==null||v===""||(Array.isArray(v)&&!v.len
 function dueSoon(a){if(!a.reviewDue)return false;var t=Date.parse(a.reviewDue+"T12:00:00Z"),now=Date.parse(D.asOf||new Date().toISOString());return t-now<=30*864e5}
 function matchQ(a){if(!V.q)return true;var q=V.q.toLowerCase();return (a.title+" "+(a.summary||"")+" "+(a.category||"")).toLowerCase().indexOf(q)>=0}
 function inCat(a){return !V.cat||(a.category&&(a.category===V.cat||a.category.indexOf(V.cat+" \u203a ")===0))}
-function myRoles(a){var r=[];if(isMe(a.author)||isMe(a.claimedBy))r.push("author");if(isMe(a.reviewer))r.push("business");if(isMe(a.validator))r.push("penny");return r}
-var ROLE_L={author:"Author",business:"Business reviewer",penny:"Penny validator"};
-function returnedToMe(a){var b=rstate(a,"business"),t=rstate(a,"technical");return myRoles(a).indexOf("author")>=0&&((b.status&&b.status!=="passed"&&b.current!==false)||(t.status&&t.status!=="passed"&&t.current!==false))}
-var VIEWS={all:function(){return true},approve:function(a){return awaitingApproval(a)},unsent:function(a){return !!DRAFT_ST[a.status]},ready:function(a){return pennyReady(a)},mine:function(a){return myRoles(a).length>0},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
+function myRoles(a){var r=[];if(isMe(writerOf(a)))r.push("writer");if(isMe(a.author)&&!isMe(writerOf(a)))r.push("creator");if(isMe(a.reviewer))r.push("business");if(isMe(a.validator))r.push("penny");return r}
+var ROLE_L={writer:"Writer",creator:"Creator",business:"Business reviewer",penny:"Penny validator"};
+function returnedToMe(a){var b=rstate(a,"business"),t=rstate(a,"technical");return myRoles(a).indexOf("writer")>=0&&((b.status&&b.status!=="passed"&&b.current!==false)||(t.status&&t.status!=="passed"&&t.current!==false))}
+var VIEWS={all:function(){return true},writeOpen:function(a){var w=writing(a);return !!(w&&w.status==="unassigned"&&w.kind==="draft")},fixOpen:function(a){var w=writing(a);return !!(w&&w.status==="unassigned"&&w.kind==="corrections")},mywriting:function(a){var w=writing(a);return !!(w&&w.status==="assigned"&&isMe(w.assignee))},approve:function(a){return awaitingApproval(a)},unsent:function(a){return !!DRAFT_ST[a.status]},ready:function(a){return pennyReady(a)},mine:function(a){return myRoles(a).length>0},fix:function(a){return a.live.length>0},review:function(a){return a.st.i<2},
   publish:function(a){return a.st.i===2},penny:function(a){return a.step==="penny"},due:dueSoon,
   myrev:function(a){return isMe(a.reviewer)&&a.step==="review"},
   mytech:function(a){return isMe(a.validator)&&a.step==="penny"},
@@ -416,6 +417,7 @@ function renderChips(){var nb=$("newart");if(nb)nb.hidden=!canCreate();
 function rb(view,label,n,extra){return '<button type="button" data-view="'+esc(view)+'" aria-current="'+(V.view===view&&!V.cat)+'"'+(extra||"")+'><span>'+esc(label)+'</span><span class="n">'+(n==null?"":n)+"</span></button>"}
 function renderRail(){
   var h=rb("overview","Overview",null)+rb("all","All articles",D.articles.length)+rb("fix","Fix",countView("fix"))+rb("review","Write and review",countView("review"))+rb("publish","Publish",countView("publish"))+rb("penny","Penny check",countView("penny"))+rb("decisions","Decisions",D.decisions.filter(decOpen).length);
+  h+="<h4>WRITING</h4>"+rb("writeOpen","Available to write",countView("writeOpen"))+rb("fixOpen","Needs changes",countView("fixOpen"))+rb("mywriting","My writing",countView("mywriting"));
   h+="<h4>APPROVALS</h4>"+rb("approve","Waiting for approval",countView("approve"))+rb("unsent","Drafts not sent",countView("unsent"));
   h+="<h4>MY WORK</h4>"+rb("mine","My articles",countView("mine"))+rb("myrev","My business reviews",countView("myrev"))+rb("mytech","My Penny validations",countView("mytech"));
   if(canAssign())h+="<h4>ASSIGN REVIEWERS</h4>"+rb("needrev","Needs a business reviewer",countView("needrev"))+rb("needtech","Needs a Penny validator",countView("needtech"));
@@ -429,7 +431,7 @@ function renderRail(){
 }
 function viewTitle(){
   if(V.cat)return V.cat.split(" \u203a ").slice(1).join(" \u203a ")||V.cat;
-  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",overview:"Knowledge health",approve:"Waiting for approval",unsent:"Drafts not sent for approval",ready:"Ready for Penny",mine:"My articles",myrev:"My business reviews",mytech:"My Penny validations",needrev:"Needs a business reviewer",needtech:"Needs a Penny validator",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
+  var t={all:"All articles",fix:"Fix",review:"Write and review",publish:"Publish",penny:"Penny check",due:"Review due in 30 days",overview:"Knowledge health",writeOpen:"Available to write",fixOpen:"Needs changes \u00b7 unassigned",mywriting:"My writing",approve:"Waiting for approval",unsent:"Drafts not sent for approval",ready:"Ready for Penny",mine:"My articles",myrev:"My business reviews",mytech:"My Penny validations",needrev:"Needs a business reviewer",needtech:"Needs a Penny validator",decisions:"Decisions",questions:"Reader questions",pages:"Trail OS pages"}[V.view];
   if(V.view==="questions"&&V.qaud)return "Reader questions: "+V.qaud;if(t)return t;if(V.view.indexOf("iss:")===0)return "Fix: "+issueLabel(V.view.slice(4));if(V.view.indexOf("miss:")===0)return "Missing "+fieldDef(V.view.slice(5)).l;return "Articles";
 }
 function renderMain(){
@@ -445,13 +447,14 @@ function renderMain(){
 function mineBar(){var all=D.articles.filter(function(a){return myRoles(a).length});
   var n=function(r){return all.filter(function(a){return r==="all"||myRoles(a).indexOf(r)>=0}).length};
   var back=all.filter(returnedToMe).length;
-  return '<div class="minebar"><div class="seg" role="group" aria-label="Show my articles by role">'+[["all","All"],["author","Authoring"],["business","Business review"],["penny","Penny validation"]].map(function(r){return '<button type="button" data-mrole="'+r[0]+'" aria-pressed="'+(V.mrole===r[0])+'">'+r[1]+" \u00b7 "+n(r[0])+"</button>"}).join("")+"</div>"+(back?'<span class="note"><b>'+back+"</b> returned to you to fix</span>":"")+"</div>";
+  return '<div class="minebar"><div class="seg" role="group" aria-label="Show my articles by role">'+[["all","All"],["writer","Writing"],["creator","Created by me"],["business","Business review"],["penny","Penny validation"]].map(function(r){return '<button type="button" data-mrole="'+r[0]+'" aria-pressed="'+(V.mrole===r[0])+'">'+r[1]+" \u00b7 "+n(r[0])+"</button>"}).join("")+"</div>"+(back?'<span class="note"><b>'+back+"</b> returned to you to fix</span>":"")+"</div>";
 }
 function insightsBox(){
   if(V.view!=="fix"||!D.insights||!(D.insights.items||[]).length)return "";
   var i=D.insights;return '<section class="card ins" aria-label="Insights"><h3>From Claude, '+esc(fmtWhen(i.generatedAt))+(i.stale?" (stale: the last refresh failed)":"")+"</h3><ul>"+i.items.map(function(x){return '<li class="'+esc(x.severity||"")+'"><span class="tag">'+esc(x.tag||"Note")+"</span><span>"+esc(x.text)+(x.articleId&&D.by[x.articleId]?' <button type="button" class="linkbtn" data-open="'+esc(x.articleId)+'">Open</button>':"")+"</span></li>"}).join("")+"</ul></section>";
 }
 function fieldCell(a,k){
+  if(k==="_writing")return writingCell(a);
   if(k==="_approval"){var at=approverText(a);return '<span class="roles">'+(at?'<span class="pill '+(at==="You can approve"?"p-done":"p-role")+'">'+esc(at)+"</span>":"")+'<span class="sub">'+esc(changeKind(a))+"</span></span>"}
   if(k==="_roles")return '<span class="roles">'+myRoles(a).map(function(r){return '<span class="pill p-role">'+ROLE_L[r]+"</span>"}).join("")+(returnedToMe(a)?'<span class="pill p-open">Returned to you</span>':"")+"</span>";
   if(k==="reviewer"||k==="validator")return a[k]?esc(personName(a[k])):'<span class="note">Not assigned</span>';
@@ -462,7 +465,7 @@ function fieldCell(a,k){
 function dots(a){var i=a.st.i;return '<span class="dots" role="img" aria-label="'+(i>=4?"All steps done":"At "+STAGES[i])+'">'+STAGES.map(function(s,j){var c=j<i?"d":j===i?(a.step==="syncBlocked"?"b":"c"):"";return '<i class="'+c+'"></i>'}).join("")+"</span>"}
 function table(rows){
   if(!rows.length)return '<div class="card" style="padding:18px">Nothing here'+(V.cat||V.q?" with these filters":"")+".</div>";
-  var fk=/^(approve|unsent)$/.test(V.view)?"_approval":V.view==="mine"?"_roles":V.view==="due"?"reviewDue":/^(myrev|needrev)$/.test(V.view)?"reviewer":/^(mytech|needtech)$/.test(V.view)?"validator":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="_approval"?"Approval":fk==="_roles"?"My role":fk==="reviewDue"?"Review due":fieldDef(fk).l;
+  var fk=/^(writeOpen|fixOpen|mywriting)$/.test(V.view)?"_writing":/^(approve|unsent)$/.test(V.view)?"_approval":V.view==="mine"?"_roles":V.view==="due"?"reviewDue":/^(myrev|needrev)$/.test(V.view)?"reviewer":/^(mytech|needtech)$/.test(V.view)?"validator":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="_writing"?"Writing":fk==="_approval"?"Approval":fk==="_roles"?"My role":fk==="reviewDue"?"Review due":fieldDef(fk).l;
   var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]}),cmp=panelOpen();
   var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
   h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
@@ -550,7 +553,7 @@ function fixTab(a){
     else if(x.kind==="needs_category"){btn="Save";inp='<label class="f">Data category<select data-fv="'+esc(x.id)+'">'+catOptions(a.category)+"</select></label>"}
     else if(x.kind==="applies_to_blank"){btn="Save";inp='<label class="f">Applies To</label>'+applyChecks("fv-"+x.id,a.appliesTo)}
     var ret=!done&&needsReturn(a,x),ok=ret?canReturnFix(a):ed;
-    if(ret){btn="Return and fix";inp+='<div class="box warn" style="font-size:13px">This article is in business review. Fixing it returns it to the author: business review and any Penny validation start over, and someone sends it for business review again before it syncs to Salesforce.</div><label class="f">Why you\'re returning it<textarea data-rn="'+esc(x.id)+'" placeholder="At least 10 characters, e.g. Audience must be a Salesforce value">'+esc(V.forms["rn:"+x.id]||"")+"</textarea></label>"}
+    if(ret){btn="Return and fix";inp+='<div class="box warn" style="font-size:13px">This article is in business review. Fixing it returns it for changes: business review and any Penny validation start over, and someone sends it for business review again before it syncs to Salesforce.</div><label class="f">Why you\'re returning it<textarea data-rn="'+esc(x.id)+'" placeholder="At least 10 characters, e.g. Audience must be a Salesforce value">'+esc(V.forms["rn:"+x.id]||"")+"</textarea></label>"}
     var ro=ret?(ok?"":'<span class="note">'+esc(returnFixWhy(a))+"</span>"):(ok?"":'<span class="note">Only authors and Knowledge staff can fix this.</span>');
     return '<div class="issue '+esc(x.severity)+(done?" done":"")+'"><span class="meta">'+({block:"Blocks publishing",warn:"Needs fixing",info:"Check"}[x.severity]||"Check")+'</span>'+(x.kind==="other"&&x.field!=="penny"?'<div style="color:var(--ink)">Salesforce delivery needs attention. Check Sync for the status.</div><details class="wfd"><summary>Error details</summary><div class="wf-error">'+esc(x.text)+"</div></details>":'<div style="color:var(--ink)">'+esc(x.text)+"</div>")+(done?'<span class="ok">Done</span>':(inp+'<div class="btnrow"><button type="button" class="btn '+(x.severity==="info"?"ghost":"solid")+'" data-fix="'+esc(x.id)+'"'+(!ok||isBusy?" disabled":"")+">"+(isBusy?"Saving\u2026":btn)+"</button>"+ro+"</div>"))+"</div>";
   }).join("");
@@ -581,6 +584,7 @@ function contentTab(a){
   if(c.loading||c.err){return c.err?'<p class="err">'+esc(c.err)+'</p><div class="btnrow"><button type="button" class="btn ghost" data-reload="'+esc(a.id)+'">Try again</button></div>':'<p class="note">Loading the article content\u2026</p>'}
   var ed=canEdit(a),dis=ed?"":" disabled";
   var h='<p class="note">'+(hasDraftRevision(a)?"This is the published version. Make changes in the draft revision.":grp(a)&&grp(a).draftArticleId===a.id&&grp(a).articleIds.length>1?"You are editing a draft revision. Readers keep the live version until the revision is published.":a.st.i>=3?"Saving starts a draft revision. Readers keep the live version until the revision is published.":"Saving keeps it as a draft. Send it for approval when it's ready.")+"</p>";
+  if(isCorrections(a))h=findingsBox(a)+h;
   if(V.focus)h='<h2 class="ftitle">'+esc(a.title)+"</h2>"+h;
   h+='<div class="sec">'+esc(c.contentLabel||"Article content")+"</div>";
   if(ed)h+='<div class="tool" role="toolbar" aria-label="Formatting">'+[["bold","B","Bold"],["italic","I","Italic"],["h3","H","Heading"],["ul","\u2022 List","Bulleted list"],["ol","1. List","Numbered list"],["link","Link","Add a link"],["unlink","Unlink","Remove link"]].map(function(b){return '<button type="button" data-fmt="'+b[0]+'" aria-label="'+b[2]+'">'+b[1]+"</button>"}).join("")+"</div>";
@@ -766,29 +770,32 @@ function rsText(s){
   if(!s.status)return ["Not reviewed yet","p-none"];
   var who=s.by?" by "+personName(s.by):"",when=s.at?" on "+fmtDate(s.at):"";
   if(s.status==="passed")return [s.current===false?"Passed an older version"+who+when+". Review again.":"Passed"+who+when,s.current===false?"p-open":"p-done"];
-  return [(s.status==="blocked"?"Blocked":"Returned to author")+who+when,"p-open"];
+  return [(s.status==="blocked"?"Blocked":"Needs changes")+who+when,"p-open"];
 }
 function assignSub(a){
-  var r=a.reviewer?personName(a.reviewer):"no one yet",v=a.validator?personName(a.validator):"no one yet";
-  return "Business review: "+r+" \u00b7 Penny validator: "+v+(a.assignment&&a.assignment.dueDate?" \u00b7 Due "+fmtDate(a.assignment.dueDate):"");
+  var r=a.reviewer?personName(a.reviewer):"no one yet",v=a.validator?personName(a.validator):"no one yet",wr=writing(a);
+  return (a.author?"Created by "+personName(a.author)+" \u00b7 ":"")+(wr&&wr.status!=="not_applicable"?"Writer: "+(wr.assignee?personName(wr.assignee):"unassigned")+" \u00b7 ":"")+"Business review: "+r+" \u00b7 Penny validator: "+v+(a.assignment&&a.assignment.dueDate?" \u00b7 Due "+fmtDate(a.assignment.dueDate):"");
 }
-function eligible(a){return D.people.filter(function(p){return !ownArticle(a,p.email)})}
+function eligible(a){return D.people.filter(function(p){return !ownArticle(a,p.email)&&!wasWriter(a,p.email)})}
+function writerChoices(a){return D.people.filter(function(p){var e=lc(p.email);return e!==lc(a.reviewer)&&e!==lc(a.validator)})}
 function personOpts(list,sel){var h='<option value="">No one</option>',found=!sel;list.forEach(function(p){if(lc(p.email)===sel)found=true;h+='<option value="'+esc(lc(p.email))+'"'+(lc(p.email)===sel?" selected":"")+">"+esc(p.name||p.email)+"</option>"});if(!found)h+='<option value="'+esc(sel)+'" selected>'+esc(personName(sel))+"</option>";return h}
 function frm(k){return V.forms[k]=V.forms[k]||{}}
 function assignBlock(a){
-  var f=frm("as:"+a.id),rv=f.reviewer!==undefined?f.reviewer:a.reviewer,vd=f.validator!==undefined?f.validator:a.validator,due=f.dueDate!==undefined?f.dueDate:((a.assignment&&a.assignment.dueDate)||"");
-  var h='<div class="box asg"><div class="sec" style="margin:0">Who reviews</div>';
+  var curW=writerOf(a)||"",f=frm("as:"+a.id),wr=f.author!==undefined?f.author:curW,rv=f.reviewer!==undefined?f.reviewer:a.reviewer,vd=f.validator!==undefined?f.validator:a.validator,due=f.dueDate!==undefined?f.dueDate:((a.assignment&&a.assignment.dueDate)||"");
+  var wq=writing(a),canW=!!(wq&&wq.status!=="not_applicable");
+  var h='<div class="box asg"><div class="sec" style="margin:0">Who works on it</div>';
   if(!canAssign()){
-    h+='<div class="kv"><span>Business review</span><b>'+esc(a.reviewer?personName(a.reviewer):"Not assigned")+'</b></div><div class="kv"><span>Penny validator</span><b>'+esc(a.validator?personName(a.validator):"Not assigned")+"</b></div>"+(due?'<div class="kv"><span>Due</span><b>'+esc(fmtDate(due))+"</b></div>":"")+'<p class="note">A Knowledge Manager assigns reviewers.</p></div>';
+    h+=(canW?'<div class="kv"><span>Writer</span><b>'+esc(curW?personName(curW):"Unassigned")+"</b></div>":"")+'<div class="kv"><span>Business review</span><b>'+esc(a.reviewer?personName(a.reviewer):"Not assigned")+'</b></div><div class="kv"><span>Penny validator</span><b>'+esc(a.validator?personName(a.validator):"Not assigned")+"</b></div>"+(due?'<div class="kv"><span>Due</span><b>'+esc(fmtDate(due))+"</b></div>":"")+'<p class="note">A Knowledge Manager assigns reviewers.</p></div>';
     return h;
   }
   var el=eligible(a);
+  if(canW)h+='<label class="f">Writer<select data-ff="as" data-fn="author">'+personOpts(writerChoices(a),wr).replace('>No one</option>','>Unassigned</option>')+'</select></label>';
   h+='<label class="f">Business reviewer<select data-ff="as" data-fn="reviewer">'+personOpts(el,rv)+'</select></label>';
   h+='<label class="f">Penny validator (technical review)<select data-ff="as" data-fn="validator">'+personOpts(el,vd)+'</select></label>';
   h+='<label class="f">Review due<input type="date" data-ff="as" data-fn="dueDate" value="'+esc(due)+'"></label>';
-  var changed=rv!==a.reviewer||vd!==a.validator||due!==((a.assignment&&a.assignment.dueDate)||"");
+  var changed=(canW&&wr!==curW)||rv!==a.reviewer||vd!==a.validator||due!==((a.assignment&&a.assignment.dueDate)||"");
   h+='<div class="btnrow"><button type="button" class="btn solid" data-asg="'+esc(a.id)+'"'+(!changed||busy["asg:"+a.id]?" disabled":"")+">"+(busy["asg:"+a.id]?"Saving\u2026":"Save assignment")+"</button>"+(changed?'<span class="note">Not saved yet</span>':"")+"</div>";
-  h+='<p class="note">The list leaves out the author and whoever claimed the article. Assigning someone does not approve anything: the business review can be passed only by the assigned reviewer (or an admin, except for policies), and the technical review by staff or the assigned technical reviewer.</p></div>';
+  h+='<p class="note">Reviewer lists leave out the creator and anyone who has written this article. Assigning someone does not approve anything: the business review can be passed only by the assigned reviewer (or an admin, except for policies), and the technical review by staff or the assigned technical reviewer.</p></div>';
   return h;
 }
 function checkRows(kind,a,list){
@@ -879,12 +886,14 @@ function doTechReview(disp){
 }
 function doAssign(id){
   var a=D.by[id],f=frm("as:"+id),p={articleId:id,expectedRevision:(a.assignment&&a.assignment.revision)||null},n=0;
+  if(f.author!==undefined&&f.author!==(writerOf(a)||"")){p.author=f.author||null;n++}
   if(f.reviewer!==undefined&&f.reviewer!==a.reviewer){p.reviewer=f.reviewer||null;n++}
   if(f.validator!==undefined&&f.validator!==a.validator){p.validator=f.validator||null;n++}
   var cur=(a.assignment&&a.assignment.dueDate)||"";if(f.dueDate!==undefined&&f.dueDate!==cur){p.dueDate=f.dueDate||null;n++}
   if(!n){toast("Nothing has changed.");return}
-  if((p.reviewer&&ownArticle(a,p.reviewer))||(p.validator&&ownArticle(a,p.validator))){toast("The author or claimer can't review their own article.",true);return}
-  act("assignReviewers",p,"asg:"+id).then(function(r){if(r.ok){delete V.forms["as:"+id];toast(r.message||"Assignment saved.")}});
+  if((p.reviewer&&wasWriter(a,p.reviewer))||(p.validator&&wasWriter(a,p.validator))){toast("Someone who created or wrote this article can't review it.",true);return}
+  if(p.author&&(p.author===lc(a.reviewer)||p.author===lc(a.validator))){toast("A reviewer can't also be the writer.",true);return}
+  act("assignArticleWork",p,"asg:"+id).then(function(r){if(r.ok){delete V.forms["as:"+id];toast(r.message||"Assignment saved.")}});
 }
 function formInput(t,rerender){
   var ff=t.dataset.ff,fn=t.dataset.fn,id=V.sel&&V.sel.id;if(!ff||!id)return false;
@@ -973,6 +982,9 @@ function approvalBar(a){
   var wc=workingCopy(a);
   if(wc)return '<div class="apbar"><span class="note">Readers see this published version. Newer changes are in the draft revision.</span></div>';
   msg=ap&&ap.label?ap.label:"Approval: not confirmed";tone=wfTone(a,"approval");
+  if(isCorrections(a)){msg="Needs changes \u00b7 "+(writing(a).assignee?personName(writing(a).assignee):"Unassigned");tone="p-open"}
+  else if(writing(a)&&writing(a).status==="unassigned"&&(st==="draft"||st==="unknown"))msg="Draft \u00b7 Unassigned";
+  if(canClaim(a))btns+='<button type="button" class="btn solid sm" data-claim="'+esc(a.id)+'"'+(busy["claim:"+a.id]?" disabled":"")+">"+(busy["claim:"+a.id]?"Claiming\u2026":"Claim writing")+"</button>";
   if(st==="awaiting_approval"&&a.reviewer)msg+=" \u00b7 "+personName(a.reviewer);
   if((st==="draft"||st==="changes_requested")&&canSubmit(a))btns+='<button type="button" class="btn solid sm" data-submit="'+esc(a.id)+'"'+(busy["sub:"+a.id]?" disabled":"")+">"+(busy["sub:"+a.id]?"Sending\u2026":"Send for approval")+"</button>";
   if(st==="awaiting_approval"&&canBizReview(a)&&V.tab!=="review")btns+='<button type="button" class="btn solid sm" data-tab="review">Review and approve</button>';
@@ -1125,7 +1137,7 @@ function newForm(){var f=V.forms["new"]=V.forms["new"]||{};if(!f.rid)f.rid=newRe
 function sameTitle(t){t=lc(t).replace(/\s+/g," ");if(!t)return [];return (D.allArticles||D.articles).filter(function(a){return lc(a.title).replace(/\s+/g," ")===t})}
 function newPanel(){
   var f=newForm(),types=D.lists.types||[],auds=D.lists.audiences||[],help=(D.lists.typeHelp||{})[f.type]||TYPE_HELP[f.type];
-  var h=head("New article","Start a draft","It's saved under your name as a draft. Nothing goes to review or Salesforce until you send it for approval.")+'</div><div class="pb">';
+  var h=head("New article","Start a draft","Saved as a draft you created. Nothing goes to review or Salesforce until it's sent for approval.")+'</div><div class="pb">';
   if(!canCreate())return h+'<p class="note">Your role can\'t create articles here. Ask a Knowledge staff member.</p></div>';
   h+='<label class="f">Title<input type="text" id="nt-title" maxlength="500" value="'+esc(f.title||"")+'" placeholder="Write it as the reader\'s question or task, e.g. Reset a learner\'s password"></label>';
   var dup=sameTitle(f.title);
@@ -1134,6 +1146,8 @@ function newPanel(){
   if(help)h+='<p class="note" style="margin:0">'+esc(help)+"</p>";
   if(auds.length)h+='<label class="f">Audience<select id="nt-aud"><option value="">Choose who it\'s for</option>'+auds.map(function(x){return '<option value="'+esc(x)+'"'+(x===f.aud?" selected":"")+">"+esc(x)+"</option>"}).join("")+"</select></label>";
   else h+='<p class="err">Trail OS couldn\'t load the Audience choices from Salesforce, so a draft can\'t be created right now. Refresh the data and try again.</p>';
+  var wv=f.writer||"",ppl=(D.people||[]).filter(function(p){return lc(p.email)!==me()});
+  h+='<label class="f">Writer<select id="nt-writer"><option value=""'+(wv===""?" selected":"")+'>Unassigned (anyone can claim it)</option>'+(me()?'<option value="'+esc(me())+'"'+(wv===me()?" selected":"")+">Assign to me</option>":"")+ppl.map(function(p){var e=lc(p.email);return '<option value="'+esc(e)+'"'+(wv===e?" selected":"")+">"+esc(p.name||p.email)+"</option>"}).join("")+"</select></label>";
   var ready=(f.title||"").trim()&&f.type&&f.aud&&auds.length;
   h+='<div class="btnrow"><button type="button" class="btn solid" id="nt-create"'+(!ready||busy["new"]?" disabled":"")+">"+(busy["new"]?"Creating\u2026":"Create draft")+'</button><button type="button" class="btn ghost" id="nt-cancel">Cancel</button></div>';
   h+='<p class="note" style="margin:0">Next you\'ll land on the Content tab with the sections this type needs. Save as you go. When it\'s ready, use Send for approval; saving never sends it.</p>';
@@ -1143,11 +1157,45 @@ function doCreate(){
   var f=newForm(),title=(f.title||"").trim();
   if(!title||!f.type||!f.aud){toast("Add a title, type and audience first.",true);return}
   if(title.length>500){toast("Keep the title under 500 characters.",true);return}
-  act("createArticle",{requestId:f.rid,title:title,type:f.type,audience:f.aud},"new").then(function(r){
+  act("createArticle",{requestId:f.rid,title:title,type:f.type,audience:f.aud,author:f.writer?f.writer:null},"new").then(function(r){
     if(!r.ok)return;
     var id=r.data&&r.data.articleId;delete V.forms["new"];
     toast(r.message||"Draft created. Add the content, save, then send it for approval when it's ready.");
-    if(id){V.pendingOpen=id;V.pendingTab="content";if(D.by[id]){V.sel={kind:"article",id:id};V.tab="content";V.pendingOpen=null;render()}}
+    if(id){V.pendingOpen=id;V.pendingTab="content"}
+  });
+}
+/* ---------- shared writing queue (v1.17) ---------- */
+function writing(a){return a&&a.writing&&typeof a.writing==="object"?a.writing:null}
+function writerOf(a){var w=writing(a);if(w&&w.assignee)return lc(w.assignee);var s=a.assignment&&a.assignment.author;return s&&s.email?lc(s.email):lc(a.claimedBy)}
+function contributors(a){var c=(a.assignment&&a.assignment.writingContributors)||[];return c.map(lc)}
+function wasWriter(a,email){var e=lc(email);return !!e&&(lc(a.author)===e||writerOf(a)===e||contributors(a).indexOf(e)>=0)}
+function isCorrections(a){var w=writing(a);return !!(w&&w.kind==="corrections")}
+function canClaim(a){return !!(a.perms&&a.perms.claimWriting===true)}
+function latestFindings(a){var b=rstate(a,"business"),t=rstate(a,"technical"),out=[];
+  if(b.findings&&b.status&&b.status!=="passed")out.push({who:"Business review",s:b});
+  if(t.findings&&t.status&&t.status!=="passed")out.push({who:"Technical review",s:t});return out}
+function findingsBox(a){var f=latestFindings(a);if(!f.length)return "";
+  return '<div class="box warn findings"><b>What needs changing</b>'+f.map(function(x){return '<div><span class="note">'+esc(x.who)+(x.s.by?" \u00b7 "+esc(personName(x.s.by)):"")+(x.s.at?" \u00b7 "+esc(fmtDate(x.s.at)):"")+(x.s.current===false?" \u00b7 earlier version":"")+"</span><blockquote>"+esc(x.s.findings)+"</blockquote></div>"}).join("")+"</div>"}
+function writingLabel(a){var w=writing(a);if(!w||w.status==="not_applicable")return "";
+  var who=w.assignee?personName(w.assignee):"Unassigned";
+  return (w.kind==="corrections"?"Needs changes":"Draft")+" \u00b7 "+who}
+function writingCell(a){var w=writing(a),h='<span class="roles">';
+  if(w)h+='<span class="pill '+(w.status==="unassigned"?"p-open":"p-role")+'">'+esc(writingLabel(a))+"</span>";
+  if(a.author)h+='<span class="sub">Created by '+esc(personName(a.author))+"</span>";
+  var f=latestFindings(a)[0];if(isCorrections(a)&&f)h+='<span class="sub">'+esc(String(f.s.findings).slice(0,90))+(String(f.s.findings).length>90?"\u2026":"")+"</span>";
+  return h+"</span>"}
+function doClaim(id){
+  var key="claim:"+id;if(busy[key])return;
+  act("loadArticleWork",{articleId:id},key).then(function(r){
+    if(!r.ok)return;
+    var w=r.data||{},asg=w.assignment||{};
+    if(w.writing&&w.writing.canClaim===false){toast("This writing can't be claimed now. Someone may have claimed it already.",true);return}
+    if(!w.editVersion){toast("Trail OS didn't return the current version. Refresh and try again.",true);return}
+    act("claimWriting",{articleId:id,editVersion:String(w.editVersion),expectedRevision:asg.revision||null},key).then(function(c){
+      if(!c.ok)return;
+      toast(c.message||"Writing assigned to you.");
+      var aid=(c.data&&c.data.articleId)||id;V.pendingOpen=aid;V.pendingTab="content";
+    });
   });
 }
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
@@ -1158,6 +1206,7 @@ document.addEventListener("click",function(e){
   if(t.dataset.view){setView(t.dataset.view);return}
   if(t.id==="newart"){if(V.focus)setFocus(false,true);V.sel={kind:"new"};V.back=null;newForm();renderPanel();var ti=$("nt-title");if(ti)ti.focus();return}
   if(t.id==="nt-create"){doCreate();return}
+  if(t.dataset.claim){doClaim(t.dataset.claim);return}
   if(t.id==="nt-cancel"){delete V.forms["new"];V.sel=null;render();return}
   if(t.dataset.go){setView(t.dataset.go);return}
   if(t.dataset.submit){doSubmit(t.dataset.submit);return}
@@ -1234,7 +1283,7 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   var t=e.target;if(!D)return;
-  if(t.id==="nt-type"||t.id==="nt-aud"||t.id==="nt-title"){var nf2=newForm();if(t.id==="nt-type")nf2.type=t.value;else if(t.id==="nt-aud")nf2.aud=t.value;else nf2.title=t.value;keepScroll(renderPanel);return}
+  if(t.id==="nt-type"||t.id==="nt-aud"||t.id==="nt-title"||t.id==="nt-writer"){var nf2=newForm();if(t.id==="nt-type")nf2.type=t.value;else if(t.id==="nt-aud")nf2.aud=t.value;else if(t.id==="nt-writer")nf2.writer=t.value;else nf2.title=t.value;keepScroll(renderPanel);return}
   if(t.dataset&&t.dataset.ff){formInput(t,t.tagName==="SELECT"||t.type==="date");return}
   if(t.id==="bdue"){V.bulk.due=t.value;return}
   if(t.id==="bfield"){V.bulk.field=t.value;V.bulk.value="";V.bulk.vals={};render();return}
