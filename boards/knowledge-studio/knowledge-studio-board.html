@@ -152,6 +152,8 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .ib{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:34px;min-height:32px;font-size:13px}
 .ib:disabled{opacity:.4;cursor:not-allowed}
 .sec{font-family:var(--head);font-weight:600;color:var(--ink);font-size:14px;margin-top:4px}
+.newbtn{flex:none;border:0;background:#fff;color:var(--teal);font-family:var(--head);font-weight:700;font-size:12.5px;border-radius:999px;padding:0 12px;min-height:28px;white-space:nowrap;cursor:pointer}
+.newbtn:hover{background:var(--tint)}.newbtn:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .wf{display:flex;flex-direction:column;gap:8px}
 h3.sec{font-size:14px}
 .wf-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0 0}
@@ -276,6 +278,7 @@ h3.sec{font-size:14px}
 <header class="top">
 <h1>Knowledge Studio</h1>
 <div class="search"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A4F4D" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input id="q" type="search" placeholder="Search articles and questions" aria-label="Search articles and questions"></div>
+<button type="button" class="newbtn" id="newart" hidden>+ New article</button>
 <div class="chips" id="chips"></div>
 <span class="asof" id="asof"></span>
 </header>
@@ -306,7 +309,7 @@ function act(name,payload,key){
 }
 window.addEventListener("message",function(e){
   if(e.source!==parent)return;var m=e.data;if(!m||typeof m!=="object")return;
-  if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);followRevision();if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab="edit";V.pendingOpen=null}render()}
+  if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);followRevision();if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab=V.pendingTab||"edit";V.pendingOpen=null;V.pendingTab=null}render()}
   else if(m.type==="actionPending"&&pending[m.id]&&pending[m.id].keepAlive){pending[m.id].keepAlive()}
   else if(m.type==="result"&&pending[m.id]){var r=pending[m.id];delete pending[m.id];r(m)}
 });
@@ -405,7 +408,7 @@ function render(){
   var aw=fmtWhen(D.asOf);$("asof").textContent="As of "+aw.replace(/^[A-Z][a-z]{2} \d{1,2}, /,"");$("asof").title="Data as of "+aw;
   renderChips();renderRail();renderMain();renderPanel();
 }
-function renderChips(){
+function renderChips(){var nb=$("newart");if(nb)nb.hidden=!canCreate();
   var pub=D.pubGroups!=null?D.pubGroups:D.articles.filter(function(a){return a.st.i>=3}).length,ready=D.articles.filter(pennyReady).length;
   var apn=D.articles.filter(function(a){return awaitingApproval(a)&&canBizReview(a)}).length,mine=countView("myrev")+countView("mytech");var c=(apn?[["approve","<b>"+apn+"</b> for you to approve"]]:[]).concat(mine?[[countView("myrev")?"myrev":"mytech","<b>"+mine+"</b> for you to review"]]:[]).concat([["penny","<b>"+ready+"/"+pub+"</b> ready for Penny"],["fix","<b>"+countView("fix")+"</b> to fix"],["publish","<b>"+countView("publish")+"</b> to publish"],["decisions","<b>"+D.decisions.filter(decOpen).length+"</b> decisions"]]);
   $("chips").innerHTML=c.map(function(x){return '<button type="button" class="chip" data-view="'+x[0]+'" aria-pressed="'+(V.view===x[0])+'">'+x[1]+"</button>"}).join("");
@@ -495,7 +498,8 @@ function renderPanel0(p){
   if(pickedIds().length&&canEdit()){p.hidden=false;p.innerHTML=bulkPanel();return}
   if(!V.sel){p.hidden=true;p.innerHTML="";return}
   var s=V.sel,h="";
-  if(s.kind==="article"&&D.by[s.id])h=articlePanel(D.by[s.id]);
+  if(s.kind==="new")h=newPanel();
+  else if(s.kind==="article"&&D.by[s.id])h=articlePanel(D.by[s.id]);
   else if(s.kind==="decision")h=decisionPanel(D.decisions.filter(function(d){return d.id===s.id})[0]);
   else if(s.kind==="question")h=questionPanel(D.questions.filter(function(q){return q.id===s.id})[0]);
   else if(s.kind==="page")h=pagePanel(D.pages.filter(function(x){return x.id===s.id})[0]);
@@ -1099,12 +1103,62 @@ function historyNote(a){
   if(wfStatus(a,"delivery")==="live_current")return "";
   return '<p class="note" style="margin:0">This is published history. Readers may still see the live version above while newer edits in this working revision wait for approval, delivery or publication.</p>';
 }
+/* ---------- new article (v1.16) ---------- */
+var TYPE_HELP={
+  procedure:"Step-by-step instructions. You'll write a short overview, then numbered steps, each with what the reader should see when it worked.",
+  "learner-task":"A task a learner completes. You'll describe the action, then the steps and how they know they're done.",
+  reference:"Facts someone looks up: definitions, lists, contacts, settings. You'll write the reference content in one section.",
+  concept:"Explains an idea and why it matters, with examples.",
+  troubleshooting:"Fixes a problem. You'll describe the symptom the reader sees, then the cause and the fix.",
+  policy:"A rule people must follow. You'll write the rule statement word for word, its effective date and who can grant an exception. Policies need a business reviewer to sign off.",
+  pathway:"An ordered route through other articles. You'll introduce it and link the articles in order.",
+  "release-note":"What changed in a release and what people need to do about it."
+};
+function canCreate(){var v=D.viewer||{};return v.canCreate!=null?!!v.canCreate:!!v.isStaff}
+function newRequestId(){
+  try{if(window.crypto&&crypto.randomUUID)return crypto.randomUUID()}catch(e){}
+  var b=new Uint8Array(16);crypto.getRandomValues(b);b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;
+  var h=Array.prototype.map.call(b,function(x){return (x+256).toString(16).slice(1)}).join("");
+  return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
+}
+function newForm(){var f=V.forms["new"]=V.forms["new"]||{};if(!f.rid)f.rid=newRequestId();return f}
+function sameTitle(t){t=lc(t).replace(/\s+/g," ");if(!t)return [];return (D.allArticles||D.articles).filter(function(a){return lc(a.title).replace(/\s+/g," ")===t})}
+function newPanel(){
+  var f=newForm(),types=D.lists.types||[],auds=D.lists.audiences||[],help=(D.lists.typeHelp||{})[f.type]||TYPE_HELP[f.type];
+  var h=head("New article","Start a draft","It's saved under your name as a draft. Nothing goes to review or Salesforce until you send it for approval.")+'</div><div class="pb">';
+  if(!canCreate())return h+'<p class="note">Your role can\'t create articles here. Ask a Knowledge staff member.</p></div>';
+  h+='<label class="f">Title<input type="text" id="nt-title" maxlength="500" value="'+esc(f.title||"")+'" placeholder="Write it as the reader\'s question or task, e.g. Reset a learner\'s password"></label>';
+  var dup=sameTitle(f.title);
+  if(dup.length)h+='<div class="box warn" style="font-size:13px">An article with this title already exists. Open it instead of making a duplicate: '+dup.slice(0,3).map(function(a){return '<button type="button" class="linkbtn" data-vopen="'+esc(a.id)+'">'+esc(a.title)+(a.sfNumber?" #"+esc(a.sfNumber):"")+"</button>"}).join(", ")+"</div>";
+  h+='<label class="f">Article type<select id="nt-type"><option value="">Choose a type</option>'+types.map(function(t){return '<option value="'+esc(t.key)+'"'+(t.key===f.type?" selected":"")+">"+esc(t.label)+"</option>"}).join("")+"</select></label>";
+  if(help)h+='<p class="note" style="margin:0">'+esc(help)+"</p>";
+  if(auds.length)h+='<label class="f">Audience<select id="nt-aud"><option value="">Choose who it\'s for</option>'+auds.map(function(x){return '<option value="'+esc(x)+'"'+(x===f.aud?" selected":"")+">"+esc(x)+"</option>"}).join("")+"</select></label>";
+  else h+='<p class="err">Trail OS couldn\'t load the Audience choices from Salesforce, so a draft can\'t be created right now. Refresh the data and try again.</p>';
+  var ready=(f.title||"").trim()&&f.type&&f.aud&&auds.length;
+  h+='<div class="btnrow"><button type="button" class="btn solid" id="nt-create"'+(!ready||busy["new"]?" disabled":"")+">"+(busy["new"]?"Creating\u2026":"Create draft")+'</button><button type="button" class="btn ghost" id="nt-cancel">Cancel</button></div>';
+  h+='<p class="note" style="margin:0">Next you\'ll land on the Content tab with the sections this type needs. Save as you go. When it\'s ready, use Send for approval; saving never sends it.</p>';
+  return h+"</div>";
+}
+function doCreate(){
+  var f=newForm(),title=(f.title||"").trim();
+  if(!title||!f.type||!f.aud){toast("Add a title, type and audience first.",true);return}
+  if(title.length>500){toast("Keep the title under 500 characters.",true);return}
+  act("createArticle",{requestId:f.rid,title:title,type:f.type,audience:f.aud},"new").then(function(r){
+    if(!r.ok)return;
+    var id=r.data&&r.data.articleId;delete V.forms["new"];
+    toast(r.message||"Draft created. Add the content, save, then send it for approval when it's ready.");
+    if(id){V.pendingOpen=id;V.pendingTab="content";if(D.by[id]){V.sel={kind:"article",id:id};V.tab="content";V.pendingOpen=null;render()}}
+  });
+}
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back,exact){V.pin=exact?id:null;if(!exact&&D.repOf&&D.repOf[id])id=D.repOf[id];V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
 document.addEventListener("click",function(e){
   var t=e.target.closest("button,input[type=checkbox]");if(!t||!D)return;
   if(t.dataset.view){setView(t.dataset.view);return}
+  if(t.id==="newart"){if(V.focus)setFocus(false,true);V.sel={kind:"new"};V.back=null;newForm();renderPanel();var ti=$("nt-title");if(ti)ti.focus();return}
+  if(t.id==="nt-create"){doCreate();return}
+  if(t.id==="nt-cancel"){delete V.forms["new"];V.sel=null;render();return}
   if(t.dataset.go){setView(t.dataset.go);return}
   if(t.dataset.submit){doSubmit(t.dataset.submit);return}
   if(t.dataset.annow){V.forms["an:"+t.dataset.annow]={open:true};renderPanel();return}
@@ -1166,6 +1220,7 @@ document.addEventListener("click",function(e){
 document.addEventListener("input",function(e){
   var t=e.target;if(!D)return;
   if(t.id==="rte"){captureBody();return}
+  if(t.id==="nt-title"){var nf=newForm();nf.title=t.value;var cb=$("nt-create");if(cb)cb.disabled=!(t.value.trim()&&nf.type&&nf.aud&&(D.lists.audiences||[]).length)||!!busy["new"];return}
   if(t.dataset&&t.dataset.an==="note"&&V.sel){(V.forms["an:"+V.sel.id]=V.forms["an:"+V.sel.id]||{}).note=t.value;return}
   if(t.dataset&&t.dataset.rn){V.forms["rn:"+t.dataset.rn]=t.value;return}
   if(t.dataset&&t.dataset.ff&&t.tagName!=="SELECT"&&t.type!=="date"){formInput(t,false);return}
@@ -1179,6 +1234,7 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   var t=e.target;if(!D)return;
+  if(t.id==="nt-type"||t.id==="nt-aud"||t.id==="nt-title"){var nf2=newForm();if(t.id==="nt-type")nf2.type=t.value;else if(t.id==="nt-aud")nf2.aud=t.value;else nf2.title=t.value;keepScroll(renderPanel);return}
   if(t.dataset&&t.dataset.ff){formInput(t,t.tagName==="SELECT"||t.type==="date");return}
   if(t.id==="bdue"){V.bulk.due=t.value;return}
   if(t.id==="bfield"){V.bulk.field=t.value;V.bulk.value="";V.bulk.vals={};render();return}
