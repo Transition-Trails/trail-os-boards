@@ -133,6 +133,13 @@ blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--teal);backgrou
 .waiting{margin:40px auto;max-width:520px;text-align:center;padding:28px}
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:9;max-width:90vw}
 .toast.bad{background:#8A3B12}
+.failbox{position:fixed;bottom:16px;right:16px;left:auto;max-width:min(420px,calc(100vw - 32px));background:#fff;border:1px solid #C9A88B;border-left:4px solid #8A3B12;border-radius:10px;padding:10px 12px;z-index:10;box-shadow:0 6px 24px rgba(0,0,0,.15);display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.failbox[hidden]{display:none}.fbtxt{min-width:0;flex:1;overflow-wrap:anywhere}
+.gd{border-radius:10px;padding:8px 12px;margin:8px 0 4px;background:var(--bg);border-left:4px solid #5590A9;font-size:13px;overflow-wrap:anywhere}
+.gd-success{border-left-color:#3E9A55}.gd-warning{border-left-color:#C08A1E;background:var(--warn)}.gd-error{border-left-color:#8A3B12;background:var(--warn)}
+.gdrow{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:space-between}.gdtxt{flex:1 1 220px;min-width:0}
+.gdmsg{margin:0;font-weight:600;color:var(--ink)}.gdnext{margin:2px 0 0;color:var(--ink2,#555)}.gdnote{flex:0 1 auto}
+.gd .btn{max-width:100%;white-space:normal}.pfbox{margin-top:8px;background:#fff}.pflist{margin:4px 0;padding-left:18px}
 .mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
 .more{align-self:flex-start}
 .grip{position:absolute;left:0;top:0;bottom:0;width:10px;cursor:col-resize;z-index:2;background:transparent;border:0;padding:0}
@@ -296,6 +303,7 @@ h3.sec{font-size:14px}
 </div>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
+<div class="failbox" id="failbox" role="alert" hidden></div>
 <script>
 (function(){
 "use strict";
@@ -307,15 +315,15 @@ function send(m){parent.postMessage(m,"*")}
 function act(name,payload,key){
   var id="a"+(++seq);busy[key||id]=true;render();
   return new Promise(function(res){
-    var t=null;function arm(){clearTimeout(t);t=setTimeout(function(){delete pending[id];delete busy[key||id];toast("Trail OS didn't answer in time. Check the record before trying again.",true);render();res({ok:false,code:"timeout"})},20000)}
-    arm();pending[id]=function(m){clearTimeout(t);delete busy[key||id];if(!m.ok)toast(m.message||"That didn't save.",true);render();res(m)};
+    var t=null;function arm(){clearTimeout(t);t=setTimeout(function(){delete pending[id];delete busy[key||id];showFailure({message:"This request could not be completed.",nextStep:"Refresh status and follow the article\u2019s current next step.",details:"No answer from Trail OS within 20 seconds ("+name+")."});render();res({ok:false,code:"timeout"})},20000)}
+    arm();pending[id]=function(m){clearTimeout(t);delete busy[key||id];if(!m.ok){if(FAIL_PASS[m.code])toast(m.message||"That didn't save.",true);else showFailure(failFromResult(m))}render();res(m)};
     pending[id].keepAlive=arm;
     send({type:"action",id:id,name:name,payload:payload});
   });
 }
 window.addEventListener("message",function(e){
   if(e.source!==parent)return;var m=e.data;if(!m||typeof m!=="object")return;
-  if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);followRevision();if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab=V.pendingTab||"edit";V.pendingOpen=null;V.pendingTab=null}render()}
+  if(m.type==="data"&&m.data){if(m.data.contractVersion!==CONTRACT){showWait("This board version expects data contract "+CONTRACT+". Ask an admin to activate a matching board version.");return}D=index(m.data);refreshArrived();followRevision();if(V.pendingOpen&&D.by[V.pendingOpen]){V.sel={kind:"article",id:V.pendingOpen};V.tab=V.pendingTab||"edit";V.pendingOpen=null;V.pendingTab=null}render();lastStale=dataStale()}
   else if(m.type==="actionPending"&&pending[m.id]&&pending[m.id].keepAlive){pending[m.id].keepAlive()}
   else if(m.type==="result"&&pending[m.id]){var r=pending[m.id];delete pending[m.id];r(m)}
   else if(m.type==="publicationComparisonReturn"&&typeof m.articleId==="string"){comparisonReturned(m.articleId)}
@@ -987,7 +995,7 @@ function approverText(a){
 function approvalBar(a){
   var h="",btns="",msg,tone,ap=wfPart(a,"approval"),st=wfStatus(a,"approval");
   var wc=workingCopy(a);
-  if(wc)return '<div class="apbar"><span class="note">Readers see this published version. Newer changes are in the draft revision.</span></div>';
+  if(wc)return guidanceBlock(a)+'<div class="apbar"><span class="note">Readers see this published version. Newer changes are in the draft revision.</span></div>';
   msg=ap&&ap.label?ap.label:"Approval: not confirmed";tone=wfTone(a,"approval");
   if(isCorrections(a)){msg="Needs changes \u00b7 "+(writing(a).assignee?personName(writing(a).assignee):"Unassigned");tone="p-open"}
   else if(writing(a)&&writing(a).status==="unassigned"&&(st==="draft"||st==="unknown"))msg="Draft \u00b7 Unassigned";
@@ -997,8 +1005,10 @@ function approvalBar(a){
   if(st==="awaiting_approval"&&canBizReview(a)&&V.tab!=="review")btns+='<button type="button" class="btn solid sm" data-tab="review">Review and approve</button>';
   if(st==="approved")btns+=sfLink(a);
   if(st!=="approved"&&canOverride(a)&&!(V.forms["an:"+a.id]||{}).open)btns+='<button type="button" class="btn ghost sm" data-annow="'+esc(a.id)+'">Approve now (superadmin)</button>';
-  h='<div class="apbar"><span class="pill '+tone+'">'+esc(msg)+"</span>"+(publishedSibling(a)?'<span class="note">Revision of a published article</span>':"")+btns+"</div>";
-  if(st==="approved")h+='<p class="note apnote">Salesforce delivery starts automatically after approval; check <button type="button" class="linkbtn" data-tab="sync">Sync</button> for its status.</p>';
+  var gd=guidanceBlock(a);
+  if(gd)h=gd+(btns||publishedSibling(a)?'<div class="apbar">'+(publishedSibling(a)?'<span class="note">Revision of a published article</span>':"")+btns+"</div>":"");
+  else h='<div class="apbar"><span class="pill '+tone+'">'+esc(msg)+"</span>"+(publishedSibling(a)?'<span class="note">Revision of a published article</span>':"")+btns+"</div>";
+  if(st==="approved"&&!gd)h+='<p class="note apnote">Salesforce delivery starts automatically after approval; check <button type="button" class="linkbtn" data-tab="sync">Sync</button> for its status.</p>';
   var f=V.forms["an:"+a.id];
   if(f&&f.open&&canOverride(a))h+='<div class="box warn anbox"><b>Approve without the independent review?</b><p class="note" style="margin:0">This records your approval for the current version and skips the assigned reviewer and review checklist. Trail OS records that you did. Salesforce delivery then starts automatically; it doesn\'t publish anything, and it doesn\'t make the article ready for Penny.</p><label class="f">Why you\'re approving it this way<textarea data-an="note" placeholder="At least 10 characters, e.g. Founder approval of a wording fix">'+esc(f.note||"")+'</textarea></label><div class="checks"><label><input type="checkbox" data-an="ok"'+(f.ok?" checked":"")+'>I approve version '+esc(String(a.contentVersion||"").slice(0,8))+" of this article</label></div><div class=\"btnrow\"><button type=\"button\" class=\"btn solid\" data-anconfirm=\""+esc(a.id)+"\""+(busy["an:"+a.id]?" disabled":"")+">"+(busy["an:"+a.id]?"Approving\u2026":"Approve")+'</button><button type="button" class="btn ghost" data-ancancel="'+esc(a.id)+'">Cancel</button></div></div>';
   return h;
@@ -1095,7 +1105,7 @@ function syncTab(a){
   if(d.nextAttemptAt)h+='<div class="kv"><span>Next automatic attempt</span><b>'+esc(fmtWhen(d.nextAttemptAt))+"</b></div>";
   if(active)h+='<p class="note" style="margin:0">Delivery runs automatically. You can leave this page while it runs and come back here for the result.</p>';
   if(d.error)h+='<details class="wfd"><summary>Error details</summary>'+(d.attemptedAt?'<p class="note" style="margin:6px 0">Attempted: '+esc(fmtWhen(d.attemptedAt))+"</p>":"")+'<div class="wf-error">'+esc(d.error)+"</div></details>";
-  if(d.canRetry===true&&!active&&canPublish(a))h+='<div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry sync")+"</button></div>";
+  if(d.canRetry===true&&!active&&canPublish(a)&&!(gOf(a)&&gOf(a).wait===true))h+='<div class="btnrow"><button type="button" class="btn solid" data-sync="'+esc(a.id)+'"'+(busy["sync:"+a.id]?" disabled":"")+">"+(busy["sync:"+a.id]?"Retrying\u2026":"Retry sync")+"</button></div>";
   h+='<p class="note" style="margin:0">Delivery puts the approved revision into a Salesforce draft. It never publishes; publishing is on the Publish tab.</p>';
   return h+"</section>"+pubHelp();
 }
@@ -1291,6 +1301,108 @@ function pubHelp(){
   "<li>A licensed Knowledge user publishes it manually in Salesforce.</li>"+
   "<li>Come back and use Check Salesforce status. Checklist ticks aren\u2019t evidence of publication.</li></ol></details>";
 }
+/* ---------- shared guidance (v1.19) ---------- */
+V.preflight=V.preflight||{};
+var STALE_MS=120000;
+function gOf(a){var w=a&&a.workflow,g=w&&w.guidance;return g&&typeof g==="object"&&typeof g.message==="string"?g:null}
+function dataStale(){if(!D)return true;var t=Date.parse(D.asOf||"");return !isFinite(t)||Date.now()-t>STALE_MS}
+function fmtLocal(iso){var t=Date.parse(iso||"");if(!isFinite(t))return "";try{return new Date(t).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"})}catch(e){return new Date(t).toLocaleString()}}
+var GD_TABS={};
+function gdPermitted(a,kind){
+  /* enabled is presentation only; the board's own permission gates still apply */
+  if(kind==="retry_delivery"||kind==="check_status")return canPublish(a);
+  return true;
+}
+function guidanceBlock(a){
+  var g=gOf(a);if(!g)return "";
+  var stale=dataStale(),tone=stale?"warning":(g.tone||"info"),alert=tone==="warning"||tone==="error";
+  var ga=stale?{kind:"refresh_data",label:"Refresh status",enabled:true}:(g.action||{kind:"none"});
+  var h='<section class="gd gd-'+esc(tone)+'" data-gd="'+esc(a.id)+'" role="'+(alert?"alert":"status")+'"><div class="gdrow"><div class="gdtxt">';
+  h+='<p class="gdmsg">'+esc(stale?"This status is out of date.":g.message)+"</p>";
+  var ns=stale?"Refresh status before deciding whether to wait or retry.":g.nextStep;
+  if(ns)h+='<p class="gdnext">'+esc(ns)+"</p>";
+  if(!stale&&g.nextAttemptAt&&fmtLocal(g.nextAttemptAt))h+='<p class="gdnext">Next scheduled check: <time datetime="'+esc(g.nextAttemptAt)+'">'+esc(fmtLocal(g.nextAttemptAt))+"</time></p>";
+  h+="</div>";
+  var kind=ga&&ga.kind||"none";
+  if(kind!=="none"&&ga.label){
+    if(!gdPermitted(a,kind))h+='<span class="note gdnote">Knowledge staff handle this step.</span>';
+    else{var key="gd:"+a.id,dis=!ga.enabled||busy[key]||(kind==="refresh_data"&&V.refreshing);
+      h+='<button type="button" class="btn '+(alert?"solid":"ghost")+' sm" data-gdact="'+esc(a.id)+'" data-gdkind="'+esc(kind)+'"'+(dis?" disabled":"")+">"+esc(kind==="refresh_data"&&V.refreshing?"Refreshing\u2026":busy[key]?"Working\u2026":ga.label)+"</button>"}
+  }
+  h+="</div>";
+  var s=g.support;
+  if(!stale&&s&&s.error)h+='<details class="wfd gdsup"><summary>Details for support</summary><div class="wf-error">'+esc(s.error)+'</div><div class="kv"><span>Attempt</span><b>'+esc(s.attemptedAt?fmtLocal(s.attemptedAt):"Not recorded")+'</b></div><div class="kv"><span>Salesforce version</span><b class="mono">'+esc(s.receiptVersionId||"Not recorded")+'</b></div><div class="kv"><span>Current content</span><b class="mono">'+esc(s.contentVersion||"Not recorded")+'</b></div><div class="kv"><span>Attempted content</span><b class="mono">'+esc(s.receiptContentVersion||"Not recorded")+"</b></div></details>";
+  var pf=V.preflight[a.id];
+  if(pf)h+=preflightBox(a,pf);
+  return h+"</section>";
+}
+function preflightBox(a,pf){
+  var h='<div class="box pfbox"><div class="sfh"><b>Rules check</b><button type="button" class="linkbtn" data-pfclose="'+esc(a.id)+'">Dismiss</button></div>';
+  if(pf.loading)return h+'<p class="note" style="margin:0">Checking\u2026</p></div>';
+  if(pf.msg)h+='<p style="margin:0">'+esc(pf.msg)+"</p>";
+  if(pf.items&&pf.items.length)h+='<ul class="pflist">'+pf.items.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ul>";
+  else if(pf.ok)h+='<p class="note" style="margin:0">No findings.</p>';
+  return h+'<p class="note" style="margin:0">Checked '+esc(fmtLocal(pf.at))+'. This read-only check doesn\u2019t approve, deliver, or change any history.</p></div>';
+}
+function pfItems(d){
+  if(!d||typeof d!=="object")return [];
+  var keys=["findings","issues","problems","errors","warnings","results"],out=[];
+  keys.forEach(function(k){var v=d[k];if(Array.isArray(v))v.forEach(function(x){
+    if(typeof x==="string")out.push(x);
+    else if(x&&typeof x==="object"){var t=x.message||x.text||x.label||x.detail||x.field;if(t)out.push(String(x.field&&t!==x.field?x.field+": "+t:t))}
+  })});
+  return out.slice(0,20);
+}
+function gdRun(id,kind){
+  var a=D.by[id],g=gOf(a);if(!a)return;
+  var stale=dataStale(),ga=stale?{kind:"refresh_data",enabled:true}:(g&&g.action)||{kind:"none"};
+  if(ga.kind!==kind||!ga.enabled||!gdPermitted(a,kind))return;
+  var key="gd:"+id;
+  if(kind==="refresh_data"){boardRefresh();return}
+  if(kind==="open_article"){V.tab=awaitingApproval(a)&&canBizReview(a)?"review":"content";renderPanel();return}
+  if(kind==="compare"){doCompare(id);return}
+  if(kind==="open_salesforce"){act("openRecord",{type:"salesforce",id:id,version:"draft"},key);return}
+  if(kind==="check_status"){act("checkPublication",{articleId:id},key).then(function(r){if(r.ok)toast(r.message||"Salesforce status checked. Nothing was delivered or published.")});return}
+  if(kind==="retry_delivery"){act("retrySync",{articleId:id},key).then(function(r){if(r.ok)toast(r.message||"Delivery queued. Follow the article\u2019s next step for the result.")});return}
+  if(kind==="check_rules"){
+    var fresh=D.by[id];V.preflight[id]={loading:true};
+    act("checkCurrentPreflight",{articleId:id,editVersion:fresh.editVersion,contentVersion:fresh.contentVersion},key).then(function(r){
+      if(!r.ok){delete V.preflight[id];keepScroll(renderPanel);return}
+      var d=r.data||{};V.preflight[id]={ok:true,at:new Date().toISOString(),msg:r.message||d.message||"",items:pfItems(d)};keepScroll(renderPanel);
+    });return}
+}
+/* refresh: re-announce the board so Trail OS sends its latest data; no write */
+function boardRefresh(){
+  if(V.refreshing)return;V.refreshing=Date.now();updateGuidance();
+  send({type:"ready",board:BOARD,boardVersion:BOARD_VERSION,contractVersion:CONTRACT,capabilities:["publicationComparisonReturn"]});
+  setTimeout(function(){if(!V.refreshing)return;V.refreshing=0;updateGuidance();
+    if(dataStale())showFailure({message:"Trail OS hasn\u2019t sent newer data yet.",nextStep:"Use Refresh data at the top of Knowledge Studio, then follow the article\u2019s next step."})},6000);
+}
+function refreshArrived(){if(V.refreshing){V.refreshing=0;if(dataStale())showFailure({message:"Trail OS hasn\u2019t sent newer data yet.",nextStep:"Use Refresh data at the top of Knowledge Studio, then follow the article\u2019s next step."})}}
+/* update only the guidance banners, never the forms around them */
+var lastStale=null;
+function updateGuidance(){
+  lastStale=dataStale();
+  Array.prototype.forEach.call(document.querySelectorAll("[data-gd]"),function(el){
+    var a=D&&D.by[el.dataset.gd];if(!a)return;var tmp=document.createElement("div");tmp.innerHTML=guidanceBlock(a);
+    var n=tmp.firstChild;if(!n)return;
+    var openSup=el.querySelector("details.gdsup");if(openSup&&openSup.open){var ns=n.querySelector("details.gdsup");if(ns)ns.open=true}
+    el.parentNode.replaceChild(n,el);
+  });
+}
+setInterval(function(){if(D&&dataStale()!==lastStale)updateGuidance()},10000);
+/* failures stay visible until dismissed */
+var FAIL_PASS={preview_only:1,cancelled:1};
+function showFailure(f){
+  V.fail=f;var el=$("failbox");if(!el)return;
+  el.innerHTML='<div class="fbtxt"><p class="gdmsg">'+esc(f.message)+"</p>"+(f.nextStep?'<p class="gdnext">'+esc(f.nextStep)+"</p>":"")+(f.details?'<details class="wfd"><summary>Details for support</summary><div class="wf-error">'+esc(f.details)+"</div></details>":"")+'</div><button type="button" class="btn ghost sm" id="faildismiss">Dismiss</button>';
+  el.hidden=false;
+}
+function failFromResult(m){
+  if(m.feedback&&typeof m.feedback==="object"&&m.feedback.message)return {message:String(m.feedback.message),nextStep:m.feedback.nextStep?String(m.feedback.nextStep):"",details:m.feedback.details?String(m.feedback.details):""};
+  var det=[m.code?"Code: "+m.code:"",m.message||""].filter(Boolean).join("\n");
+  return {message:"This request could not be completed.",nextStep:"Refresh status and follow the article\u2019s current next step.",details:det};
+}
 function setView(v){if(v!=="questions")V.qaud=null;V.view=v;V.cat=null;V.limit=200;V.sel=null;V.back=null;V.tab=null;if(v.indexOf("miss:")===0)V.bulk.field=v.slice(5);render();$("main").scrollTop=0}
 function openArticle(id,back,exact){V.pin=exact?id:null;if(!exact&&D.repOf&&D.repOf[id])id=D.repOf[id];V.sel={kind:"article",id:id};V.tab=null;V.back=back||null;render()}
 function checkedVals(name){return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value})}
@@ -1360,6 +1472,9 @@ document.addEventListener("click",function(e){
   if(t.dataset.tagsave){tagSave(t.dataset.tagsave);return}
   if(t.dataset.tagcancel){delete V.tagEd[t.dataset.tagcancel];keepScroll(renderPanel);return}
   if(t.dataset.compare){doCompare(t.dataset.compare);return}
+  if(t.dataset.gdact){gdRun(t.dataset.gdact,t.dataset.gdkind);return}
+  if(t.dataset.pfclose){delete V.preflight[t.dataset.pfclose];keepScroll(renderPanel);return}
+  if(t.id==="faildismiss"){V.fail=null;$("failbox").hidden=true;return}
   if(t.dataset.ff&&t.type==="checkbox"){formInput(t,false);return}
   if(t.id==="bapply"){doBulk();return}
   if(t.dataset.decide){doDecide(t.dataset.decide);return}
