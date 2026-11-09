@@ -4,7 +4,8 @@ Dates are build dates. Record each Trail OS activation here as you make it, with
 
 | Version | Built | Activated in Trail OS |
 |---|---|---|
-| v1.21 | 2026-11-08 | Active (confirmed 2026-11-09) |
+| v1.22 | 2026-11-09 | Active (activated 2026-11-09) |
+| v1.21 | 2026-11-08 | Active 2026-11-09, replaced by v1.22 the same day |
 | v1.20 | 2026-11-08 | |
 | v1.19 | 2026-11-08 | |
 | v1.18 | 2026-11-08 | |
@@ -26,5 +27,7 @@ Dates are build dates. Record each Trail OS activation here as you make it, with
 | v1.2 | 2026-11-04 | |
 | v1.1 | 2026-11-04 | |
 | v1 | 2026-11-04 | |
+
+v1.22 added a Salesforce column to the article table. It links to the published version and the draft in Salesforce when Trail OS has read the article's version history, and to the article by number otherwise. When the side panel is open, the links move under the article title.
 
 Each version is a tagged commit (`knowledge-studio/v1.N`). The changes inside each version were not recorded when the files were built, so compare tags to see them: `git diff knowledge-studio/v1.20 knowledge-studio/v1.21`.

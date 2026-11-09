@@ -5,11 +5,11 @@ Knowledge Studio is the staff and Knowledge Manager board for writing, reviewing
 | | |
 |---|---|
 | File | `knowledge-studio-board.html` |
-| Version | v1.21 (`BOARD_VERSION=1`, `CONTRACT=1`) |
-| Built | Nov 8, 2026 |
-| Size | 180,557 bytes |
-| sha256 | `d6bf19dcaa8f85b6069188227aca761b147658107ceec60b0a4f4d9743a4174f` |
-| Active in Trail OS | Yes, v1.21 (confirmed Nov 9, 2026) |
+| Version | v1.22 (`BOARD_VERSION=1`, `CONTRACT=1`) |
+| Built | Nov 9, 2026 |
+| Size | 182,173 bytes |
+| sha256 | `0012d53a18c988a0f096fd78a74c36743782b80d955f2c7735f09cbcb8ea69af` |
+| Active in Trail OS | Yes, v1.22 (activated Nov 9, 2026) |
 | Trail OS resource key | `knowledge-studio-board:main`, files under `/objects/knowledge-studio-boards/` |
 
 ## Specs
