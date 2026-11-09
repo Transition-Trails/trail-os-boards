@@ -1,0 +1,67 @@
+/* Program Studio additions */
+.empty{padding:18px;color:var(--body)}
+.stl{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px}
+.stl .linkbtn{font-size:13px}
+.warnt{color:#8A3B12!important;font-weight:600}
+.fld{display:flex;flex-direction:column;gap:3px}
+.fld .was{font-size:12px;color:var(--body);padding-left:2px}
+ul.plain{margin:0;padding-left:18px}
+.issues{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.issues .issue{padding:8px 10px;gap:2px;font-size:13px}
+.errbox{margin-top:4px;font-size:13px;color:#5c2a0d}
+label.f.inline{flex-direction:row;align-items:center;gap:8px;font-weight:600}
+label.f.inline select{min-height:32px}
+.sec{font-family:var(--head);font-size:12px;letter-spacing:.04em;color:var(--teal);font-weight:600;margin-top:4px}
+.stbox,.newc,.apbox,.anbox{display:flex;flex-direction:column;gap:8px}
+.stbox .sfh,.sfh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pbar{height:8px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;background:var(--green);border-radius:999px}
+blockquote{margin:0;padding:8px 12px;border-left:3px solid var(--line);background:var(--bg);font-size:13.5px}
+.cal{padding:4px 0;overflow-x:auto}
+.calhead,.calrow{display:grid;grid-template-columns:minmax(150px,220px) minmax(420px,1fr);gap:10px;align-items:center;padding:0 12px}
+.calhead{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding-top:8px;padding-bottom:6px;z-index:1}
+.calaxis{position:relative;height:18px}
+.calaxis span{position:absolute;top:0;font-size:11.5px;color:var(--body);white-space:nowrap;border-left:1px solid var(--line);padding-left:4px}
+.calrow{border-top:1px solid var(--line);min-height:46px}
+.calrow:first-of-type{border-top:0}
+.callabel{text-align:left;padding:6px 0}
+.caltrack{position:relative;height:26px}
+.calbar{position:absolute;top:6px;height:14px;border-radius:4px;background:var(--teal)}
+.calbar.st-Active{background:var(--green)}
+.calbar.st-Planned{background:#7FAFC6}
+.calbar.st-Completed{background:#A9B2AD}
+.calbar.st-Canceled{background:repeating-linear-gradient(45deg,#C9CEC9 0 4px,#E6E9E6 4px 8px)}
+.calbar.open{-webkit-mask-image:linear-gradient(90deg,#000 70%,transparent);mask-image:linear-gradient(90deg,#000 70%,transparent)}
+.caltoday{position:absolute;top:0;bottom:0;width:0;border-left:2px solid #C2462B}
+select:disabled,input:disabled,textarea:disabled{background:var(--bg);color:var(--body)}
+@media (max-width:1000px){aside.panel:not(.focus){flex-shrink:0}}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}.kv span{min-width:100px}main.main{padding:14px 12px 30px}.pb{padding:12px 14px 20px}}
+.mhead .closedtg{margin-left:auto;font-size:13px}
+/* rich text sections (v1.2) */
+.jump{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-bottom:4px}
+.chipb{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px;min-height:30px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.chipb:hover{border-color:var(--teal)}.chipb.ed{border-color:var(--green);background:#edf4ef}
+.rtf{gap:0;scroll-margin-top:12px}
+.rth{display:flex;align-items:center;gap:8px;margin:6px 0 6px}
+.rtl{font-family:var(--head);font-size:14.5px;font-weight:600;color:var(--ink)}
+.rtf .tool{gap:2px;padding:4px;align-items:center}
+.rtf .tool button{min-height:28px;min-width:30px;font-size:12.5px;padding:0 7px}
+.rtf:focus-within .tool{position:sticky;top:0;z-index:3;box-shadow:0 2px 6px rgba(42,46,44,.06)}
+.rtf .rte{min-height:96px;max-height:none;overflow:visible}
+.rtf.ed .rte{border-left:3px solid var(--green)}
+.rte.ro{border-radius:8px;background:var(--bg)}
+.rte h2,.rte h4{font-size:15px;margin:12px 0 6px}
+.rte table{border-collapse:collapse;width:100%;margin:6px 0 10px;font-size:13.5px}
+.rte th,.rte td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+.rte th{background:var(--bg)}
+.rte a{color:var(--teal)}
+.rte img{max-width:100%}
+.rte:empty:before{content:"Start writing\2026";color:var(--off)}
+.rtlink{display:inline-flex;gap:4px;align-items:center;margin-left:6px}
+.rtlink input{min-height:28px;width:min(320px,50vw);border:1px solid var(--line);border-radius:6px;padding:0 8px}
+.savebar{position:sticky;bottom:0;background:var(--surface);padding:10px 0;border-top:1px solid var(--line);z-index:4}
+.panel.focus .savebar{background:var(--bg)}
+.panel.focus .rtf .rte{min-height:140px;font-size:15px;line-height:1.65;padding:14px 18px}
+.panel.focus .rtl{font-size:16px}
+@media (min-width:900px){.panel.focus>.pb{padding:24px 36px 0}}
+@media (max-width:640px){.jump{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}.chipb{flex:none}}

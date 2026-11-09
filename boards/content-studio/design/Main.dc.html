@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Content Studio, staff board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fafaf7}
+a{color:#2f6b3f}a:hover{color:#245531}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #fafaf7; color: #4a4f4d; font-family: 'Open Sans', 'Roboto', system-ui, sans-serif; font-size: 15px; line-height: 1.5; box-sizing: border-box">
+
+  <header style="padding: 24px 32px 16px; border-bottom: 1px solid #e2e4e1; background: #ffffff; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between">
+    <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+      <div style="font-size: 13px; font-weight: 600; letter-spacing: .04em; color: #2f6f7e; text-transform: uppercase">Penny · Create</div>
+      <h1 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 30px; font-weight: 600; line-height: 1.2; color: #2a2e2c">Content Studio</h1>
+      <p style="margin: 0; max-width: 760px; color: #4a4f4d">Everything we make, from idea to published: Build With Me videos, Trail Kits, articles, social posts and newsletters. Content Items and Topics live in Salesforce. Each item in production gets its own Case, and the volunteer is the Case's Volunteer Assigned Contact.</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #edf5f8; color: #2a2e2c; font-size: 13px">
+      <span aria-hidden="true">ⓘ</span>
+      <span>Design preview: a sample of real Content Items from Salesforce, Nov 7, 2026. Assignments marked Sample are made up.</span>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px 32px 48px; align-items: flex-start">
+
+    <nav aria-label="Content Studio views" style="flex: 1 1 200px; max-width: 240px; display: flex; flex-direction: column; gap: 4px">
+      <button type="button" onClick="{{ nav.overview.go }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: {{ nav.overview.bg }}; color: {{ nav.overview.color }}; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+        <span>Overview</span>
+      </button>
+      <button type="button" onClick="{{ nav.pipeline.go }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: {{ nav.pipeline.bg }}; color: {{ nav.pipeline.color }}; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M8 7v7M12 7v4M16 7v9"></path></svg>
+        <span>Pipeline</span>
+      </button>
+      <button type="button" onClick="{{ nav.publishing.go }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: {{ nav.publishing.bg }}; color: {{ nav.publishing.color }}; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+        <span>Publishing</span>
+      </button>
+      <button type="button" onClick="{{ nav.volunteers.go }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: {{ nav.volunteers.bg }}; color: {{ nav.volunteers.color }}; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Volunteers</span>
+      </button>
+
+      <div style="margin: 20px 14px 6px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #686e6c">Needs a person</div>
+      <sc-for list="{{ quicks }}" as="qk" hint-placeholder-count="4">
+        <button type="button" onClick="{{ qk.go }}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: {{ qk.bg }}; color: #2a2e2c; font-size: 14px; text-align: left; cursor: pointer">
+          <span>{{ qk.label }}</span>
+          <span style="min-width: 28px; padding: 2px 8px; border-radius: 999px; background: #ffffff; border: 1px solid #e2e4e1; font-size: 13px; font-weight: 600; text-align: center">{{ qk.count }}</span>
+        </button>
+      </sc-for>
+    </nav>
+
+    <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <label style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 240px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+          Search
+          <input type="search" value="{{ q }}" onChange="{{ onSearch }}" placeholder="Title or CI number" style="min-height: 44px; padding: 0 14px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #ffffff; font: inherit; font-weight: 400; color: #2a2e2c">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 4px; flex: 0 1 260px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+          Topic
+          <select value="{{ topic }}" onChange="{{ onTopic }}" style="min-height: 44px; padding: 0 12px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #ffffff; font: inherit; font-weight: 400; color: #2a2e2c">
+            <sc-for list="{{ topicOptions }}" as="t" hint-placeholder-count="6">
+              <option value="{{ t.value }}">{{ t.label }}</option>
+            </sc-for>
+          </select>
+        </label>
+        <div role="group" aria-label="Format" style="display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-end">
+          <sc-for list="{{ formatChips }}" as="f" hint-placeholder-count="4">
+            <button type="button" onClick="{{ f.go }}" aria-pressed="{{ f.pressed }}" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid {{ f.border }}; background: {{ f.bg }}; color: {{ f.color }}; font-size: 14px; font-weight: 600; cursor: pointer">{{ f.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ hasQuick }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 14px; background: #edf5f8; color: #2a2e2c; font-size: 14px">
+          <span>Showing only: <strong>{{ quickLabel }}</strong></span>
+          <button type="button" onClick="{{ clearQuick }}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1.5px solid #2f6f7e; background: #ffffff; color: #2f6f7e; font-weight: 600; cursor: pointer">Show everything</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 20px">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+            <sc-for list="{{ tiles }}" as="tl" hint-placeholder-count="4">
+              <button type="button" onClick="{{ tl.go }}" style="display: flex; flex-direction: column; gap: 6px; padding: 20px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; box-shadow: 0 6px 16px rgba(42,46,44,.08); text-align: left; cursor: pointer">
+                <span style="font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #686e6c">{{ tl.label }}</span>
+                <span style="font-family: 'Poppins', system-ui, sans-serif; font-size: 36px; font-weight: 600; line-height: 1.1; color: #2a2e2c">{{ tl.value }}</span>
+                <span style="font-size: 14px; color: #4a4f4d">{{ tl.sub }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <section style="padding: 24px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline">
+              <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 20px; font-weight: 600; color: #2a2e2c">Where everything is</h2>
+              <span style="font-size: 13px; color: #686e6c">Content Item Status in Salesforce</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px">
+              <sc-for list="{{ stageCells }}" as="sc" hint-placeholder-count="6">
+                <button type="button" onClick="{{ sc.go }}" style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 14px; border: 1px solid #e2e4e1; background: #fafaf7; text-align: left; cursor: pointer">
+                  <span style="font-family: 'Poppins', system-ui, sans-serif; font-size: 24px; font-weight: 600; color: #2a2e2c">{{ sc.count }}</span>
+                  <span style="font-size: 14px; color: #4a4f4d">{{ sc.name }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </section>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px">
+            <section style="padding: 24px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 12px">
+              <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 20px; font-weight: 600; color: #2a2e2c">What needs a person</h2>
+              <p style="margin: 0; font-size: 14px; color: #686e6c">Worked out from the data each time the board opens.</p>
+              <sc-for list="{{ attention }}" as="at" hint-placeholder-count="4">
+                <button type="button" onClick="{{ at.go }}" style="display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1px solid #e2e4e1; border-radius: 14px; background: #fafaf7; text-align: left; cursor: pointer">
+                  <span aria-hidden="true" style="flex: 0 0 auto; font-size: 16px; color: #2a2e2c">⚠</span>
+                  <span style="display: flex; flex-direction: column; gap: 2px">
+                    <span style="font-weight: 600; color: #2a2e2c">{{ at.text }}</span>
+                    <span style="font-size: 14px; color: #4a4f4d">{{ at.sub }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </section>
+
+            <section style="padding: 24px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 14px">
+              <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 20px; font-weight: 600; color: #2a2e2c">By topic</h2>
+              <sc-for list="{{ byTopic }}" as="bt" hint-placeholder-count="6">
+                <button type="button" onClick="{{ bt.go }}" style="display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; min-height: 44px">
+                  <span style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: #2a2e2c">
+                    <span style="font-weight: 600">{{ bt.name }}</span>
+                    <span>{{ bt.summary }}</span>
+                  </span>
+                  <span style="display: block; height: 8px; border-radius: 999px; background: #e6f0ea">
+                    <span style="display: block; height: 8px; border-radius: 999px; background: #2f6b3f; width: {{ bt.width }}"></span>
+                  </span>
+                </button>
+              </sc-for>
+            </section>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isPipeline }}" hint-placeholder-val="{{ false }}">
+        <div style="overflow-x: auto; padding-bottom: 8px">
+          <div style="display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 14px; min-width: 1440px">
+            <sc-for list="{{ columns }}" as="col" hint-placeholder-count="6">
+              <section style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 22px; background: #edf5f8">
+                <h2 style="margin: 0; padding: 4px 6px; display: flex; justify-content: space-between; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; font-weight: 600; color: #2a2e2c">
+                  <span>{{ col.name }}</span><span>{{ col.count }}</span>
+                </h2>
+                <sc-if value="{{ col.empty }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin: 0; padding: 16px 8px; font-size: 14px; color: #686e6c; text-align: center">Nothing here</p>
+                </sc-if>
+                <sc-for list="{{ col.cards }}" as="c" hint-placeholder-count="3">
+                  <button type="button" onClick="{{ c.open }}" style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1.5px solid {{ c.border }}; box-shadow: {{ c.ring }}; border-radius: 14px; background: #ffffff; text-align: left; cursor: pointer">
+                    <span style="font-size: 12px; color: #686e6c; font-family: Menlo, 'Courier New', monospace">{{ c.ci }}</span>
+                    <span style="font-size: 14px; font-weight: 600; line-height: 1.4; color: #2a2e2c">{{ c.title }}</span>
+                    <span style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px">
+                      <span style="padding: 2px 10px; border-radius: 999px; background: #e6f0ea; color: #245531; font-weight: 600">{{ c.format }}</span>
+                      <span style="color: #4a4f4d">{{ c.topic }}</span>
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: {{ c.volColor }}">
+                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <span>{{ c.volLabel }}</span>
+                    </span>
+                    <sc-for list="{{ c.flags }}" as="fl" hint-placeholder-count="0">
+                      <span style="padding: 4px 10px; border-radius: 8px; background: #fff3e0; color: #2a2e2c; font-size: 12px">⚠ {{ fl.text }}</span>
+                    </sc-for>
+                  </button>
+                </sc-for>
+              </section>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isPublishing }}" hint-placeholder-val="{{ false }}">
+        <section style="padding: 24px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline">
+            <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 20px; font-weight: 600; color: #2a2e2c">Publishing</h2>
+            <span style="font-size: 13px; color: #686e6c">Content Item Publication records. Buffer schedules social posts; this list is where we confirm they went out.</span>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px">
+              <thead>
+                <tr style="text-align: left; color: #686e6c; font-size: 13px">
+                  <th style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; font-weight: 600">Content item</th>
+                  <th style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; font-weight: 600">Platform</th>
+                  <th style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; font-weight: 600">Planned</th>
+                  <th style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; font-weight: 600">Status</th>
+                  <th style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; font-weight: 600">Check</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ pubRows }}" as="pr" hint-placeholder-count="8">
+                  <tr>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1">
+                      <button type="button" onClick="{{ pr.open }}" style="padding: 0; border: 0; background: transparent; color: #2f6b3f; font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-decoration: underline">{{ pr.title }}</button>
+                    </td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; color: #2a2e2c">{{ pr.platform }}</td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; color: #2a2e2c; white-space: nowrap">{{ pr.planned }}</td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; color: #2a2e2c">{{ pr.status }}</td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid #e2e4e1; color: #2a2e2c">{{ pr.check }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <sc-if value="{{ noPubRows }}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; color: #686e6c">No publications match these filters.</p>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isVolunteers }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-radius: 22px; background: #edf5f8; color: #2a2e2c">
+            <span><strong>{{ unassignedCount }} items in production</strong> have no volunteer yet.</span>
+            <button type="button" onClick="{{ goNoVol }}" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #2f6f7e; background: #ffffff; color: #2f6f7e; font-weight: 600; cursor: pointer">See them in the pipeline</button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px">
+            <sc-for list="{{ volCards }}" as="vc" hint-placeholder-count="5">
+              <section style="padding: 20px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; align-items: center; gap: 12px">
+                  <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 999px; background: #2f6f7e; color: #ffffff; display: flex; align-items: center; justify-content: center; font-family: 'Poppins', system-ui, sans-serif; font-weight: 600">{{ vc.initials }}</span>
+                  <span style="display: flex; flex-direction: column">
+                    <span style="font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; color: #2a2e2c">{{ vc.name }}</span>
+                    <span style="font-size: 13px; color: #686e6c">Contributor · {{ vc.countLabel }}</span>
+                  </span>
+                </div>
+                <sc-if value="{{ vc.none }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin: 0; font-size: 14px; color: #686e6c">No content assigned.</p>
+                </sc-if>
+                <sc-for list="{{ vc.items }}" as="vi" hint-placeholder-count="2">
+                  <button type="button" onClick="{{ vi.open }}" style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid #e2e4e1; border-radius: 14px; background: #fafaf7; text-align: left; cursor: pointer">
+                    <span style="font-size: 14px; font-weight: 600; color: #2a2e2c">{{ vi.title }}</span>
+                    <span style="font-size: 13px; color: #4a4f4d">{{ vi.status }} · Sample</span>
+                  </button>
+                </sc-for>
+              </section>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+
+    <sc-if value="{{ hasPanel }}" hint-placeholder-val="{{ false }}">
+      <aside aria-label="Content item" style="flex: 1 1 360px; max-width: 420px; min-width: 0; padding: 24px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; box-shadow: 0 12px 28px rgba(42,46,44,.10); display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start">
+          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <span style="font-size: 12px; color: #686e6c; font-family: Menlo, 'Courier New', monospace">{{ panel.ci }} · {{ panel.topic }}</span>
+            <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 20px; font-weight: 600; line-height: 1.3; color: #2a2e2c">{{ panel.title }}</h2>
+          </div>
+          <button type="button" onClick="{{ panel.close }}" aria-label="Close item" style="flex: 0 0 44px; width: 44px; height: 44px; border-radius: 999px; border: 1px solid #e2e4e1; background: #ffffff; color: #2a2e2c; cursor: pointer">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <ol aria-label="Status" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px">
+          <sc-for list="{{ panel.steps }}" as="st" hint-placeholder-count="6">
+            <li style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: {{ st.color }}; font-weight: {{ st.weight }}">
+              <span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 999px; background: {{ st.dot }}; border: 2px solid {{ st.ring }}; box-sizing: border-box"></span>
+              <span>{{ st.name }}</span>
+              <span style="font-size: 12px; color: #686e6c">{{ st.note }}</span>
+            </li>
+          </sc-for>
+        </ol>
+
+        <sc-for list="{{ panel.flags }}" as="pf" hint-placeholder-count="0">
+          <div style="padding: 10px 14px; border-radius: 14px; background: #fff3e0; color: #2a2e2c; font-size: 14px">⚠ {{ pf.text }}</div>
+        </sc-for>
+
+        <section style="display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+          <h3 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">Who is doing it</h3>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+            Volunteer (Contact)
+            <select value="{{ panel.volId }}" onChange="{{ panel.onAssign }}" style="min-height: 44px; padding: 0 12px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #ffffff; font: inherit; font-weight: 400; color: #2a2e2c">
+              <option value="">No volunteer</option>
+              <sc-for list="{{ volOptions }}" as="vo" hint-placeholder-count="5">
+                <option value="{{ vo.id }}">{{ vo.name }}</option>
+              </sc-for>
+            </select>
+          </label>
+          <p style="margin: 0; font-size: 13px; color: #4a4f4d">{{ panel.caseLabel }}</p>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+          <h3 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">The record</h3>
+          <dl style="margin: 0; display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 6px 12px; font-size: 14px">
+            <sc-for list="{{ panel.fields }}" as="fd" hint-placeholder-count="5">
+              <dt style="color: #686e6c">{{ fd.label }}</dt>
+              <dd style="margin: 0; color: #2a2e2c; overflow-wrap: anywhere">{{ fd.value }}</dd>
+            </sc-for>
+          </dl>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+          <h3 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">Publications</h3>
+          <sc-if value="{{ panel.noPubs }}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; font-size: 14px; color: #686e6c">None yet. A publication is added when we plan where this goes out.</p>
+          </sc-if>
+          <sc-for list="{{ panel.pubs }}" as="pp" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid #e2e4e1; border-radius: 14px; font-size: 14px">
+              <span style="font-weight: 600; color: #2a2e2c">{{ pp.platform }}</span>
+              <span style="color: #4a4f4d">{{ pp.line }}</span>
+            </div>
+          </sc-for>
+        </section>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+          <sc-if value="{{ panel.hasNext }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ panel.onNext }}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #f5a623; color: #2a2e2c; font-weight: 700; box-shadow: 0 2px 8px rgba(245,166,35,.35); cursor: pointer">{{ panel.nextLabel }} →</button>
+          </sc-if>
+          <a href="Record.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; box-sizing: border-box; border-radius: 999px; border: 1.5px solid #2f6f7e; background: #ffffff; color: #2f6f7e; font-weight: 600; text-decoration: none">Open full record</a>
+        </div>
+        <p style="margin: 0; font-size: 12px; color: #686e6c">Volunteers can move an item as far as Ready for Review. Approving and publishing stay with staff.</p>
+      </aside>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  seed() {
+    var FT = 'Foundations Trail', TT = 'Transition Trails', GT = 'The Guided Trail', NO = 'Nonprofit Operations & Management', PD = 'Program Delivery & Innovation', TO = 'Technology and Tools';
+    var NFT = 'Substack (Notes from the Trail)', NL = 'Substack (Newsletter)', LI = 'LinkedIn';
+    function P(platform, planned, status, published) { return { platform: platform, planned: planned, status: status, published: published || null }; }
+    function I(ci, title, status, format, topic, extra) {
+      var o = { ci: ci, title: title, status: status, format: format, topic: topic, due: null, vol: null, caseNo: null, pubs: [], location: null, penny: null, objective: null, pillars: null };
+      if (extra) { for (var k in extra) { o[k] = extra[k]; } }
+      return o;
+    }
+    var items = [
+      I('CI0146', 'The Salesforce Job Market in 2027: What the Data Actually Shows', 'Idea', 'Article', PD),
+      I('CI0145', 'Switching to Tech With No Experience in 2027: The 8 Steps That Actually Work', 'Idea', 'Article', TT),
+      I('CI0144', 'Best Tech Career Paths for Veterans in 2027, No Degree Required', 'Idea', 'Article', TT),
+      I('CI0143', 'How to Break Into Tech in 2027: The Career Changer’s Honest Guide', 'Idea', 'Article', TT),
+      I('CI0142', 'What Nonprofits Are Up Against in 2027: Workforce, AI, and Funding', 'Idea', 'Article', NO),
+      I('CI0141', 'Nonprofit Technology Roadmapping for 2027: A Practical Starting Point', 'Idea', 'Article', PD),
+      I('CI0139', 'The State of Salesforce for Nonprofits in 2027: What You Need to Know', 'Idea', 'Article', NO),
+      I('CI0138', 'Agentforce for Nonprofits: What It Is, Why It Matters, and How to Start', 'Idea', 'Article', TO),
+      I('CI0155', 'FT27-W00-A | Get your Trailhead Pantry Dallas org', 'Not Started', 'Video', FT, { vol: 'v1', caseNo: 'sample', pillars: 'Salesforce' }),
+      I('CI0156', 'FT27-W00-B | Connect your org for scoring', 'Not Started', 'Video', FT, { pillars: 'Salesforce' }),
+      I('CI0157', 'FT27-W01-A | Company settings and fiscal year', 'Not Started', 'Video', FT, { vol: 'v1', caseNo: 'sample', pillars: 'Salesforce' }),
+      I('CI0158', 'FT27-W01-B | Deactivate a former user', 'Not Started', 'Video', FT, { vol: 'v1', caseNo: 'sample', pillars: 'Salesforce' }),
+      I('CI0159', 'FT27-W01-C | Licenses and user setup', 'Not Started', 'Video', FT, { pillars: 'Salesforce' }),
+      I('CI0160', 'FT27-W02-A | Replace a System Admin workaround', 'Not Started', 'Video', FT, { pillars: 'Salesforce' }),
+      I('CI0161', 'FT27-W02-B | Role hierarchy', 'Not Started', 'Video', FT, { pillars: 'Salesforce' }),
+      I('CI0162', 'FT27-W02-C | Org-wide defaults and a sharing rule', 'Not Started', 'Video', FT, { pillars: 'Salesforce' }),
+      I('CI0190', 'FT27-W12-A | Agent with topics and actions', 'Not Started', 'Video', FT, { pillars: 'Salesforce' }),
+      I('CI0191', 'FT27-W12-B | Prompt template', 'Not Started', 'Video', FT, { pillars: 'Salesforce' }),
+      I('CI0148', 'FT-W01-B | Install & Verify NPSP', 'Not Started', 'Video', FT, { caseNo: '00001173', pillars: 'Salesforce' }),
+      I('CI0153', 'Trail OS Onboarding deck', 'In Progress', null, TT, { vol: 'v1', caseNo: 'sample', objective: 'Nurturing - Informative' }),
+      I('CI0154', 'Set up your Transition Trails Chrome profile and passkeys', 'Ready for Review', 'Video', TT, { vol: 'v5', caseNo: 'sample', objective: 'Nurturing - Informative', penny: 'In Review', pillars: 'Salesforce' }),
+      I('CI0032', 'The Transition Trails Story', 'Published', 'Article', TT, { location: 'Google Doc', pubs: [P(NFT, '2026-01-03', 'Published', '2026-01-03'), P(LI, '2026-02-07', 'Published', '2026-02-07')] }),
+      I('CI0108', 'The Transition Trails Story', 'Published', 'Article', TT, { location: 'Google Doc' }),
+      I('CI0073', 'Best Practices for Managing Volunteers in Nonprofit Organizations', 'Published', 'Article', NO, { location: 'Google Doc', pubs: [P(NFT, '2026-01-31', 'Published', '2026-01-31'), P(NL, '2026-02-27', 'Published', '2026-02-28')] }),
+      I('CI0097', 'Escape the “Certification Trap”: Why Your Salesforce Cert Isn’t Getting You Hired', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-02-11', 'Published', '2026-02-11'), P(NFT, '2026-02-21', 'Scheduled', '2026-02-21')] }),
+      I('CI0096', 'Building Professional Credibility: Why Your Next “Project” Should Be a System, Not a Toy', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-02-21', 'Scheduled', '2026-02-21'), P(NFT, '2026-03-14', 'Published', '2026-03-14')] }),
+      I('CI0093', 'Beyond Memory: Why an Admin Decision Log is Your Most Valuable Career Tool', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-02-25', 'Published', '2026-02-25'), P(NFT, '2026-03-21', 'Scheduled')] }),
+      I('CI0100', 'Moving from Order Taker to Solution Designer: Introducing the RESOLVE Framework', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-02-28', 'Published', '2026-02-28'), P(NFT, '2026-03-28', 'Scheduled')] }),
+      I('CI0092', 'Beyond Memorization: How Active Recall and Scenario-Based Coaching Turn Candidates into Consultants', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-03-04', 'Published', '2026-03-04'), P(NFT, '2026-04-04', 'Scheduled')] }),
+      I('CI0094', 'Beyond the Sandbox: How Linear and Slack Build the Muscle Memory of a Salesforce Consultant', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-03-07', 'Published', '2026-03-07'), P(NFT, '2026-04-11', 'Scheduled')] }),
+      I('CI0098', 'From Student to Steward: Shifting the Tech Mindset', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-02-14', 'Published', '2026-02-14'), P(NFT, '2026-04-18', 'Scheduled')] }),
+      I('CI0095', 'Bridging the Gap: Why Your Salesforce Certification is Only Half the Journey', 'Published', 'Article', GT, { location: 'Google Doc', pubs: [P(LI, '2026-03-11', 'Published', '2026-03-11'), P(NFT, '2026-04-25', 'Scheduled')] }),
+      I('CI0149', 'FT-W01-B | Install & Verify NPSP', 'Published', 'Video', FT, { location: 'YouTube', caseNo: '00001173' })
+    ];
+    var vols = [
+      { id: 'v1', name: 'Arnav Shah' },
+      { id: 'v2', name: 'Katarina Schenkel' },
+      { id: 'v3', name: 'Mary Ascough' },
+      { id: 'v4', name: 'Segun Babalola' },
+      { id: 'v5', name: 'Zariah' }
+    ];
+    return { items: items, vols: vols };
+  }
+
+  renderVals() {
+    var self = this;
+    if (!this._seed) { this._seed = this.seed(); }
+    var s = this.state || {};
+    var items = s.items || this._seed.items;
+    var vols = this._seed.vols;
+    var TODAY = '2026-11-07';
+    var STAGES = ['Idea', 'Not Started', 'In Progress', 'Ready for Review', 'Ready to Publish', 'Published'];
+    var PROD = ['Not Started', 'In Progress', 'Ready for Review', 'Ready to Publish'];
+    var NEXT = { 'Idea': 'Approve idea', 'Not Started': 'Start production', 'In Progress': 'Move to review', 'Ready for Review': 'Approve for publishing', 'Ready to Publish': 'Mark published' };
+    var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    function fd(d) { return d ? MON[+d.slice(5, 7) - 1] + ' ' + (+d.slice(8, 10)) + ', ' + d.slice(0, 4) : 'Not set'; }
+    function volName(id) { for (var i = 0; i < vols.length; i++) { if (vols[i].id === id) return vols[i].name; } return ''; }
+    function set(p) { self.setState(p); }
+    function update(ci, fn) {
+      set({ items: items.map(function (it) { if (it.ci !== ci) return it; var c = {}; for (var k in it) c[k] = it[k]; return fn(c); }) });
+    }
+    var titleCount = {};
+    items.forEach(function (it) { titleCount[it.title] = (titleCount[it.title] || 0) + 1; });
+    function isStale(p) { return p.status !== 'Published' && p.planned && p.planned < TODAY; }
+    var all = items.map(function (it) {
+      var st = it.pubs.filter(isStale).length;
+      var c = {}; for (var k in it) c[k] = it[k];
+      c.staleCount = st;
+      c.dup = titleCount[it.title] > 1;
+      c.inProd = PROD.indexOf(it.status) >= 0;
+      c.noPub = it.status === 'Published' && it.pubs.length === 0;
+      c.flagList = [];
+      if (st) c.flagList.push({ text: st + (st === 1 ? ' publication still says Scheduled after its date' : ' publications still say Scheduled after their date') });
+      if (c.dup) c.flagList.push({ text: 'Another item has the same title' });
+      if (c.noPub) c.flagList.push({ text: 'Published, but no publication record' });
+      return c;
+    });
+
+    var view = s.view || 'overview';
+    var quick = s.quick || '';
+    var topic = s.topic || 'all';
+    var fmt = s.fmt || 'all';
+    var q = (s.q || '').trim().toLowerCase();
+    var sel = s.sel || null;
+
+    var QUICK = {
+      novol: { label: 'No volunteer yet', test: function (i) { return i.inProd && !i.vol; } },
+      review: { label: 'Waiting for staff review', test: function (i) { return i.status === 'Ready for Review'; } },
+      nodue: { label: 'No due date', test: function (i) { return i.inProd && !i.due; } },
+      tidy: { label: 'Records to tidy up', test: function (i) { return i.flagList.length > 0; } }
+    };
+    function matches(i) {
+      if (topic !== 'all' && i.topic !== topic) return false;
+      if (fmt !== 'all' && (i.format || 'No format') !== fmt) return false;
+      if (q && (i.title + ' ' + i.ci).toLowerCase().indexOf(q) < 0) return false;
+      if (quick && QUICK[quick] && !QUICK[quick].test(i)) return false;
+      return true;
+    }
+    var list = all.filter(matches);
+    function open(ci) { return function () { set({ sel: ci }); }; }
+
+    function card(i) {
+      var on = i.ci === sel;
+      return {
+        ci: i.ci, title: i.title, format: i.format || 'No format', topic: i.topic,
+        volLabel: i.vol ? volName(i.vol) + ' (sample)' : 'No volunteer', volColor: i.vol ? '#2a2e2c' : '#686e6c',
+        flags: i.flagList,
+        border: on ? '#2f6b3f' : '#e2e4e1', ring: on ? '0 0 0 3px rgba(47,107,63,.15)' : 'none',
+        open: open(i.ci)
+      };
+    }
+    var columns = STAGES.map(function (name) {
+      var cs = list.filter(function (i) { return i.status === name; }).map(card);
+      return { name: name, count: cs.length, cards: cs, empty: cs.length === 0 };
+    });
+
+    function navItem(key) {
+      var on = view === key;
+      return { bg: on ? '#e6f0ea' : 'transparent', color: on ? '#245531' : '#2a2e2c', go: function () { set({ view: key, quick: '' }); } };
+    }
+    var nav = { overview: navItem('overview'), pipeline: navItem('pipeline'), publishing: navItem('publishing'), volunteers: navItem('volunteers') };
+
+    var inProd = all.filter(function (i) { return i.inProd; });
+    var noVol = inProd.filter(function (i) { return !i.vol; });
+    var review = all.filter(function (i) { return i.status === 'Ready for Review'; });
+    var staleTotal = 0; all.forEach(function (i) { staleTotal += i.staleCount; });
+    var tidy = all.filter(function (i) { return i.flagList.length > 0; });
+    function goQuick(k) { return function () { set({ view: k === 'stale' ? 'publishing' : 'pipeline', quick: k === 'stale' ? '' : k }); }; }
+
+    var quicks = ['novol', 'review', 'nodue', 'tidy'].map(function (k) {
+      var n = all.filter(QUICK[k].test).length;
+      return { label: QUICK[k].label, count: n, bg: quick === k ? '#e6f0ea' : 'transparent', go: goQuick(k) };
+    });
+
+    var tiles = [
+      { label: 'In production', value: inProd.length, sub: 'Not Started through Ready to Publish', go: function () { set({ view: 'pipeline', quick: '' }); } },
+      { label: 'No volunteer yet', value: noVol.length, sub: 'In production with no Case or Contact', go: goQuick('novol') },
+      { label: 'Waiting for review', value: review.length, sub: 'A volunteer finished; staff approve', go: goQuick('review') },
+      { label: 'Publications to confirm', value: staleTotal, sub: 'Still Scheduled after the planned date', go: goQuick('stale') }
+    ];
+    var stageCells = STAGES.map(function (n) {
+      return { name: n, count: all.filter(function (i) { return i.status === n; }).length, go: function () { set({ view: 'pipeline', quick: '' }); } };
+    });
+    var attention = [];
+    if (noVol.length) attention.push({ text: noVol.length + ' items in production have no volunteer', sub: 'Pick a Contact on each one. Trail OS creates the Case.', go: goQuick('novol') });
+    if (staleTotal) attention.push({ text: staleTotal + ' publications still say Scheduled', sub: 'Their planned dates passed between February and April. Confirm each went out, or reschedule.', go: goQuick('stale') });
+    var noDue = inProd.filter(function (i) { return !i.due; }).length;
+    if (noDue) attention.push({ text: 'None of the ' + inProd.length + ' items in production has a due date', sub: 'The Foundations Trail videos need dates before January cohorts start.', go: goQuick('nodue') });
+    var dupN = all.filter(function (i) { return i.dup; }).length;
+    if (dupN) attention.push({ text: dupN + ' items share a title with another item', sub: 'The Transition Trails Story and FT-W01-B each appear twice. Keep one of each.', go: goQuick('tidy') });
+
+    var topics = [];
+    all.forEach(function (i) { if (topics.indexOf(i.topic) < 0) topics.push(i.topic); });
+    topics.sort();
+    var maxT = 1;
+    var byTopic = topics.map(function (t) {
+      var ts = all.filter(function (i) { return i.topic === t; });
+      if (ts.length > maxT) maxT = ts.length;
+      return { name: t, total: ts.length, pub: ts.filter(function (i) { return i.status === 'Published'; }).length, prod: ts.filter(function (i) { return i.inProd; }).length };
+    }).sort(function (a, b) { return b.total - a.total; }).map(function (t) {
+      return { name: t.name, summary: t.total + ' items · ' + t.prod + ' in production · ' + t.pub + ' published', width: Math.round(t.total / maxT * 100) + '%', go: function () { set({ view: 'pipeline', topic: t.name, quick: '' }); } };
+    });
+
+    var pubRows = [];
+    list.forEach(function (i) {
+      i.pubs.forEach(function (p) {
+        var stale = isStale(p);
+        pubRows.push({
+          sortKey: (stale ? '0' : '1') + p.planned, title: i.title, platform: p.platform, planned: fd(p.planned), status: p.status,
+          check: stale ? (p.published ? '⚠ Has a published date; status not updated' : '⚠ Date passed; confirm or reschedule') : (p.status === 'Published' ? '✓ Published ' + fd(p.published) : 'On schedule'),
+          open: open(i.ci)
+        });
+      });
+    });
+    pubRows.sort(function (a, b) { return a.sortKey < b.sortKey ? -1 : 1; });
+
+    var volCards = vols.map(function (v) {
+      var mine = all.filter(function (i) { return i.vol === v.id; });
+      return {
+        name: v.name, initials: v.name.split(' ').map(function (p) { return p[0]; }).join('').slice(0, 2),
+        countLabel: mine.length === 1 ? '1 item' : mine.length + ' items', none: mine.length === 0,
+        items: mine.map(function (i) { return { title: i.title, status: i.status, open: open(i.ci) }; })
+      };
+    });
+
+    var topicOptions = [{ value: 'all', label: 'All topics' }].concat(topics.map(function (t) { return { value: t, label: t }; }));
+    var formatChips = ['all', 'Article', 'Video', 'No format'].map(function (f) {
+      var on = fmt === f;
+      return { label: f === 'all' ? 'All formats' : f, pressed: on ? 'true' : 'false', bg: on ? '#2f6b3f' : '#ffffff', color: on ? '#ffffff' : '#2a2e2c', border: on ? '#2f6b3f' : '#e2e4e1', go: function () { set({ fmt: f }); } };
+    });
+
+    var panel = null;
+    var it = null;
+    for (var x = 0; x < all.length; x++) { if (all[x].ci === sel) it = all[x]; }
+    if (it) {
+      var idx = STAGES.indexOf(it.status);
+      var caseLabel;
+      if (it.caseNo === '00001173') caseLabel = 'Series Case 00001173, Foundations Trail – Build With Me. This item gets its own Case once a volunteer is picked.';
+      else if (it.caseNo === 'sample') caseLabel = 'Sample: in Trail OS this shows the item’s Case number, with Volunteer Assigned set to this Contact.';
+      else if (it.caseNo === 'new') caseLabel = 'Trail OS will create a Case for this item with Volunteer Assigned set to this Contact.';
+      else caseLabel = 'No Case yet. Picking a volunteer creates one.';
+      panel = {
+        ci: it.ci, title: it.title, topic: it.topic, volId: it.vol || '', caseLabel: caseLabel,
+        flags: it.flagList,
+        steps: STAGES.map(function (n, i) {
+          var done = i < idx, cur = i === idx;
+          return { name: n, note: cur ? 'Now' : '', color: cur ? '#2a2e2c' : (done ? '#2f6b3f' : '#686e6c'), weight: cur ? 700 : 400, dot: done ? '#2f6b3f' : (cur ? '#f5a623' : '#ffffff'), ring: done ? '#2f6b3f' : (cur ? '#b37400' : '#e2e4e1') };
+        }),
+        fields: [
+          { label: 'Format', value: it.format || 'Not set' },
+          { label: 'Topic', value: it.topic },
+          { label: 'Pillars', value: it.pillars || 'Not set' },
+          { label: 'Objective', value: it.objective || 'Not set' },
+          { label: 'Due date', value: fd(it.due) },
+          { label: 'Where the file is', value: it.location || 'Not set' },
+          { label: 'Penny script', value: it.penny || (it.format === 'Video' ? 'Not started' : 'Not needed') }
+        ],
+        pubs: it.pubs.map(function (p) { return { platform: p.platform, line: p.status + ' · planned ' + fd(p.planned) + (isStale(p) ? ' · ⚠ date passed' : '') }; }),
+        noPubs: it.pubs.length === 0,
+        hasNext: !!NEXT[it.status], nextLabel: NEXT[it.status] || '',
+        onNext: function () { update(it.ci, function (c) { c.status = STAGES[idx + 1]; return c; }); },
+        onAssign: function (e) {
+          var v = e.target.value || null;
+          update(it.ci, function (c) { c.vol = v; if (v && !c.caseNo) c.caseNo = 'new'; if (!v && c.caseNo === 'new') c.caseNo = null; return c; });
+        },
+        close: function () { set({ sel: null }); }
+      };
+    }
+
+    return {
+      nav: nav, quicks: quicks, tiles: tiles, stageCells: stageCells, attention: attention, byTopic: byTopic,
+      columns: columns, pubRows: pubRows, noPubRows: pubRows.length === 0, volCards: volCards,
+      unassignedCount: noVol.length, goNoVol: goQuick('novol'),
+      isOverview: view === 'overview', isPipeline: view === 'pipeline', isPublishing: view === 'publishing', isVolunteers: view === 'volunteers',
+      hasQuick: !!quick, quickLabel: quick && QUICK[quick] ? QUICK[quick].label : '', clearQuick: function () { set({ quick: '' }); },
+      q: s.q || '', onSearch: function (e) { set({ q: e.target.value }); },
+      topic: topic, onTopic: function (e) { set({ topic: e.target.value }); }, topicOptions: topicOptions,
+      formatChips: formatChips, volOptions: vols,
+      hasPanel: !!panel, panel: panel || { steps: [], fields: [], pubs: [], flags: [] }
+    };
+  }
+}
+</script>
+</body>
+</html>

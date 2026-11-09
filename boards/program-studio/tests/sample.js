@@ -1,0 +1,35 @@
+const ap=(s,l)=>({status:s,label:l,contentVersion:"c1",note:null});
+const dl=(s,l,x={})=>Object.assign({status:s,label:l,message:"",error:null,canRetry:false,contentVersion:"c1",versionId:null,verifiedAt:null,attemptedAt:null,receiptContentVersion:null,receiptVersionId:null,nextAttemptAt:null},x);
+const gd=(tone,message,nextStep,action)=>({code:"x",tone,message,nextStep,wait:false,nextAttemptAt:null,action:action||{kind:"none",label:"",enabled:false},support:null});
+const perms={edit:true,submit:true,approve:false,changeStatus:["Active","Completed","Canceled"]};
+function P(id,sf,f,o={}){return Object.assign({id,salesforceId:sf,editVersion:"v1",fields:f,draft:null,changes:[],perms:Object.assign({},perms),workflow:{approval:ap("approved","Approved"),delivery:dl("live_current","Live in Salesforce",{verifiedAt:"2026-11-07T15:00:00Z"}),guidance:gd("success","Salesforce matches Trail OS.","")},issues:[],proposalCompleteness:{done:11,total:11,missing:[]},cohortIds:[],courses:[]},o)}
+function C(id,sf,pid,f,o={}){return Object.assign({id,salesforceId:sf,editVersion:"v1",fields:f,draft:null,changes:[],perms:Object.assign({},perms,{changeStatus:["Active","Completed","Canceled"]}),workflow:{approval:ap("approved","Approved"),delivery:dl("live_current","Live in Salesforce"),guidance:gd("success","Salesforce matches Trail OS.","")},issues:[],programId:pid,roster:[],seatsOpen:null},o)}
+module.exports=function(){
+const programs=[
+ P("p1","a0P1",{Name:"Guided Trail",pmdm__Status__c:"Active",pmdm__ShortSummary__c:"Twelve-week guided Salesforce Admin program with nonprofit project work.",pmdm__StartDate__c:"2026-01-12",pmdm__EndDate__c:"2027-12-31",Program_Manager__c:"m1",pmdm__ProgramIssueArea__c:"Workforce Development",Program_Goals__c:"<ul><li>Certify learners</li><li>Place in admin roles</li></ul>",Google_Drive_Folder__c:"https://drive.google.com/drive/folders/abc",Requires_Payment__c:true,Product__c:"pr1"},{cohortIds:["c1","c2"],courses:[{id:"k1",name:"Admin Foundations"},{id:"k2",name:"Flow Builder"}]}),
+ P("p2","a0P2",{Name:"Foundations Trail",pmdm__Status__c:"Active",pmdm__ShortSummary__c:"Self-paced foundations.",pmdm__StartDate__c:"2026-03-01",Program_Manager__c:"m2"},{cohortIds:["c3"],
+   draft:{id:"d2",fields:{pmdm__EndDate__c:"2027-06-30",Program_Goals__c:"<p>Grow to 40 learners</p>"},status:"awaiting_approval",author:"hugh@transitiontrails.org",updatedAt:"2026-11-07T20:00:00Z",note:null},
+   changes:[{field:"pmdm__EndDate__c",from:null,to:"2027-06-30"},{field:"Program_Goals__c",from:null,to:"<p>Grow to 40 learners</p>"}],
+   perms:{edit:true,submit:false,approve:true,changeStatus:[]},workflow:{approval:ap("awaiting_approval","Waiting for approval"),delivery:dl("not_approved","Not sent"),guidance:gd("info","This change is waiting for approval.","Review the changes on Approval.",{kind:"compare",label:"Review changes",enabled:true})}}),
+ P("p3","a0P3",{Name:"Trail of Mastery",pmdm__Status__c:"In Discovery",pmdm__ShortSummary__c:"Advanced practice for alumni.",Program_Manager__c:null},{proposalCompleteness:{done:4,total:11,missing:["Problem statement","Implementation plan","Budget and resources"]},
+   workflow:{approval:ap("approved","Approved"),delivery:dl("needs_attention","Needs attention",{message:"Salesforce rejected the update.",error:"FIELD_CUSTOM_VALIDATION_EXCEPTION: End date before start",canRetry:true,attemptedAt:"2026-11-08T14:00:00Z"}),guidance:Object.assign(gd("error","Delivery to Salesforce failed.","Fix the dates, then retry delivery.",{kind:"retry_delivery",label:"Retry delivery",enabled:true}),{support:{error:"FIELD_CUSTOM_VALIDATION_EXCEPTION",attemptedAt:"2026-11-08T14:00:00Z",receiptVersionId:null}})},
+   issues:[{code:"dates",severity:"block",text:"End date is before start date."}]}),
+ P("p4",null,{Name:"Community Mentors",pmdm__Status__c:"In Discovery",pmdm__ShortSummary__c:"Alumni mentor new learners.",Program_Manager__c:"m1"},{proposalCompleteness:{done:2,total:11,missing:["Problem statement","Goals","Expected outcomes","Structure","Implementation plan","Success metrics","Risks","Budget","Funding"]},
+   draft:{id:"d4",fields:{Name:"Community Mentors",pmdm__ShortSummary__c:"Alumni mentor new learners."},status:"draft",author:"angela@transitiontrails.org",updatedAt:"2026-11-08T16:00:00Z"},changes:[{field:"Name",from:null,to:"Community Mentors"}],
+   workflow:{approval:ap("draft","Draft"),delivery:dl("not_approved","Not sent"),guidance:gd("info","This proposal is a draft.","Fill in the plan, then send it for approval.",{kind:"open_article",label:"Continue editing",enabled:true})}}),
+ P("p5","a0P5",{Name:"Legacy Bootcamp",pmdm__Status__c:"Completed",pmdm__StartDate__c:"2024-01-01",pmdm__EndDate__c:"2024-12-31",Program_Manager__c:"m2"},{perms:{edit:false,submit:false,approve:false,changeStatus:[]}}),
+];
+const cohorts=[
+ C("c1","a0C1","p1",{Name:"GT 2027 01",pmdm__Status__c:"Planned",pmdm__StartDate__c:"2027-01-11",pmdm__EndDate__c:"2027-04-05",Cohort_Capacity__c:12,Coach__c:"co1"},{roster:[{stage:"Applied",count:9},{stage:"Enrolled",count:5}],seatsOpen:7}),
+ C("c2","a0C2","p1",{Name:"GT 2026 03",pmdm__Status__c:"Active",pmdm__StartDate__c:"2026-09-07",pmdm__EndDate__c:"2026-12-04",Cohort_Capacity__c:10,Coach__c:"co2"},{roster:[{stage:"Active",count:11},{stage:"Withdrawn",count:1}],seatsOpen:-1}),
+ C("c3","a0C3","p2",{Name:"FT 2026 Beta 01",pmdm__Status__c:"Active",pmdm__StartDate__c:"2026-10-01",Cohort_Capacity__c:null},{roster:[{stage:"Active",count:2}],seatsOpen:null}),
+ C("c4","a0C4","p1",{Name:"GT 2027 02",pmdm__Status__c:"Planned"},{roster:[],seatsOpen:null,
+   draft:{id:"d5",fields:{Cohort_Capacity__c:15},status:"returned",author:"angela@transitiontrails.org",updatedAt:"2026-11-06T16:00:00Z",note:"Capacity above 12 needs a second coach."},changes:[{field:"Cohort_Capacity__c",from:null,to:15}],workflow:{approval:ap("changes_requested","Changes requested"),delivery:dl("not_approved","Not sent"),guidance:gd("warning","A reviewer asked for changes.","Read the note on Approval, update the draft and send it again.",{kind:"compare",label:"See the note",enabled:true})}}),
+];
+programs[0].cohortIds=["c1","c2","c4"];
+return {contractVersion:1,asOf:new Date().toISOString(),
+ viewer:{email:"angela@transitiontrails.org",name:"Angela Landrith",isStaff:true,isManager:true,canPropose:true,canEdit:true,canApprove:true,canSkipReview:true},
+ lists:{programStatus:["In Discovery","Active","Completed","Canceled"],cohortStatus:["Planned","Active","Completed","Canceled"],issueAreas:["Workforce Development","Education"],engagementStages:["Applied","Ready for Interview","Waitlisted","Enrolled","Active","Completed","Withdrawn","Application Denied"],
+  managers:[{id:"m1",name:"Angela Landrith",email:"angela@transitiontrails.org"},{id:"m2",name:"Hugh Richardson",email:"hugh@transitiontrails.org"}],coaches:[{id:"co1",name:"Coach One"},{id:"co2",name:"Coach Two"}],products:[{id:"pr1",name:"Guided Trail Tuition"}],owners:[{id:"m1",name:"Angela Landrith"}],recordTypes:[{id:"rt1",name:"Cohort"}]},
+ programs,cohorts,scheduler:{running:true,lastRunAt:"2026-11-08T16:55:00Z"}};
+};

@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Build With Me video record</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fafaf7}
+a{color:#2f6b3f}a:hover{color:#245531}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #fafaf7; color: #4a4f4d; font-family: 'Open Sans', 'Roboto', system-ui, sans-serif; font-size: 15px; line-height: 1.5; box-sizing: border-box">
+
+  <header style="padding: 20px 32px 18px; border-bottom: 1px solid #e2e4e1; background: #ffffff; display: flex; flex-direction: column; gap: 12px">
+    <nav aria-label="Breadcrumb" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px">
+      <a href="Main.dc.html" style="color: #2f6b3f; font-weight: 600">Content Studio</a>
+      <span aria-hidden="true">›</span>
+      <a href="Video.dc.html" style="color: #2f6b3f; font-weight: 600">Build With Me</a>
+      <span aria-hidden="true">›</span>
+      <span style="color: #2a2e2c">FT27-W01-A</span>
+    </nav>
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <h1 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 28px; font-weight: 600; line-height: 1.25; color: #2a2e2c">FT27-W01-A | Company settings and fiscal year</h1>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px">
+          <span style="font-family: Menlo, 'Courier New', monospace; color: #2a2e2c">CI0157</span>
+          <span style="padding: 2px 10px; border-radius: 999px; background: #e6f0ea; color: #245531; font-weight: 600">Video</span>
+          <span>Foundations Trail · Week 1</span>
+          <span style="padding: 2px 10px; border-radius: 999px; background: #edf5f8; color: #2a2e2c; font-weight: 600">Status: {{ sfStatus }}</span>
+        </div>
+      </div>
+      <div role="group" aria-label="Viewing as" style="display: flex; gap: 6px; align-items: center">
+        <span style="font-size: 13px; font-weight: 600; color: #2a2e2c; margin-right: 4px">Viewing as</span>
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="2">
+          <button type="button" onClick="{{ r.go }}" aria-pressed="{{ r.pressed }}" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid {{ r.border }}; background: {{ r.bg }}; color: {{ r.color }}; font-size: 14px; font-weight: 600; cursor: pointer">{{ r.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px">
+        <sc-for list="{{ segs }}" as="sg" hint-placeholder-count="10">
+          <span style="display: block; height: 8px; border-radius: 999px; background: {{ sg.bg }}"></span>
+        </sc-for>
+      </div>
+      <span style="font-size: 13px; color: #2a2e2c">{{ progressText }}</span>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px 32px 48px; align-items: flex-start">
+
+    <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+
+      <sc-for list="{{ cards }}" as="c" hint-placeholder-count="6">
+        <section style="padding: 20px 24px; border: 1.5px solid {{ c.border }}; border-radius: 22px; background: {{ c.bg }}; box-shadow: {{ c.shadow }}; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center">
+            <div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+              <span aria-hidden="true" style="flex: 0 0 auto; width: 32px; height: 32px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 14px; background: {{ c.numBg }}; color: {{ c.numColor }}">{{ c.num }}</span>
+              <span style="display: flex; flex-direction: column; min-width: 0">
+                <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 18px; font-weight: 600; color: #2a2e2c">{{ c.title }}</h2>
+                <span style="font-size: 13px; color: #4a4f4d">{{ c.who }}</span>
+              </span>
+            </div>
+            <span style="font-size: 13px; font-weight: 700; color: #2a2e2c">{{ c.state }}</span>
+          </div>
+
+          <sc-if value="{{ c.isPlan }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <p style="margin: 0; padding: 12px 14px; border-radius: 14px; background: #fafaf7; border: 1px solid #e2e4e1; color: #2a2e2c">Foundations Trail 2027, Week 1 (Trailhead Pantry Dallas): set the company information, locale and fiscal year in the org.</p>
+              <span style="font-size: 13px">From the Content Item Summary. The step-by-step build plan lives on the item's Case.</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ c.isRecord }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px">
+                <li>Record in the Trailhead Pantry Dallas org, using your Transition Trails Chrome profile.</li>
+                <li>Talk through what you're doing. Penny replaces your voice later, so don't worry about wording.</li>
+                <li>Keep personal accounts, other email addresses and password tools off screen.</li>
+              </ul>
+              <sc-if value="{{ c.canEdit }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+                  <label style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+                    Raw recording link (Descript or Google Drive)
+                    <input type="url" value="{{ recDraft }}" onChange="{{ onRecDraft }}" placeholder="https://" style="min-height: 44px; padding: 0 14px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #ffffff; font: inherit; font-weight: 400; color: #2a2e2c">
+                  </label>
+                  <button type="button" onClick="{{ onSaveRec }}" disabled="{{ recDisabled }}" style="min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: {{ recBg }}; color: {{ recColor }}; font-weight: 700; cursor: pointer">Save recording</button>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ c.isRun }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <p style="margin: 0; font-size: 14px">{{ c.runText }}</p>
+              <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px">
+                <sc-for list="{{ c.outputs }}" as="o" hint-placeholder-count="3">
+                  <li style="display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; font-size: 14px; color: #2a2e2c">
+                    <span aria-hidden="true">{{ o.mark }}</span>
+                    <span><strong>{{ o.label }}</strong> <span style="color: #4a4f4d">· fills {{ o.field }}</span></span>
+                  </li>
+                </sc-for>
+              </ul>
+              <sc-if value="{{ c.showPrompt }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+                    Prompt for Claude
+                    <textarea readonly rows="8" style="padding: 12px 14px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #fafaf7; font-family: Menlo, 'Courier New', monospace; font-size: 12px; line-height: 1.5; font-weight: 400; color: #2a2e2c; resize: vertical">{{ c.prompt }}</textarea>
+                  </label>
+                  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+                    <button type="button" onClick="{{ c.onCopy }}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #f5a623; color: #2a2e2c; font-weight: 700; box-shadow: 0 2px 8px rgba(245,166,35,.35); cursor: pointer">Copy prompt →</button>
+                    <span style="font-size: 14px; color: #2f6b3f">{{ copied }}</span>
+                  </div>
+                  <span style="font-size: 13px">Paste it in your Claude app. When Claude finishes, this station turns done on its own, because the board reads the fields Claude fills.</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ c.isGate }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <p style="margin: 0; font-size: 14px">{{ c.gateText }}</p>
+              <sc-for list="{{ c.checks }}" as="ck" hint-placeholder-count="0">
+                <label style="display: flex; gap: 10px; align-items: center; min-height: 36px; font-size: 14px; color: #2a2e2c">
+                  <input type="checkbox" checked="{{ ck.on }}" onChange="{{ ck.toggle }}" style="width: 20px; height: 20px; accent-color: #2f6b3f">
+                  <span>{{ ck.label }}</span>
+                </label>
+              </sc-for>
+              <sc-if value="{{ c.showUrl }}" hint-placeholder-val="{{ false }}">
+                <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+                  YouTube link
+                  <input type="url" value="{{ ytDraft }}" onChange="{{ onYt }}" placeholder="https://youtu.be/" style="min-height: 44px; padding: 0 14px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #ffffff; font: inherit; font-weight: 400; color: #2a2e2c">
+                </label>
+              </sc-if>
+              <sc-if value="{{ c.canAct }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px">
+                  <button type="button" onClick="{{ c.onApprove }}" disabled="{{ c.disabled }}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: {{ c.btnBg }}; color: {{ c.btnColor }}; font-weight: 700; cursor: pointer">{{ c.approveLabel }}</button>
+                  <sc-if value="{{ c.canReturn }}" hint-placeholder-val="{{ true }}">
+                    <button type="button" onClick="{{ c.onReturn }}" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #2f6f7e; background: #ffffff; color: #2f6f7e; font-weight: 600; cursor: pointer">Send back to Arnav</button>
+                  </sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.waitForAngela }}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 0; padding: 10px 14px; border-radius: 14px; background: #edf5f8; color: #2a2e2c; font-size: 14px">With Angela. You'll see it move here when she's done.</p>
+              </sc-if>
+            </div>
+          </sc-if>
+        </section>
+      </sc-for>
+    </main>
+
+    <aside style="flex: 1 1 300px; max-width: 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <section style="padding: 20px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">The record</h2>
+        <dl style="margin: 0; display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 6px 12px; font-size: 14px">
+          <sc-for list="{{ facts }}" as="f" hint-placeholder-count="7">
+            <dt style="color: #686e6c">{{ f.label }}</dt>
+            <dd style="margin: 0; color: #2a2e2c; overflow-wrap: anywhere">{{ f.value }}</dd>
+          </sc-for>
+        </dl>
+      </section>
+
+      <section style="padding: 20px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">Files and links</h2>
+        <sc-for list="{{ links }}" as="lk" hint-placeholder-count="7">
+          <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px">
+            <span style="color: #686e6c">{{ lk.label }}</span>
+            <span style="color: #2a2e2c; text-align: right">{{ lk.value }}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="padding: 20px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="font-size: 13px; font-weight: 700; letter-spacing: .04em; color: #2f6f7e">PENNY</span>
+          <span style="padding: 2px 10px; border-radius: 999px; background: #2f6f7e; color: #ffffff; font-size: 12px; font-weight: 600">Coach</span>
+        </div>
+        <p style="margin: 0; color: #2a2e2c">{{ coach }}</p>
+      </section>
+
+      <section style="padding: 20px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">History</h2>
+        <sc-if value="{{ noHistory }}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; font-size: 14px; color: #686e6c">Nothing yet.</p>
+        </sc-if>
+        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px">
+          <sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+            <li>{{ h.text }}</li>
+          </sc-for>
+        </ol>
+      </section>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startStation":{"editor":"enum","default":"2","options":["0","1","2","3","4","5","6","7","8","9","10"],"section":"Preview"},"startRole":{"editor":"enum","default":"arnav","options":["arnav","angela"],"section":"Preview"},"$preview":{"width":1440,"height":2100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var start = parseInt(this.props.startStation != null ? this.props.startStation : '2', 10);
+    var done = s.done != null ? s.done : start;
+    var role = s.role || this.props.startRole || 'arnav';
+    var NAMES = ['Build plan ready', 'Record the build', 'Penny script and written guide', 'Approve the script', 'Penny audio', 'Thumbnail', 'Video and Descript', 'Trail OS article draft', 'Final review', 'Publish on YouTube'];
+    var N = NAMES.length;
+    var rec = s.rec || (done >= 2 ? 'Descript (sample)' : '');
+    function go(n, extra) { var p = { done: n, copied: false, checks: {} }; if (extra) for (var k in extra) p[k] = extra[k]; self.setState(p); }
+
+    var full = 'FT27-W01-A | Company settings and fiscal year';
+    var sfStatus = done <= 1 ? 'Not Started' : (done <= 7 ? 'In Progress' : (done === 8 ? 'Ready for Review' : (done === 9 ? 'Ready to Publish' : 'Published')));
+
+    function pill(on) { return { bg: on ? '#2f6b3f' : '#ffffff', color: on ? '#ffffff' : '#2a2e2c', border: on ? '#2f6b3f' : '#e2e4e1', pressed: on ? 'true' : 'false' }; }
+    var roles = [['arnav', 'Arnav'], ['angela', 'Angela']].map(function (r) { var p = pill(role === r[0]); p.label = r[1]; p.go = function () { self.setState({ role: r[0] }); }; return p; });
+
+    var segs = NAMES.map(function (x, i) { return { bg: i < done ? '#2f6b3f' : (i === done ? '#f5a623' : '#e2e4e1') }; });
+    var progressText = done >= N ? 'Published. All ' + N + ' stations done.' : (done + ' of ' + N + ' stations done · Next: ' + NAMES[done]);
+
+    function head(k, name) {
+      return 'Use the Build With Me video skill, Claude step ' + k + ' of 5: ' + name + '.\n\nContent Item: CI0157 "' + full + '". Read it in Salesforce first. If this step is already done, tell me and stop.\n\n';
+    }
+    var prompts = {
+      2: head(1, 'script and written guide') + 'Raw recording: ' + (rec || '[link]') + '\nExtract the script from my recording and turn it into Penny’s script. Penny: voice only.\nStop when the script and written guide are in Drive and Penny Script Status is In Review.',
+      4: head(2, 'Penny audio') + 'Check that Penny Script Status is Approved; stop if it isn’t. Generate Penny’s audio on eleven_v4 from the approved script. Give me the ElevenLabs credit estimate and wait for my go.\nSave the ElevenLabs flow link in Content Details, then stop.',
+      5: head(3, 'thumbnail') + 'Make the title slide and thumbnail from the How To Training Canva template. Show it to me, save Thumbnail Design Location, then stop.',
+      6: head(4, 'video and Descript') + 'Get Penny’s audio from the ElevenLabs flow in Content Details and cut my recording to match each scene, with the thumbnail first. Upload the final to a Descript project.\nSave Descript Project URL, Length and the scene start times in Content Details, then stop.',
+      7: head(5, 'Trail OS article draft') + 'Create the learner-task article draft in Trail OS, using the scene start times in Content Details for the step timestamps. Fill the rest of the Content Item and set Status to Ready for Review. Angela does the final review.'
+    };
+    function copy(text) { return function () { try { navigator.clipboard.writeText(text); } catch (e) {} self.setState({ copied: true }); }; }
+
+    function stateOf(i) { return done > i ? 'done' : (done === i ? 'now' : 'later'); }
+    function look(st) {
+      return {
+        border: st === 'now' ? '#f5a623' : '#e2e4e1', bg: '#ffffff', shadow: st === 'now' ? '0 12px 28px rgba(42,46,44,.10)' : 'none',
+        numBg: st === 'done' ? '#2f6b3f' : (st === 'now' ? '#f5a623' : '#e2e4e1'), numColor: st === 'done' ? '#ffffff' : '#2a2e2c',
+        state: st === 'done' ? '✓ Done' : (st === 'now' ? 'Now' : 'Later')
+      };
+    }
+    var none = { isPlan: false, isRecord: false, isRun: false, isGate: false };
+    function mk(o, i) { var b = {}; for (var k in none) b[k] = none[k]; for (var p in o) b[p] = o[p]; var l = look(stateOf(i)); for (var q in l) b[q] = l[q]; b.num = i + 1; return b; }
+    function out(i, label, field) { return { mark: done > i ? '✓' : '○', label: label, field: field }; }
+    function run(i, k, title, text, outputs) {
+      return mk({ title: 'Claude step ' + k + ' of 5: ' + title, who: 'Arnav in Claude · one session', isRun: true, runText: text, outputs: outputs,
+        showPrompt: done === i && role === 'arnav', prompt: prompts[i], onCopy: copy(prompts[i]) }, i);
+    }
+
+    var checksState = s.checks || {};
+    var QA = ['Build plays correctly from start to finish', 'Captions are present and accurate', 'No personal accounts or emails on screen', 'All links open the intended destination', 'Penny says Transition Trails, never TT'];
+    var allOn = true;
+    var qaChecks = QA.map(function (q, i) { var on = !!checksState[i]; if (!on) allOn = false; return { label: q, on: on, toggle: function () { var n = {}; for (var k in checksState) n[k] = checksState[k]; n[i] = !on; self.setState({ checks: n }); } }; });
+    var ytDraft = s.yt || '';
+    var ytOk = ytDraft.indexOf('https://') === 0;
+    var isAngela = role === 'angela';
+    function gate(i, o) {
+      var base = { isGate: true, checks: [], showUrl: false, canAct: done === i && isAngela, waitForAngela: done === i && !isAngela, canReturn: true, disabled: false, btnBg: '#2f6b3f', btnColor: '#ffffff' };
+      for (var k in o) base[k] = o[k];
+      return mk(base, i);
+    }
+
+    var cards = [
+      mk({ title: 'Build plan', who: 'Staff', isPlan: true }, 0),
+      mk({ title: 'Record the build', who: 'Arnav · fills Raw Recording Location', isRecord: true, canEdit: done === 1 && role === 'arnav' }, 1),
+      run(2, 1, 'script and written guide', 'Claude turns your recording into Penny’s script, writes the guide and files both in the item’s Drive folder.',
+        [out(2, 'Drive folder', 'Content Location'), out(2, 'Penny script doc', 'Penny Narration Location, Penny Script'), out(2, 'Ready for Angela', 'Penny Script Status = In Review')]),
+      gate(3, { title: 'Approve the script', who: 'Angela · sets Penny Script Status = Approved',
+        gateText: 'Read the Penny script and written guide in the Drive folder. Approving lets Arnav generate audio, which spends ElevenLabs credits.',
+        approveLabel: 'Approve script', onApprove: function () { go(4); }, onReturn: function () { go(2); } }),
+      run(4, 2, 'Penny audio', 'Claude estimates the ElevenLabs credits and waits for your go before generating. The audio stays in the ElevenLabs flow, so the next step can pick it up in a new session.',
+        [out(4, 'Penny audio, all scenes', 'Penny Narration Script Hash'), out(4, 'ElevenLabs flow link', 'Content Details')]),
+      run(5, 3, 'thumbnail', 'Claude fills the How To Training Canva template. It’s also the first scene of the video.',
+        [out(5, 'Canva title slide and thumbnail', 'Thumbnail Design Location')]),
+      run(6, 4, 'video and Descript', 'Claude cuts your recording to Penny’s narration, joins the scenes and saves the final in Descript, so nothing is lost when the session ends.',
+        [out(6, 'Final video in Descript', 'Descript Project URL'), out(6, 'Length and scene start times', 'Length, Content Details')]),
+      run(7, 5, 'Trail OS article draft', 'Claude writes the learner-task article with a step for each scene, timed to the video, and marks the item ready for Angela.',
+        [out(7, 'Learner-task article draft', 'Trail OS'), out(7, 'Ready for Angela', 'Status = Ready for Review')]),
+      gate(8, { title: 'Final review', who: 'Angela · sets Status = Ready to Publish',
+        gateText: 'Watch the final in Descript and read the article draft in Trail OS, then check each item.',
+        checks: isAngela && done === 8 ? qaChecks : [], approveLabel: 'Approve for publishing', disabled: !allOn, btnBg: allOn ? '#2f6b3f' : '#e2e4e1', btnColor: allOn ? '#ffffff' : '#4a4f4d',
+        onApprove: function () { if (allOn) go(9); }, onReturn: function () { go(6); } }),
+      gate(9, { title: 'Publish on YouTube', who: 'Angela · creates the Content Item Publication',
+        gateText: 'Publish from Descript, then paste the link. Trail OS records the YouTube publication and marks the item Published.',
+        showUrl: done === 9 && isAngela, canReturn: false, approveLabel: 'Record as published', disabled: !ytOk, btnBg: ytOk ? '#2f6b3f' : '#e2e4e1', btnColor: ytOk ? '#ffffff' : '#4a4f4d',
+        onApprove: function () { if (ytOk) go(10, { ytSaved: ytDraft }); }, onReturn: null })
+    ];
+
+    var recDraft = s.recDraft || '';
+    var recOk = recDraft.indexOf('https://') === 0;
+
+    var facts = [
+      { label: 'Status', value: sfStatus },
+      { label: 'Case', value: 'Sample Case for CI0157' },
+      { label: 'Volunteer', value: 'Arnav Shah (sample)' },
+      { label: 'Format', value: 'Video' },
+      { label: 'Topic', value: 'Foundations Trail' },
+      { label: 'Pillars', value: 'Salesforce' },
+      { label: 'Due date', value: 'Not set' },
+      { label: 'Penny script', value: done < 3 ? 'Not started' : (done === 3 ? 'In Review' : 'Approved') },
+      { label: 'Length', value: done >= 7 ? 'Filled by Claude' : 'Not yet' }
+    ];
+    var links = [
+      { label: 'Raw recording', value: rec || 'Not yet' },
+      { label: 'Drive folder', value: done >= 3 ? 'Drive (sample)' : 'Not yet' },
+      { label: 'Penny script doc', value: done >= 3 ? 'Google Doc (sample)' : 'Not yet' },
+      { label: 'ElevenLabs flow', value: done >= 5 ? 'ElevenLabs (sample)' : 'Not yet' },
+      { label: 'Thumbnail', value: done >= 6 ? 'Canva (sample)' : 'Not yet' },
+      { label: 'Descript', value: done >= 7 ? 'Descript (sample)' : 'Not yet' },
+      { label: 'Trail OS article', value: done >= 8 ? 'Learner task draft' : 'Not yet' },
+      { label: 'YouTube', value: done >= 10 ? (s.ytSaved || 'Published (sample)') : 'Not yet' }
+    ];
+    var H = ['Build plan ready', 'Arnav linked the raw recording', 'Claude filed the script and guide; Penny Script Status set to In Review', 'Angela approved the script', 'Claude generated Penny’s audio', 'Claude made the thumbnail', 'Claude saved the final video in Descript', 'Claude drafted the Trail OS article; Status set to Ready for Review', 'Angela approved the final for publishing', 'Published on YouTube'];
+    var hist = H.slice(0, Math.min(done, N));
+
+    var coach = role === 'arnav'
+      ? (done === 1 ? 'Before you hit record, which part of this build do you think learners will get stuck on?' : (done === 3 || done === 8 || done === 9 ? 'You’re waiting on Angela. What did you learn on this build that the next video should repeat?' : (done >= N ? 'This one is live. Which video is next?' : 'Each Claude step picks up from the record, so you can stop after any of them. Which step will you finish today?')))
+      : (done === 3 ? 'The script is ready for you. Does it say Transition Trails, never TT, all the way through?' : (done === 8 ? 'The final is ready. Did the narration keep pace with the recording?' : (done === 9 ? 'Approved. Is it ready to go public on YouTube?' : 'Nothing is waiting on you for this video.')));
+
+    return {
+      sfStatus: sfStatus, roles: roles, segs: segs, progressText: progressText, cards: cards,
+      copied: s.copied ? '✓ Copied. Paste it in Claude.' : '',
+      recDraft: recDraft, onRecDraft: function (e) { self.setState({ recDraft: e.target.value }); },
+      recDisabled: !recOk, recBg: recOk ? '#2f6b3f' : '#e2e4e1', recColor: recOk ? '#ffffff' : '#4a4f4d',
+      onSaveRec: function () { if (recOk) go(2, { rec: recDraft, recDraft: '' }); },
+      ytDraft: ytDraft, onYt: function (e) { self.setState({ yt: e.target.value }); },
+      facts: facts, links: links, coach: coach,
+      history: hist.map(function (t) { return { text: t }; }), noHistory: hist.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

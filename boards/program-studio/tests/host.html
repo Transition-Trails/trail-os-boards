@@ -1,0 +1,34 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100%;display:block}</style></head><body>
+<iframe id="f" sandbox="allow-scripts"></iframe>
+<script>
+window.LOG=[];window.D=null;window.PREVIEW=false;window.FAIL=null;
+const f=document.getElementById('f');
+function post(m){f.contentWindow.postMessage(m,'*')}
+window.sendData=function(){D.asOf=new Date().toISOString();post({type:'data',data:JSON.parse(JSON.stringify(D))})};
+window.addEventListener('message',e=>{if(e.source!==f.contentWindow)return;const m=e.data;LOG.push(m);
+ if(m.type==='ready'){sendData();return}
+ if(m.type!=='action')return;
+ post({type:'actionPending',id:m.id});
+ setTimeout(()=>{let r=handle(m.name,m.payload);r.type='result';r.id=m.id;post(r);sendData()},60);
+});
+function find(t,id){return (t==='program'?D.programs:D.cohorts).find(x=>x.id===id)}
+function handle(n,p){
+ if(window.FAIL&&window.FAIL[n])return Object.assign({ok:false},window.FAIL[n]);
+ if(PREVIEW&&n!=='checkSalesforce'&&n!=='openRecord')return {ok:false,code:'preview_only',message:'Preview only: changes are turned off.'};
+ if(n==='checkSalesforce')return {ok:true,message:'Salesforce checked. Nothing was changed.'};
+ if(n==='openRecord')return {ok:true,data:{url:'https://example.my.salesforce.com/'+p.id}};
+ if(n==='saveProgramDraft'||n==='saveCohortDraft'){const t=n==='saveProgramDraft'?'program':'cohort',r=find(t,p.programId||p.cohortId);
+   if(p.editVersion!==r.editVersion)return {ok:false,code:'stale',message:'Someone else saved this first. Reload to see their changes.'};
+   r.draft=r.draft||{id:'d'+Date.now(),fields:{},status:'draft',author:D.viewer.email,updatedAt:new Date().toISOString()};Object.assign(r.draft.fields,p.fields);r.draft.status='draft';
+   r.changes=Object.keys(r.draft.fields).map(k=>({field:k,from:r.fields[k]??null,to:r.draft.fields[k]}));r.editVersion='v'+(+r.editVersion.slice(1)+1);r.workflow.approval={status:'draft',label:'Draft'};return {ok:true}}
+ if(n==='submitForApproval'){const r=find(p.recordType,p.id);r.draft.status='awaiting_approval';r.workflow.approval={status:'awaiting_approval',label:'Waiting for approval'};return {ok:true}}
+ if(n==='approveChange'){const r=find(p.recordType,p.id);r.draft.status='approved';r.workflow.delivery.status='queued';r.workflow.delivery.label='Queued';return {ok:true}}
+ if(n==='returnChange'){const r=find(p.recordType,p.id);r.draft.status='returned';r.draft.note=p.note;return {ok:true}}
+ if(n==='discardDraft'){const r=find(p.recordType,p.id);r.draft=null;r.changes=[];return {ok:true}}
+ if(n==='requestStatusChange'){const r=find(p.recordType,p.id);r.draft=r.draft||{id:'ds',fields:{},status:'draft',author:D.viewer.email};r.draft.fields.pmdm__Status__c=p.toStatus;return {ok:true,message:'Status change saved as a draft.'}}
+ if(n==='proposeProgram'){const id='pn'+D.programs.length;D.programs.push({id,salesforceId:null,editVersion:'v1',fields:{},draft:{id:'dn',fields:{Name:p.name,pmdm__ShortSummary__c:p.shortSummary,pmdm__Status__c:'In Discovery'},status:'draft',author:D.viewer.email},changes:[],perms:{edit:true,submit:true,approve:false,changeStatus:[]},workflow:{approval:{status:'draft',label:'Draft'},delivery:{status:'not_approved',label:'Not sent'},guidance:null},issues:[],proposalCompleteness:{done:1,total:11,missing:[]},cohortIds:[],courses:[]});return {ok:true,data:{id}}}
+ if(n==='createCohort'){const id='cn'+D.cohorts.length;D.cohorts.push({id,salesforceId:null,editVersion:'v1',fields:{},draft:{id:'dc',fields:Object.assign({pmdm__Status__c:'Planned'},p.fields),status:'draft',author:D.viewer.email},changes:[],perms:{edit:true,submit:true,approve:false,changeStatus:[]},workflow:{approval:{status:'draft',label:'Draft'},delivery:{status:'not_approved',label:'Not sent'}},issues:[],programId:p.programId,roster:[],seatsOpen:null});return {ok:true,data:{id}}}
+ if(n==='approveNow'||n==='retryDelivery')return {ok:true};
+ return {ok:false,code:'unknown',message:'Unknown action'};
+}
+</script></body></html>

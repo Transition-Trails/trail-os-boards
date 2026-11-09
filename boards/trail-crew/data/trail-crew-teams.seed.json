@@ -1,0 +1,79 @@
+{
+  "source": "Coach Pulse team configuration (worker/team-config.mjs), verified Contact IDs. Effective 2026-11-08. Replace with the Teams screen (case 1280) once it exists.",
+  "effectiveDate": "2026-11-08",
+  "roles": ["Coach", "Assistant Coach", "Product Owner", "Product Manager", "BA", "Admin", "Developer", "Data", "Tech Manager", "Replit Manager", "Marketing Manager", "Salesforce Marketing Consultant"],
+  "priorityEditorRoles": ["Coach", "Assistant Coach", "Product Owner", "Product Manager"],
+  "teams": [
+    {
+      "key": "devops",
+      "name": "Trail OS DevOps",
+      "goal": "Stabilize Trail OS for learners and coaches",
+      "description": "Connect and stabilize the core systems between Replit and Salesforce, so Trail OS is fast, safe and ready for the January cohort.",
+      "status": "Active",
+      "slackChannelId": "C0CDDJH95B2",
+      "slackChannelName": "teamtrailos",
+      "members": [
+        {"contactId": "003Hp00003JoD3KIAV", "name": "Hugh Richardson", "roles": ["Coach"], "primaryRole": "Coach"},
+        {"contactId": "003an00000sFwfhAAC", "name": "Jayna Winn", "roles": ["Assistant Coach", "Admin"], "primaryRole": "Assistant Coach"},
+        {"contactId": "003an00000t9iIIAAY", "name": "Omar Cohen", "roles": ["Product Owner"], "primaryRole": "Product Owner"},
+        {"contactId": "003an00000vkWAZAA2", "name": "Eugene Harris", "roles": ["BA"], "primaryRole": "BA"},
+        {"contactId": "003an00000rpU4YAAU", "name": "Sidra Siddiqui", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": "003an00000rpU4VAAU", "name": "Maureen Wangui", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": "003an00000s4u9NAAQ", "name": "Ayanna Higgins", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": "003an00000nlTljAAE", "name": "Michele Ward", "roles": ["Tech Manager"], "primaryRole": "Tech Manager"},
+        {"contactId": "003an00000H24FTAAZ", "name": "Henry Mbare", "roles": ["Replit Manager"], "primaryRole": "Replit Manager"}
+      ]
+    },
+    {
+      "key": "academy",
+      "name": "Transition Trails Academy",
+      "goal": "Prepare the Academy experience site",
+      "description": "Build the digital experience and reusable LWCs for program learners and community members.",
+      "status": "Active",
+      "slackChannelId": "C0CD3TFFC5N",
+      "slackChannelName": "teamtransitiontrailsacademy",
+      "members": [
+        {"contactId": "003an00000sHLu1AAG", "name": "Dalona Morgan", "roles": ["Coach"], "primaryRole": "Coach"},
+        {"contactId": "003an00000wTUanAAG", "name": "Amrutha Mohandas", "roles": ["Assistant Coach"], "primaryRole": "Assistant Coach"},
+        {"contactId": "003an00000syntCAAQ", "name": "Deepti Sankara", "roles": ["Product Owner"], "primaryRole": "Product Owner"},
+        {"contactId": "003an00000sFXxRAAW", "name": "Shobha Pullela", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": "003an00000sFQJHAA4", "name": "Ken Tran", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": "003an00000WCYTOAA5", "name": "Sujatha Ramadoss", "roles": ["Developer"], "primaryRole": "Developer"}
+      ]
+    },
+    {
+      "key": "penny",
+      "name": "Team Penny",
+      "goal": "Enable Penny with Agentforce",
+      "description": "Support Guided Trail learners and coaches throughout their 12-week program.",
+      "status": "Active",
+      "slackChannelId": "C0CC99GN6RG",
+      "slackChannelName": "teampenny",
+      "members": [
+        {"contactId": "003an00000IOaPnAAL", "name": "Mary Ascough", "roles": ["Product Manager", "Coach"], "primaryRole": "Product Manager"},
+        {"contactId": "003an00000sFqYfAAK", "name": "Jillian Pearman", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": "003an00000rpU4XAAU", "name": "Rebeca Origel", "roles": ["Data"], "primaryRole": "Data"},
+        {"contactId": "003an00000u2LzwAAE", "name": "Arnav Shah", "roles": ["Admin"], "primaryRole": "Admin"},
+        {"contactId": "003an00000tnrZlAAI", "name": "Katarina Schenkel", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": null, "name": null, "roles": ["Product Owner"], "primaryRole": "Product Owner", "openSeat": true},
+        {"contactId": null, "name": null, "roles": ["Assistant Coach"], "primaryRole": "Assistant Coach", "openSeat": true}
+      ]
+    },
+    {
+      "key": "marketing",
+      "name": "Transition Trails Marketing",
+      "goal": "Marketing team forming",
+      "description": "Confirm the roster, coach, and responsibilities.",
+      "status": "Forming",
+      "slackChannelId": "C0CCHB4B4J2",
+      "slackChannelName": "teamtransitiontrailsmarketing",
+      "members": [
+        {"contactId": "003an00000rpU4UAAU", "name": "Steph-Nora Chidimma", "roles": ["BA", "Admin"], "primaryRole": "BA"},
+        {"contactId": "003an00000XxYdmAAF", "name": "Anshika Agrawal", "roles": ["Marketing Manager"], "primaryRole": "Marketing Manager"},
+        {"contactId": "003an00000tATXLAA4", "name": "Segun Babalola", "roles": ["Salesforce Marketing Consultant"], "primaryRole": "Salesforce Marketing Consultant"},
+        {"contactId": null, "name": null, "roles": ["Coach"], "primaryRole": "Coach", "openSeat": true},
+        {"contactId": null, "name": null, "roles": ["Product Owner"], "primaryRole": "Product Owner", "openSeat": true}
+      ]
+    }
+  ]
+}

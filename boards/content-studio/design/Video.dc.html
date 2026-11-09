@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Build With Me video production</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fafaf7}
+a{color:#2f6b3f}a:hover{color:#245531}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #fafaf7; color: #4a4f4d; font-family: 'Open Sans', 'Roboto', system-ui, sans-serif; font-size: 15px; line-height: 1.5; box-sizing: border-box">
+
+  <header style="padding: 24px 32px 16px; border-bottom: 1px solid #e2e4e1; background: #ffffff; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: .04em; color: #2f6f7e; text-transform: uppercase">Content Studio · Video production</div>
+        <h1 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 30px; font-weight: 600; line-height: 1.2; color: #2a2e2c">Build With Me: Foundations Trail 2027</h1>
+        <p style="margin: 0; max-width: 780px">Arnav records each build in the Trailhead Pantry Dallas org, then runs the Penny video skill in his own Claude app. Trail OS never calls Claude: each station turns done when the skill fills the matching Content Item field.</p>
+      </div>
+      <div role="group" aria-label="Viewing as" style="display: flex; gap: 6px; align-items: center">
+        <span style="font-size: 13px; font-weight: 600; color: #2a2e2c; margin-right: 4px">Viewing as</span>
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="2">
+          <button type="button" onClick="{{ r.go }}" aria-pressed="{{ r.pressed }}" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid {{ r.border }}; background: {{ r.bg }}; color: {{ r.color }}; font-size: 14px; font-weight: 600; cursor: pointer">{{ r.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 14px; background: #edf5f8; color: #2a2e2c; font-size: 13px">
+      <span aria-hidden="true">ⓘ</span>
+      <span>Design preview. The 37 FT27 videos are real Content Items (all Not Started today). Progress on the first five is sample data to show each station.</span>
+    </div>
+  </header>
+
+  <div style="padding: 24px 32px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+    <sc-for list="{{ tiles }}" as="tl" hint-placeholder-count="4">
+      <div style="display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff">
+        <span style="font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #686e6c">{{ tl.label }}</span>
+        <span style="font-family: 'Poppins', system-ui, sans-serif; font-size: 30px; font-weight: 600; line-height: 1.1; color: #2a2e2c">{{ tl.value }}</span>
+        <span style="font-size: 14px">{{ tl.sub }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px 32px 48px; align-items: flex-start">
+
+    <main style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <div role="group" aria-label="Show" style="display: flex; flex-wrap: wrap; gap: 6px">
+        <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+          <button type="button" onClick="{{ f.go }}" aria-pressed="{{ f.pressed }}" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid {{ f.border }}; background: {{ f.bg }}; color: {{ f.color }}; font-size: 14px; font-weight: 600; cursor: pointer">{{ f.label }}</button>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{ weeks }}" as="wk" hint-placeholder-count="4">
+        <section style="display: flex; flex-direction: column; gap: 8px">
+          <h2 style="margin: 8px 0 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">{{ wk.label }}</h2>
+          <sc-for list="{{ wk.videos }}" as="v" hint-placeholder-count="3">
+            <button type="button" onClick="{{ v.open }}" style="display: grid; grid-template-columns: 76px minmax(0, 1fr) 200px; gap: 14px; align-items: center; padding: 12px 16px; border: 1.5px solid {{ v.border }}; box-shadow: {{ v.ring }}; border-radius: 14px; background: #ffffff; text-align: left; cursor: pointer">
+              <span style="font-family: Menlo, 'Courier New', monospace; font-size: 13px; color: #2a2e2c">{{ v.code }}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-weight: 600; color: #2a2e2c">{{ v.name }}</span>
+                <span style="font-size: 13px; color: #4a4f4d">{{ v.nextLine }}</span>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 6px">
+                <span aria-hidden="true" style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px">
+                  <sc-for list="{{ v.segs }}" as="sg" hint-placeholder-count="10">
+                    <span style="display: block; height: 6px; border-radius: 999px; background: {{ sg.bg }}"></span>
+                  </sc-for>
+                </span>
+                <span style="font-size: 12px; color: #4a4f4d">{{ v.progress }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </section>
+      </sc-for>
+      <sc-if value="{{ noVideos }}" hint-placeholder-val="{{ false }}">
+        <p style="margin: 0; padding: 20px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e4e1">Nothing waiting on you right now.</p>
+      </sc-if>
+    </main>
+
+    <aside aria-label="Selected video" style="flex: 1 1 400px; max-width: 520px; min-width: 0; padding: 24px; border: 1px solid #e2e4e1; border-radius: 22px; background: #ffffff; box-shadow: 0 12px 28px rgba(42,46,44,.10); display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; color: #686e6c; font-family: Menlo, 'Courier New', monospace">{{ d.ci }} · {{ d.code }} · Week {{ d.week }}</span>
+        <h2 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 22px; font-weight: 600; line-height: 1.3; color: #2a2e2c">{{ d.name }}</h2>
+        <span style="font-size: 14px">{{ d.summary }}</span>
+        <a href="Record.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; margin-top: 6px; padding: 0 18px; box-sizing: border-box; border-radius: 999px; border: 1.5px solid #2f6f7e; background: #ffffff; color: #2f6f7e; font-weight: 600; text-decoration: none">Open full record</a>
+      </div>
+
+      <ol aria-label="Production stations" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px">
+        <sc-for list="{{ d.stations }}" as="st" hint-placeholder-count="9">
+          <li style="display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 12px; border-radius: 14px; background: {{ st.bg }}; border: 1px solid {{ st.border }}">
+            <span aria-hidden="true" style="margin-top: 3px; width: 16px; height: 16px; border-radius: 999px; box-sizing: border-box; background: {{ st.dot }}; border: 2px solid {{ st.ring }}"></span>
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-weight: 600; color: #2a2e2c">{{ st.name }}</span>
+              <span style="font-size: 12px; color: #4a4f4d">{{ st.who }} · reads {{ st.field }}</span>
+            </span>
+            <span style="font-size: 12px; font-weight: 700; color: #2a2e2c; white-space: nowrap">{{ st.state }}</span>
+          </li>
+        </sc-for>
+      </ol>
+
+      <sc-if value="{{ d.showRecording }}" hint-placeholder-val="{{ false }}">
+        <section style="display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+          <h3 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">Record the build</h3>
+          <p style="margin: 0; font-size: 14px">Follow the build plan on the Case in the Trailhead Pantry Dallas org. Use your Transition Trails Chrome profile so no personal accounts show. Talk through it naturally; Penny replaces your voice later.</p>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+            Raw recording link (Descript or Google Drive)
+            <input type="url" value="{{ d.recLink }}" onChange="{{ d.onRecLink }}" placeholder="https://" style="min-height: 44px; padding: 0 14px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #ffffff; font: inherit; font-weight: 400; color: #2a2e2c">
+          </label>
+          <button type="button" onClick="{{ d.onSaveRec }}" disabled="{{ d.recDisabled }}" style="align-self: flex-start; min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: {{ d.recBg }}; color: {{ d.recColor }}; font-weight: 700; cursor: pointer">Save recording</button>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ d.showPrompt }}" hint-placeholder-val="{{ false }}">
+        <section style="display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+          <h3 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">{{ d.promptTitle }}</h3>
+          <p style="margin: 0; font-size: 14px">Paste this in Claude. Each step is one session and saves its results to the record, so you can stop after any step and pick up later.</p>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #2a2e2c">
+            Prompt for Claude
+            <textarea readonly rows="9" style="padding: 12px 14px; border: 1.5px solid #e2e4e1; border-radius: 14px; background: #fafaf7; font-family: Menlo, 'Courier New', monospace; font-size: 12px; line-height: 1.5; font-weight: 400; color: #2a2e2c; resize: vertical">{{ d.prompt }}</textarea>
+          </label>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+            <button type="button" onClick="{{ d.onCopy }}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #f5a623; color: #2a2e2c; font-weight: 700; box-shadow: 0 2px 8px rgba(245,166,35,.35); cursor: pointer">Copy prompt →</button>
+            <span style="font-size: 14px; color: #2f6b3f">{{ d.copied }}</span>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ d.showGate }}" hint-placeholder-val="{{ false }}">
+        <section style="display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+          <h3 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">{{ d.gateTitle }}</h3>
+          <p style="margin: 0; font-size: 14px">{{ d.gateText }}</p>
+          <sc-for list="{{ d.checks }}" as="ck" hint-placeholder-count="0">
+            <label style="display: flex; gap: 10px; align-items: center; min-height: 36px; font-size: 14px; color: #2a2e2c">
+              <input type="checkbox" checked="{{ ck.on }}" onChange="{{ ck.toggle }}" style="width: 20px; height: 20px; accent-color: #2f6b3f">
+              <span>{{ ck.label }}</span>
+            </label>
+          </sc-for>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px">
+            <button type="button" onClick="{{ d.onApprove }}" disabled="{{ d.approveDisabled }}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: {{ d.approveBg }}; color: {{ d.approveColor }}; font-weight: 700; cursor: pointer">{{ d.approveLabel }}</button>
+            <button type="button" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #2f6f7e; background: #ffffff; color: #2f6f7e; font-weight: 600; cursor: pointer">Send back with a note</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ d.showWaiting }}" hint-placeholder-val="{{ false }}">
+        <p style="margin: 0; padding: 12px 14px; border-radius: 14px; background: #edf5f8; color: #2a2e2c; font-size: 14px">{{ d.waitingText }}</p>
+      </sc-if>
+
+      <section style="display: flex; flex-direction: column; gap: 6px; padding-top: 14px; border-top: 1px solid #e2e4e1">
+        <h3 style="margin: 0; font-family: 'Poppins', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #2a2e2c">Links</h3>
+        <sc-for list="{{ d.links }}" as="lk" hint-placeholder-count="6">
+          <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px">
+            <span style="color: #686e6c">{{ lk.label }}</span>
+            <span style="color: #2a2e2c">{{ lk.value }}</span>
+          </div>
+        </sc-for>
+      </section>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  catalog() {
+    var t = [
+      ['CI0155', 'W00-A', 'Get your Trailhead Pantry Dallas org'], ['CI0156', 'W00-B', 'Connect your org for scoring'],
+      ['CI0157', 'W01-A', 'Company settings and fiscal year'], ['CI0158', 'W01-B', 'Deactivate a former user'], ['CI0159', 'W01-C', 'Licenses and user setup'],
+      ['CI0160', 'W02-A', 'Replace a System Admin workaround'], ['CI0161', 'W02-B', 'Role hierarchy'], ['CI0162', 'W02-C', 'Org-wide defaults and a sharing rule'],
+      ['CI0163', 'W03-A', 'Custom object with a relationship'], ['CI0164', 'W03-B', 'Formula and roll-up summary fields'], ['CI0165', 'W03-C', 'Validation rules'],
+      ['CI0166', 'W04-A', 'Record types and page layouts'], ['CI0167', 'W04-B', 'Lightning record page with Dynamic Forms'], ['CI0168', 'W04-C', 'Custom Lightning app'],
+      ['CI0169', 'W05-A', 'Import with the Data Import Wizard'], ['CI0170', 'W05-B', 'Update records with Data Loader'], ['CI0171', 'W05-C', 'Duplicate and matching rules'],
+      ['CI0172', 'W06-A', 'Summary and matrix reports'], ['CI0173', 'W06-B', 'Custom report type'], ['CI0174', 'W06-C', 'Dashboard with a dynamic running user'],
+      ['CI0175', 'W07-A', 'Leads, assignment and conversion'], ['CI0176', 'W07-B', 'Opportunity stages and Path'], ['CI0177', 'W07-C', 'Products, price books and a campaign'],
+      ['CI0178', 'W08-A', 'Activities and email templates'], ['CI0179', 'W08-B', 'Chatter and Slack'], ['CI0180', 'W08-C', 'Mobile and In-App Guidance'],
+      ['CI0181', 'W09-A', 'Record-triggered flow'], ['CI0182', 'W09-B', 'Screen flow'], ['CI0183', 'W09-C', 'Approval process'],
+      ['CI0184', 'W10-A', 'Schedule-triggered flow'], ['CI0185', 'W10-B', 'Subflow'], ['CI0186', 'W10-C', 'Debug and repair a broken flow'],
+      ['CI0187', 'W11-A', 'Cases, queues and assignment rules'], ['CI0188', 'W11-B', 'Escalation and Web-to-Case'], ['CI0189', 'W11-C', 'Experience Cloud page'],
+      ['CI0190', 'W12-A', 'Agent with topics and actions'], ['CI0191', 'W12-B', 'Prompt template']
+    ];
+    var sample = { CI0155: 8, CI0156: 5, CI0157: 3, CI0158: 2, CI0159: 1 };
+    return t.map(function (r) {
+      return { ci: r[0], code: r[1], week: +r[1].slice(1, 3), name: r[2], done: sample[r[0]] != null ? sample[r[0]] : 1, rec: sample[r[0]] >= 2 ? 'Descript (sample)' : '' };
+    });
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    if (!this._cat) this._cat = this.catalog();
+    var vids = s.vids || this._cat;
+    var role = s.role || 'arnav';
+    var filter = s.filter || 'all';
+    var sel = s.sel || 'CI0157';
+
+    var ST = [
+      { name: 'Build plan ready', who: 'Staff', field: 'Summary', kind: 'staff' },
+      { name: 'Record the build', who: 'Arnav', field: 'Raw Recording Location', kind: 'arnav' },
+      { name: 'Penny script and written guide', who: 'Arnav in Claude', field: 'Penny Narration Location, Penny Script Status = In Review', kind: 'claude' },
+      { name: 'Approve the script', who: 'Angela', field: 'Penny Script Status = Approved', kind: 'angela' },
+      { name: 'Penny audio', who: 'Arnav in Claude', field: 'Penny Narration Script Hash', kind: 'claude' },
+      { name: 'Thumbnail', who: 'Arnav in Claude', field: 'Thumbnail Design Location', kind: 'claude' },
+      { name: 'Video and Descript', who: 'Arnav in Claude', field: 'Descript Project URL, Length', kind: 'claude' },
+      { name: 'Trail OS article draft', who: 'Arnav in Claude', field: 'Status = Ready for Review', kind: 'claude' },
+      { name: 'Final review', who: 'Angela', field: 'Status = Ready to Publish', kind: 'angela' },
+      { name: 'Publish on YouTube', who: 'Angela', field: 'Content Item Publication', kind: 'angela' }
+    ];
+    var N = ST.length;
+    function owner(v) { if (v.done >= N) return 'none'; var k = ST[v.done].kind; return k === 'claude' ? 'arnav' : k; }
+    function nextLine(v) {
+      if (v.done >= N) return 'Published';
+      var st = ST[v.done];
+      return 'Next: ' + st.name + ' · ' + st.who;
+    }
+    function upd(ci, patch) {
+      self.setState({ vids: vids.map(function (v) { if (v.ci !== ci) return v; var c = {}; for (var k in v) c[k] = v[k]; for (var p in patch) c[p] = patch[p]; return c; }) });
+    }
+
+    var mine = vids.filter(function (v) { return owner(v) === role; });
+    var shown = filter === 'mine' ? mine : (filter === 'started' ? vids.filter(function (v) { return v.done > 1; }) : vids);
+
+    var weeksMap = {};
+    var order = [];
+    shown.forEach(function (v) {
+      if (!weeksMap[v.week]) { weeksMap[v.week] = []; order.push(v.week); }
+      var on = v.ci === sel;
+      weeksMap[v.week].push({
+        code: v.code, name: v.name, nextLine: nextLine(v), progress: Math.min(v.done, N) + ' of ' + N + ' stations',
+        segs: ST.map(function (x, i) { return { bg: i < v.done ? '#2f6b3f' : (i === v.done ? '#f5a623' : '#e2e4e1') }; }),
+        border: on ? '#2f6b3f' : '#e2e4e1', ring: on ? '0 0 0 3px rgba(47,107,63,.15)' : 'none',
+        open: function () { self.setState({ sel: v.ci, copied: false, checks: {} }); }
+      });
+    });
+    var weeks = order.map(function (w) { return { label: w === 0 ? 'Week 0 · Before day one' : 'Week ' + w, videos: weeksMap[w] }; });
+
+    var recorded = vids.filter(function (v) { return v.done >= 2; }).length;
+    var scriptWait = vids.filter(function (v) { return v.done === 3; }).length;
+    var finalWait = vids.filter(function (v) { return v.done === 8; }).length;
+    var published = vids.filter(function (v) { return v.done >= N; }).length;
+    var tiles = [
+      { label: 'Recorded', value: recorded + ' of ' + vids.length, sub: 'Raw recording linked' },
+      { label: 'Scripts to approve', value: scriptWait, sub: 'Waiting on Angela' },
+      { label: 'Final reviews', value: finalWait, sub: 'Waiting on Angela' },
+      { label: 'Published', value: published, sub: 'Live on YouTube' }
+    ];
+
+    function pill(on) { return { bg: on ? '#2f6b3f' : '#ffffff', color: on ? '#ffffff' : '#2a2e2c', border: on ? '#2f6b3f' : '#e2e4e1', pressed: on ? 'true' : 'false' }; }
+    var roles = [['arnav', 'Arnav'], ['angela', 'Angela']].map(function (r) { var p = pill(role === r[0]); p.label = r[1]; p.go = function () { self.setState({ role: r[0] }); }; return p; });
+    var filters = [['mine', 'Waiting on ' + (role === 'arnav' ? 'Arnav' : 'Angela') + ' (' + mine.length + ')'], ['started', 'Started'], ['all', 'All ' + vids.length]].map(function (f) {
+      var p = pill(filter === f[0]); p.label = f[1]; p.go = function () { self.setState({ filter: f[0] }); }; return p;
+    });
+
+    var v = null;
+    for (var i = 0; i < vids.length; i++) { if (vids[i].ci === sel) v = vids[i]; }
+    if (!v) v = vids[0];
+    var cur = v.done < N ? ST[v.done] : null;
+    var stations = ST.map(function (x, i) {
+      var done = i < v.done, now = i === v.done;
+      return {
+        name: x.name, who: x.who, field: x.field,
+        state: done ? '✓ Done' : (now ? 'Next' : ''),
+        dot: done ? '#2f6b3f' : (now ? '#f5a623' : '#ffffff'), ring: done ? '#2f6b3f' : (now ? '#b37400' : '#e2e4e1'),
+        bg: now ? '#fff3e0' : '#ffffff', border: now ? '#ffd08a' : '#e2e4e1'
+      };
+    });
+
+    var full = 'FT27-' + v.code + ' | ' + v.name;
+    function head(k, nm) {
+      return 'Use the Build With Me video skill, Claude step ' + k + ' of 5: ' + nm + '.\n\nContent Item: ' + v.ci + ' "' + full + '". Read it in Salesforce first. If this step is already done, tell me and stop.\n\n';
+    }
+    var P = {
+      2: ['script and written guide', 1, 'Raw recording: ' + (v.rec || '[link]') + '\nExtract the script from my recording and turn it into Penny’s script. Penny: voice only.\nStop when the script and written guide are in Drive and Penny Script Status is In Review.'],
+      4: ['Penny audio', 2, 'Check that Penny Script Status is Approved; stop if it isn’t. Generate Penny’s audio on eleven_v4 from the approved script. Give me the ElevenLabs credit estimate and wait for my go.\nSave the ElevenLabs flow link in Content Details, then stop.'],
+      5: ['thumbnail', 3, 'Make the title slide and thumbnail from the How To Training Canva template. Show it to me, save Thumbnail Design Location, then stop.'],
+      6: ['video and Descript', 4, 'Get Penny’s audio from the ElevenLabs flow in Content Details and cut my recording to match each scene, with the thumbnail first. Upload the final to a Descript project.\nSave Descript Project URL, Length and the scene start times in Content Details, then stop.'],
+      7: ['Trail OS article draft', 5, 'Create the learner-task article draft in Trail OS, using the scene start times in Content Details for the step timestamps. Fill the rest of the Content Item and set Status to Ready for Review. Angela does the final review.']
+    };
+    var prompt = '';
+    var promptTitle = '';
+    if (P[v.done]) {
+      promptTitle = 'Claude step ' + P[v.done][1] + ' of 5: ' + P[v.done][0];
+      prompt = head(P[v.done][1], P[v.done][0]) + P[v.done][2];
+    }
+
+    var checksState = s.checks || {};
+    var QA = ['Build plays correctly from start to finish', 'Captions are present and accurate', 'No personal accounts or emails on screen', 'All links open the intended destination', 'Penny says Transition Trails, never TT'];
+    var showGate = role === 'angela' && cur && cur.kind === 'angela' && v.done !== 0;
+    var gateTitle = '', gateText = '', approveLabel = '', checks = [], allOn = true;
+    if (showGate && v.done === 3) { gateTitle = 'Approve the script'; gateText = 'Read the Penny script and written guide in the item’s Drive folder. Approving lets Arnav generate audio, which spends ElevenLabs credits.'; approveLabel = 'Approve script'; }
+    if (showGate && v.done === 8) {
+      gateTitle = 'Final review'; gateText = 'Watch the final in Descript and check each item.'; approveLabel = 'Approve for publishing';
+      checks = QA.map(function (q, i) { var on = !!checksState[i]; if (!on) allOn = false; return { label: q, on: on, toggle: function () { var n = {}; for (var k in checksState) n[k] = checksState[k]; n[i] = !on; self.setState({ checks: n }); } }; });
+    }
+    if (showGate && v.done === 9) { gateTitle = 'Publish on YouTube'; gateText = 'Publish from Descript as unlisted or public, then paste the link. Trail OS records the publication and marks the item Published.'; approveLabel = 'Record as published'; }
+    var approveDisabled = showGate && v.done === 8 && !allOn;
+
+    var isArnavTurn = role === 'arnav' && owner(v) === 'arnav';
+    var waitingText = '';
+    if (!isArnavTurn && !showGate) {
+      waitingText = v.done >= N ? 'Published. Nothing left to do.' : (role === 'arnav' ? 'Waiting on ' + cur.who + ': ' + cur.name + '.' : 'Waiting on ' + cur.who + ': ' + cur.name + '. Nothing for you yet.');
+    }
+    var recLink = s.recDraft != null && s.recFor === v.ci ? s.recDraft : '';
+    var recOk = recLink.indexOf('https://') === 0;
+
+    var d = {
+      ci: v.ci, code: v.code, week: v.week, name: full,
+      summary: 'Foundations Trail 2027, Week ' + v.week + ' (Trailhead Pantry Dallas).',
+      stations: stations,
+      showRecording: isArnavTurn && v.done === 1,
+      recLink: recLink, onRecLink: function (e) { self.setState({ recDraft: e.target.value, recFor: v.ci }); },
+      recDisabled: !recOk, recBg: recOk ? '#2f6b3f' : '#e2e4e1', recColor: recOk ? '#ffffff' : '#4a4f4d',
+      onSaveRec: function () { if (recOk) { upd(v.ci, { done: 2, rec: recLink }); self.setState({ recDraft: '' }); } },
+      showPrompt: isArnavTurn && !!prompt, promptTitle: promptTitle, prompt: prompt,
+      copied: s.copied ? '✓ Copied. Paste it in Claude.' : '',
+      onCopy: function () { try { navigator.clipboard.writeText(prompt); } catch (e) {} self.setState({ copied: true }); },
+      showGate: !!showGate, gateTitle: gateTitle, gateText: gateText, approveLabel: approveLabel, checks: checks,
+      approveDisabled: approveDisabled, approveBg: approveDisabled ? '#e2e4e1' : '#2f6b3f', approveColor: approveDisabled ? '#4a4f4d' : '#ffffff',
+      onApprove: function () { if (!approveDisabled) { upd(v.ci, { done: v.done + 1 }); self.setState({ checks: {} }); } },
+      showWaiting: !!waitingText, waitingText: waitingText,
+      links: [
+        { label: 'Raw recording', value: v.rec || 'Not yet' },
+        { label: 'Drive folder (script, guide)', value: v.done >= 3 ? 'Drive (sample)' : 'Not yet' },
+        { label: 'ElevenLabs flow', value: v.done >= 5 ? 'ElevenLabs (sample)' : 'Not yet' },
+        { label: 'Thumbnail', value: v.done >= 6 ? 'Canva (sample)' : 'Not yet' },
+        { label: 'Descript', value: v.done >= 7 ? 'Descript (sample)' : 'Not yet' },
+        { label: 'Trail OS article', value: v.done >= 8 ? 'Learner task draft (sample)' : 'Not yet' },
+        { label: 'YouTube', value: v.done >= N ? 'Published' : 'Not yet' }
+      ]
+    };
+
+    return { roles: roles, filters: filters, tiles: tiles, weeks: weeks, noVideos: weeks.length === 0, d: d };
+  }
+}
+</script>
+</body>
+</html>
