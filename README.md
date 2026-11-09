@@ -27,7 +27,7 @@ Each board is a single, self-contained HTML file. You upload it in Trail OS unde
 ## Repo conventions
 
 - **`main`** holds the latest built version of each board. That is the newest file, not necessarily the one active in Trail OS.
-- **Tags** mark every board version: `<board>/v<version>`, for example `knowledge-studio/v1.21` or `program-studio/v1`. The commit history carries every earlier version, so you can roll back by checking out a tag and uploading that file.
+- **Tags** mark every board version (create them once with `bash scripts/create-version-tags.sh` from a local clone; this repo's history already has one commit per version): `<board>/v<version>`, for example `knowledge-studio/v1.21` or `program-studio/v1`. The commit history carries every earlier version, so you can roll back by checking out a tag and uploading that file.
 - **Activation stays manual.** When a version is activated in Trail OS, record it in that board's `CHANGELOG.md` and tag it with an extra `-active-YYYY-MM-DD` tag, for example `program-studio/v1-active-2026-11-08`.
 - **Specs** live next to each board, under `specs/`. They are Markdown exports of the Claude docs, which stay the place to edit. The source link sits at the top of each board's README. Re-export after a doc changes.
 - **File names** in the repo don't carry a version number (`knowledge-studio-board.html`). The version lives in the tag, the CHANGELOG and the sha256 in the board's README.
