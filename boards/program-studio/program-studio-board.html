@@ -338,6 +338,34 @@ select:disabled,input:disabled,textarea:disabled{background:var(--bg);color:var(
 @media (max-width:1000px){aside.panel:not(.focus){flex-shrink:0}}
 @media (max-width:640px){.grid2{grid-template-columns:1fr}.kv span{min-width:100px}main.main{padding:14px 12px 30px}.pb{padding:12px 14px 20px}}
 .mhead .closedtg{margin-left:auto;font-size:13px}
+/* rich text sections (v1.2) */
+.jump{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-bottom:4px}
+.chipb{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px;min-height:30px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.chipb:hover{border-color:var(--teal)}.chipb.ed{border-color:var(--green);background:#edf4ef}
+.rtf{gap:0;scroll-margin-top:12px}
+.rth{display:flex;align-items:center;gap:8px;margin:6px 0 6px}
+.rtl{font-family:var(--head);font-size:14.5px;font-weight:600;color:var(--ink)}
+.rtf .tool{gap:2px;padding:4px;align-items:center}
+.rtf .tool button{min-height:28px;min-width:30px;font-size:12.5px;padding:0 7px}
+.rtf:focus-within .tool{position:sticky;top:0;z-index:3;box-shadow:0 2px 6px rgba(42,46,44,.06)}
+.rtf .rte{min-height:96px;max-height:none;overflow:visible}
+.rtf.ed .rte{border-left:3px solid var(--green)}
+.rte.ro{border-radius:8px;background:var(--bg)}
+.rte h2,.rte h4{font-size:15px;margin:12px 0 6px}
+.rte table{border-collapse:collapse;width:100%;margin:6px 0 10px;font-size:13.5px}
+.rte th,.rte td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+.rte th{background:var(--bg)}
+.rte a{color:var(--teal)}
+.rte img{max-width:100%}
+.rte:empty:before{content:"Start writing\2026";color:var(--off)}
+.rtlink{display:inline-flex;gap:4px;align-items:center;margin-left:6px}
+.rtlink input{min-height:28px;width:min(320px,50vw);border:1px solid var(--line);border-radius:6px;padding:0 8px}
+.savebar{position:sticky;bottom:0;background:var(--surface);padding:10px 0;border-top:1px solid var(--line);z-index:4}
+.panel.focus .savebar{background:var(--bg)}
+.panel.focus .rtf .rte{min-height:140px;font-size:15px;line-height:1.65;padding:14px 18px}
+.panel.focus .rtl{font-size:16px}
+@media (min-width:900px){.panel.focus>.pb{padding:24px 36px 0}}
+@media (max-width:640px){.jump{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}.chipb{flex:none}}
 
 </style>
 </head>
@@ -620,7 +648,8 @@ function cohortPanel(c){
 function form(id){return V.forms[id]=V.forms[id]||{}}
 function fieldInput(r,kind,f){
   var def=(kind==="program"?PF:CF)[f],fm=form(r.id),cur=Object.prototype.hasOwnProperty.call(fm,f)?fm[f]:val(r,f),ed=canEditRec(r),dis=ed?"":" disabled",key=' data-fld="'+esc(f)+'"',h='<div class="fld"><label class="f">'+esc(def.l);
-  if(def.k==="area"||def.k==="rich"){var tv=Object.prototype.hasOwnProperty.call(fm,f)?fm[f]:(def.k==="rich"?txt(cur):(cur==null?"":cur));h+='<textarea'+key+dis+' rows="'+(def.k==="rich"?5:3)+'">'+esc(tv)+"</textarea>"}
+  if(def.k==="rich")return richField(r,f,def,cur,ed);
+  if(def.k==="area"){var tv=cur==null?"":cur;h+='<textarea'+key+dis+' rows="3">'+esc(tv)+"</textarea>"}
   else if(def.k==="date")h+='<input type="date"'+key+' value="'+esc(cur||"")+'"'+dis+">";
   else if(def.k==="int")h+='<input type="number" min="0" step="1"'+key+' value="'+esc(cur==null?"":cur)+'"'+dis+">";
   else if(def.k==="bool")h+='<span class="checks"><label><input type="checkbox"'+key+(cur?" checked":"")+dis+">Yes</label></span>";
@@ -629,16 +658,65 @@ function fieldInput(r,kind,f){
   else h+='<input type="'+(def.k==="url"?"url":"text")+'"'+key+' value="'+esc(cur==null?"":cur)+'"'+(def.max?' maxlength="'+def.max+'"':"")+dis+">";
   h+="</label>";
   if(r.salesforceId&&(inDraft(r,f)||Object.prototype.hasOwnProperty.call(fm,f))){var lv=show(def,live(r,f));h+='<span class="note was">In Salesforce: '+esc(lv?(lv.length>140?lv.slice(0,140)+"\u2026":lv):"blank")+"</span>"}
-  if(def.k==="rich"&&ed)h+='<span class="note">Plain text; start a line with \u201c- \u201d for a bullet. Other formatting is simplified when you edit this field.</span>';
   return h+"</div>";
 }
+function saveBar(r){var fm=form(r.id),dirty=Object.keys(fm).length,key="save:"+r.id;
+  return '<div class="btnrow savebar" id="savebar"><button type="button" class="btn solid" data-save="'+esc(r.id)+'"'+(!dirty||busy[key]?" disabled":"")+">"+(busy[key]?"Saving\u2026":"Save draft")+"</button>"+(dirty?'<button type="button" class="btn ghost" data-undo="'+esc(r.id)+'">Undo changes</button><span class="note">'+dirty+" unsaved change"+(dirty===1?"":"s")+"</span>":'<span class="note">No unsaved changes</span>')+"</div>"}
+function refreshSaveBar(r){var el=$("savebar");if(el)el.outerHTML=saveBar(r);Array.prototype.forEach.call(document.querySelectorAll("[data-jump]"),function(b){b.classList.toggle("ed",Object.prototype.hasOwnProperty.call(form(r.id),b.dataset.jump))})}
+/* ---------- rich text sections ---------- */
+var RT_OK={P:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,UL:1,OL:1,LI:1,H2:1,H3:1,H4:1,A:1,TABLE:1,THEAD:1,TBODY:1,TR:1,TH:1,TD:1,BLOCKQUOTE:1,DIV:1,IMG:1};
+var RT_DROP=/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|META|LINK|SVG|MATH|FORM|INPUT|BUTTON|TEXTAREA|SELECT|TEMPLATE|NOSCRIPT)$/;
+function rtWalk(n){Array.prototype.slice.call(n.childNodes).forEach(function(c){
+  if(c.nodeType===3)return;if(c.nodeType!==1){c.parentNode.removeChild(c);return}
+  var t=c.tagName;if(RT_DROP.test(t)){c.parentNode.removeChild(c);return}
+  rtWalk(c);
+  if(!RT_OK[t]){while(c.firstChild)c.parentNode.insertBefore(c.firstChild,c);c.parentNode.removeChild(c);return}
+  Array.prototype.slice.call(c.attributes).forEach(function(a){var nm=a.name.toLowerCase(),keep=(t==="A"&&nm==="href"&&/^(https?:|mailto:)/i.test(a.value))||(t==="IMG"&&(nm==="src"&&/^https:/i.test(a.value)||nm==="alt"))||((t==="TD"||t==="TH")&&(nm==="colspan"||nm==="rowspan"));if(!keep)c.removeAttribute(a.name)});
+  if(t==="IMG"&&!c.getAttribute("src"))c.parentNode.removeChild(c);
+})}
+function rtClean(html){if(html==null||html==="")return "";var s=String(html);if(!/[<&]/.test(s))s=toRich(s);try{var doc=new DOMParser().parseFromString("<body>"+s+"</body>","text/html");rtWalk(doc.body);return doc.body.innerHTML.trim()}catch(e){return esc(s)}}
+function rtEmpty(html){return !txt(html).replace(/\s+/g,"")&&!/<(img|table)/i.test(html||"")}
+var RT_TOOLS=[["bold","B","Bold"],["italic","I","Italic"],["h3","H","Heading"],["ul","\u2022 List","Bulleted list"],["ol","1. List","Numbered list"],["link","Link","Add link"],["clear","Clear","Clear formatting"]];
+function richField(r,f,def,cur,ed){
+  var fm=form(r.id),changed=Object.prototype.hasOwnProperty.call(fm,f),html=rtClean(cur),id="rt-"+f;
+  var h='<section class="fld rtf'+(changed?" ed":"")+'" id="sec-'+esc(f)+'"><div class="rth"><span class="rtl" id="'+id+'-l">'+esc(def.l)+"</span>"+(changed?'<span class="vbadge">Edited</span>':inDraft(r,f)&&r.salesforceId?'<span class="vbadge pub">In draft</span>':"")+"</div>";
+  if(ed){h+='<div class="tool" role="toolbar" aria-label="'+esc(def.l)+' formatting">'+RT_TOOLS.map(function(x){return '<button type="button" data-rt="'+x[0]+'" data-for="'+esc(f)+'" title="'+x[2]+'" aria-label="'+x[2]+'">'+(x[0]==="bold"?"<b>B</b>":x[0]==="italic"?"<i>I</i>":esc(x[1]))+"</button>"}).join("");
+    h+="</div>"}
+  h+='<div class="rte'+(ed?"":" ro")+'" id="'+id+'" data-rich="'+esc(f)+'" role="textbox" aria-multiline="true" aria-labelledby="'+id+'-l" contenteditable="'+(ed?"true":"false")+'">'+html+"</div>";
+  if(!ed&&rtEmpty(html))h+='<p class="note">Not filled in.</p>';
+  return h+"</section>";
+}
+function rtInput(el){var r=rec(V.sel.kind,V.sel.id);if(!r)return;var f=el.dataset.rich,fm=form(r.id),cur=rtClean(el.innerHTML),orig=rtClean(val(r,f));
+  var same=cur===orig||(rtEmpty(cur)&&rtEmpty(orig));if(same)delete fm[f];else fm[f]=el.innerHTML;
+  var sec=$("sec-"+f);if(sec){sec.classList.toggle("ed",!same);var b=sec.querySelector(".rth .vbadge");if(!same&&!b){var n=document.createElement("span");n.className="vbadge";n.textContent="Edited";sec.querySelector(".rth").appendChild(n)}else if(same&&b&&b.textContent==="Edited")b.parentNode.removeChild(b)}
+  refreshSaveBar(r)}
+var rtRange=null;
+function rtSave(){var s=window.getSelection();if(s&&s.rangeCount){var n=s.anchorNode,el=n&&(n.nodeType===1?n:n.parentNode);if(el&&el.closest&&el.closest("[data-rich]"))rtRange=s.getRangeAt(0).cloneRange()}}
+function rtRestore(el){el.focus();if(rtRange&&el.contains(rtRange.startContainer)){var s=window.getSelection();s.removeAllRanges();try{s.addRange(rtRange)}catch(e){}}}
+function rtLinkBar(){V.linkFor=null;var x=document.querySelector(".rtlink");if(x)x.parentNode.removeChild(x)}
+function rtCmd(k,f){var el=$("rt-"+f);if(!el)return;
+  if(k==="link"){rtLinkBar(null);V.linkFor=f;var tb=el.parentNode.querySelector(".tool");if(tb){var sp=document.createElement("span");sp.className="rtlink";sp.innerHTML='<input type="url" id="rtlinkurl" placeholder="https://" aria-label="Link address"><button type="button" data-rt="linkok" data-for="'+esc(f)+'">Add</button><button type="button" data-rt="linkcancel" data-for="'+esc(f)+'">Cancel</button>';tb.appendChild(sp);$("rtlinkurl").focus()}return}
+  if(k==="linkcancel"){rtLinkBar(null);rtRestore(el);return}
+  if(k==="linkok"){var u=(($("rtlinkurl")||{}).value||"").trim();if(!/^https:\/\/\S+$/.test(u)){toast("Use a full link that starts with https://");return}rtLinkBar(null);rtRestore(el);var s=window.getSelection();if(s&&s.isCollapsed)document.execCommand("insertHTML",false,'<a href="'+esc(u)+'">'+esc(u)+"</a>");else document.execCommand("createLink",false,u);rtInput(el);return}
+  rtRestore(el);
+  if(k==="bold")document.execCommand("bold");else if(k==="italic")document.execCommand("italic");
+  else if(k==="h3"){var blk=document.queryCommandValue("formatBlock");document.execCommand("formatBlock",false,/h3/i.test(blk)?"p":"h3")}
+  else if(k==="ul")document.execCommand("insertUnorderedList");else if(k==="ol")document.execCommand("insertOrderedList");
+  else if(k==="clear"){document.execCommand("removeFormat");document.execCommand("formatBlock",false,"p")}
+  rtInput(el);
+}
+document.addEventListener("paste",function(e){var el=e.target.closest&&e.target.closest("[data-rich]");if(!el||el.getAttribute("contenteditable")!=="true")return;e.preventDefault();var cd=e.clipboardData,h=cd.getData("text/html"),t=cd.getData("text/plain");document.execCommand("insertHTML",false,h?rtClean(h):toRich(t));rtInput(el)});
+document.addEventListener("mousedown",function(e){var b=e.target.closest&&e.target.closest("[data-rt]");if(b&&b.dataset.rt!=="linkok"&&b.dataset.rt!=="linkcancel"){rtSave();e.preventDefault()}});
+document.addEventListener("selectionchange",rtSave);
 function fieldsTab(r,kind,fields,label){
   var ed=canEditRec(r),fm=form(r.id),dirty=Object.keys(fm).length,key="save:"+r.id;
   var h="";
   if(!r.perms.edit)h+='<p class="note">You can view this '+kind+". Changes need program edit access.</p>";
   else if(locked(r))h+='<p class="note">This '+kind+"\u2019s draft is "+(draftSt(r)==="approved"?"approved and being delivered":"waiting for approval")+", so it can\u2019t be edited now.</p>";
+  var rich=fields.filter(function(f){return ((kind==="program"?PF:CF)[f]||{}).k==="rich"});
+  if(rich.length>=3)h+='<nav class="jump" aria-label="Sections"><span class="note">Jump to</span>'+rich.map(function(f){return '<button type="button" class="chipb'+(Object.prototype.hasOwnProperty.call(fm,f)?" ed":"")+'" data-jump="'+esc(f)+'">'+esc((kind==="program"?PF:CF)[f].l)+"</button>"}).join("")+"</nav>";
   h+=fields.map(function(f){return fieldInput(r,kind,f)}).join("");
-  if(ed)h+='<div class="btnrow savebar"><button type="button" class="btn solid" data-save="'+esc(r.id)+'"'+(!dirty||busy[key]?" disabled":"")+">"+(busy[key]?"Saving\u2026":"Save draft")+"</button>"+(dirty?'<button type="button" class="btn ghost" data-undo="'+esc(r.id)+'">Undo changes</button><span class="note">'+dirty+" unsaved change"+(dirty===1?"":"s")+"</span>":"")+"</div>"+errBox(key)+'<p class="note">Saving keeps a draft in Trail OS. Salesforce changes only after someone else approves it.</p>';
+  if(ed)h+=saveBar(r)+errBox(key)+'<p class="note">Saving keeps a draft in Trail OS. Salesforce changes only after someone else approves it.</p>';
   return h;
 }
 function linkRow(p){var b="";if(p.salesforceId)b+='<button type="button" class="btn ghost sm" data-rec="salesforce" data-id="'+esc(p.id)+'">Open in Salesforce \u2197</button>';if(val(p,"Google_Drive_Folder__c"))b+='<button type="button" class="btn ghost sm" data-rec="drive" data-id="'+esc(p.id)+'">Drive folder \u2197</button>';if(val(p,"Canva_Folder__c"))b+='<button type="button" class="btn ghost sm" data-rec="canva" data-id="'+esc(p.id)+'">Canva folder \u2197</button>';return b?'<div class="btnrow">'+b+"</div>"+errBox("rec:"+p.id):""}
@@ -741,7 +819,7 @@ function editVer(r){return String(r.editVersion||"")}
 function cleanFields(r,kind){
   var fm=V.forms[r.id]||{},out={},defs=kind==="program"?PF:CF;
   Object.keys(fm).forEach(function(f){var d=defs[f],v=fm[f];if(!d)return;
-    if(d.k==="rich")v=String(v).trim()?toRich(v):null;
+    if(d.k==="rich"){v=rtClean(v);if(rtEmpty(v))v=null}
     else if(d.k==="bool")v=!!v;
     else if(d.k==="int")v=v===""||v==null?null:Math.max(0,Math.floor(Number(v)));
     else if(typeof v==="string"){v=v.trim();if(v==="")v=null}
@@ -813,8 +891,10 @@ document.addEventListener("click",function(e){
   if(t.id==="np-cancel"){delete V.forms.newp;V.sel=null;render();return}
   if(t.id==="showclosed"){V.showClosed=t.checked;render();return}
   if(ds.showclosed){V.showClosed=true;render();return}
+  if(ds.rt){rtCmd(ds.rt,ds["for"]);return}
+  if(ds.jump){var sec=$("sec-"+ds.jump),ed=$("rt-"+ds.jump);if(sec)sec.scrollIntoView({block:"start",behavior:"smooth"});if(ed&&ed.getAttribute("contenteditable")==="true")ed.focus({preventScroll:true});return}
   if(ds.save){doSave(ds.save);return}
-  if(ds.undo){delete V.forms[ds.undo];renderPanel();return}
+  if(ds.undo){delete V.forms[ds.undo];V.linkFor=null;keepScroll(renderPanel);return}
   if(ds.stgo){doStatus(ds.stgo);return}
   if(ds.newc){doNewCohort(ds.newc);return}
   if(ds.submit){doSubmit(ds.submit);return}
@@ -838,6 +918,7 @@ function setFld(t){var r=rec(V.sel.kind,V.sel.id);if(!r)return;var f=t.dataset.f
 }
 function keepFocus(el,fn){var sel=el.dataset.fld?'[data-fld="'+el.dataset.fld+'"]':el.id?"#"+el.id:null,pos=null;try{pos=el.selectionStart}catch(e){}fn();if(!sel)return;var n=document.querySelector(sel);if(n&&n!==document.activeElement&&(el.tagName==="TEXTAREA"||el.type==="text"||el.type==="url"||el.type==="number")){n.focus();try{if(pos!=null)n.setSelectionRange(pos,pos)}catch(e){}}}
 document.addEventListener("input",function(e){var t=e.target;if(!D)return;
+  var rt=t.closest&&t.closest("[data-rich]");if(rt){rtInput(rt);return}
   if(t.id==="q"){V.q=t.value.trim();renderMain();return}
   if(t.dataset.fld&&t.type!=="checkbox"&&t.tagName!=="SELECT"&&t.type!=="date"){setFld(t);return}
   if(t.dataset.st){form("st:"+V.sel.id)[t.dataset.st]=t.value;return}
@@ -855,7 +936,11 @@ document.addEventListener("change",function(e){var t=e.target;if(!D)return;
   if(t.id==="np-mgr"){form("newp").mgr=t.value;return}
 });
 function keepScroll(fn){var p=$("panel"),y=p?p.scrollTop:0;fn();if(p)p.scrollTop=y}
-document.addEventListener("keydown",function(e){if(e.key==="Escape"&&V.focus){V.focus=false;renderPanel()}});
+document.addEventListener("keydown",function(e){
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&(e.key==="s"||e.key==="S")&&V.sel&&V.sel.kind!=="new"){var b=document.querySelector("[data-save]");e.preventDefault();if(b&&!b.disabled)b.click();return}
+  if(e.target.id==="rtlinkurl"&&e.key==="Enter"){e.preventDefault();var ok=document.querySelector('[data-rt="linkok"]');if(ok)ok.click();return}
+  if(e.key==="Escape"&&V.linkFor){var lf=V.linkFor;rtCmd("linkcancel",lf);return}
+  if(e.key==="Escape"&&V.focus){V.focus=false;renderPanel()}});
 
 </script>
 </body>
