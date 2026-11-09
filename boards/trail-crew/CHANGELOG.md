@@ -2,7 +2,7 @@
 
 | Version | Built | Notes | Activated in Trail OS |
 |---|---|---|---|
-| v1.4 | 2026-10-28 | | confirm |
+| v1.4 | 2026-10-28 | | Active (confirmed 2026-11-09) |
 | v1.3 | 2026-10-28 | | |
 | v1.2 | 2026-10-28 | | |
 | v1.1 | 2026-10-28 | Light theme (`trail-crew-board-v1.1-light.html`) | |

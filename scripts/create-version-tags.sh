@@ -10,6 +10,10 @@ while read -r sha board version; do
   tag="$board/$version"
   if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then echo "exists  $tag"; else git tag "$tag" "$sha"; echo "created $tag"; fi
 done
-v1=$(git rev-parse program-studio/v1)
-git rev-parse -q --verify refs/tags/program-studio/v1-active-2026-11-08 >/dev/null || git tag program-studio/v1-active-2026-11-08 "$v1"
+# Active-in-Trail-OS markers
+mark(){ git rev-parse -q --verify "refs/tags/$2" >/dev/null || git tag "$2" "$(git rev-parse "$1^{commit}")"; echo "marked  $2"; }
+mark program-studio/v1   program-studio/v1-active-2026-11-08
+mark program-studio/v1.2 program-studio/v1.2-active-2026-11-09
+mark knowledge-studio/v1.21 knowledge-studio/v1.21-active-2026-11-09
+mark trail-crew/v1.4     trail-crew/v1.4-active-2026-11-09
 git push origin --tags

@@ -9,7 +9,7 @@ Knowledge Studio is the staff and Knowledge Manager board for writing, reviewing
 | Built | Nov 8, 2026 |
 | Size | 180,557 bytes |
 | sha256 | `d6bf19dcaa8f85b6069188227aca761b147658107ceec60b0a4f4d9743a4174f` |
-| Active in Trail OS | Confirm in Administration › Board versions |
+| Active in Trail OS | Yes, v1.21 (confirmed Nov 9, 2026) |
 | Trail OS resource key | `knowledge-studio-board:main`, files under `/objects/knowledge-studio-boards/` |
 
 ## Specs

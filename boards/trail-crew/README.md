@@ -9,7 +9,7 @@ The Trail Crew product board covers Overview, Prioritize, Features, Team, Blocke
 | Built | Oct 28, 2026 |
 | Size | 76,398 bytes |
 | sha256 | `013e06cc8a05ef7f473cd80d4e36e9d5ac70c1c5c6d605514965bc32a096e3cf` |
-| Active in Trail OS | Confirm in Administration › Trail Crew Board versions |
+| Active in Trail OS | Yes, v1.4 (confirmed Nov 9, 2026) |
 | Trail OS resource key | `trail-crew-board:main` |
 | Seed data | [`data/trail-crew-teams.seed.json`](data/trail-crew-teams.seed.json): the four Sprint-003 teams. It is used until the Teams screen (case 1280) holds rosters. |
 

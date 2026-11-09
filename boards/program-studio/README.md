@@ -9,7 +9,7 @@ Program Studio is where staff and program managers plan and run programs and coh
 | Built | Nov 8, 2026 |
 | Size | 97,113 bytes |
 | sha256 | `0ad19cd51cc27462baa14bd30de96a9fb08808d45b3d10e75727481a3b3287af` |
-| Active in Trail OS | **v1** (activated Nov 8, 2026). v1.1 and v1.2 have not been activated yet. |
+| Active in Trail OS | **v1.2** (confirmed Nov 9, 2026). v1 was activated Nov 8, 2026. |
 
 What changed after v1:
 

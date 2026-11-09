@@ -6,10 +6,10 @@ Each board is a single, self-contained HTML file. You upload it in Trail OS unde
 
 | Board | Folder | Latest file in repo | Status |
 |---|---|---|---|
-| Knowledge Studio | [`boards/knowledge-studio`](boards/knowledge-studio) | v1.21 | Built Nov 8, 2026. Confirm which version is active in Trail OS. |
-| Content Studio | [`boards/content-studio`](boards/content-studio) | Design + spec only | The board HTML (`content-studio-board-v1.html`) is not in the repo yet. Add it. |
-| Trail Crew Boards | [`boards/trail-crew`](boards/trail-crew) | v1.4 | Built Oct 28, 2026. Confirm which version is active in Trail OS. |
-| Program Studio | [`boards/program-studio`](boards/program-studio) | v1.2 | v1 is active (Nov 8, 2026). v1.1 and v1.2 have not been activated. |
+| Knowledge Studio | [`boards/knowledge-studio`](boards/knowledge-studio) | v1.21 | Active in Trail OS (confirmed Nov 9, 2026). |
+| Content Studio | [`boards/content-studio`](boards/content-studio) | v1 | Built Nov 7, 2026. Not yet activated. |
+| Trail Crew Boards | [`boards/trail-crew`](boards/trail-crew) | v1.4 | Active in Trail OS (confirmed Nov 9, 2026). |
+| Program Studio | [`boards/program-studio`](boards/program-studio) | v1.2 | Active in Trail OS (confirmed Nov 9, 2026). |
 | Academy Board | [`boards/academy`](boards/academy) | AcademyBoard contract v2 | Prototype from Oct 31, 2026. |
 
 ## How a board works

@@ -4,7 +4,7 @@ Dates are build dates. Record each Trail OS activation here as you make it, with
 
 | Version | Built | Activated in Trail OS |
 |---|---|---|
-| v1.21 | 2026-11-08 | confirm |
+| v1.21 | 2026-11-08 | Active (confirmed 2026-11-09) |
 | v1.20 | 2026-11-08 | |
 | v1.19 | 2026-11-08 | |
 | v1.18 | 2026-11-08 | |
