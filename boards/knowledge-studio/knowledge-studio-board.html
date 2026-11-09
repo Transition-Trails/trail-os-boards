@@ -50,6 +50,9 @@ tbody tr.sel{background:#F3F8F5;box-shadow:inset 3px 0 0 var(--green)}
 .art{border:0;background:transparent;padding:0;text-align:left;font-weight:600;color:var(--ink);min-height:24px}
 .art:hover{text-decoration:underline}
 .sub{display:block;font-size:12px;color:var(--body);font-weight:400}
+.sfls{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}td>.sfls{margin-top:0}
+.sfl{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--teal);font:inherit;font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer}
+.sfl:hover{background:var(--tint)}.sfl:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 .dots{display:inline-flex;gap:3px;vertical-align:middle}
 .dots i{width:10px;height:10px;border-radius:3px;background:var(--line);display:inline-block}
 .dots i.d{background:var(--green)}.dots i.c{background:var(--sky)}.dots i.b{background:var(--amber)}
@@ -494,14 +497,29 @@ function fieldCell(a,k){
   var v=a[k];if(blank(a,k))return a.linked?'<span class="note">Blank</span>':'<span class="note">Not in Salesforce</span>';
   if(k==="category")return esc(shortCat(v));if(Array.isArray(v))return esc(v.join(", "));return esc(v);
 }
+/* ---------- Salesforce links in tables (v1.22) ---------- */
+function sfLinks(a){
+  var s=a.sf,t=esc(a.title),out=[];
+  function L(ver,label,aria){return '<button type="button" class="sfl" data-rec="salesforce" data-id="'+esc(a.id)+'"'+(ver?' data-ver="'+ver+'"':"")+' aria-label="'+aria+'">'+label+' <span aria-hidden="true">\u2197</span></button>'}
+  if(s&&s.knowledgeArticleId){
+    if(s.online)out.push(L("online","Published v"+esc(s.online.versionNumber||1),"Open published version "+esc(s.online.versionNumber||1)+" of "+t+" in Salesforce"));
+    if(s.draft)out.push(L("draft","Draft","Open the draft of "+t+" in Salesforce"));
+    if(!out.length)out.push(L("",s.status==="Archived"?"Archived":"Open","Open "+t+" in Salesforce"));
+  }else if(a.linked||a.salesforceRecordId||a.sfNumber){
+    out.push(L("",a.sfNumber?"#"+esc(a.sfNumber):"Open","Open "+t+" in Salesforce. Version history not read yet"));
+  }else if(a.step==="notLinked"){
+    return '<span class="note">Live, not linked</span>';
+  }else return '<span class="note">Not in Salesforce</span>';
+  return '<span class="sfls">'+out.join("")+"</span>";
+}
 function dots(a){var i=a.st.i;return '<span class="dots" role="img" aria-label="'+(i>=4?"All steps done":"At "+STAGES[i])+'">'+STAGES.map(function(s,j){var c=j<i?"d":j===i?(a.step==="syncBlocked"?"b":"c"):"";return '<i class="'+c+'"></i>'}).join("")+"</span>"}
 function table(rows){
   if(!rows.length)return '<div class="card" style="padding:18px">Nothing here'+(V.cat||V.q?" with these filters":"")+".</div>";
   var fk=/^(writeOpen|fixOpen|mywriting)$/.test(V.view)?"_writing":/^(approve|unsent)$/.test(V.view)?"_approval":V.view==="mine"?"_roles":V.view==="due"?"reviewDue":/^(myrev|needrev)$/.test(V.view)?"reviewer":/^(mytech|needtech)$/.test(V.view)?"validator":(V.view.indexOf("miss:")===0?V.view.slice(5):V.bulk.field),fl=fk==="_writing"?"Writing":fk==="_approval"?"Approval":fk==="_roles"?"My role":fk==="reviewDue"?"Review due":fieldDef(fk).l;
   var shown=rows.slice(0,V.limit),allOn=shown.every(function(a){return V.picked[a.id]}),cmp=panelOpen();
-  var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
+  var h='<div class="card tablewrap"><table'+(cmp?' style="min-width:0"':"")+'><thead><tr><th style="width:36px"><input type="checkbox" id="pickall" aria-label="Select all shown" '+(allOn?"checked":"")+(canEdit()?"":" disabled")+'></th><th>Article</th>'+(cmp?"":"<th>Category</th><th>"+esc(fl)+"</th><th>Salesforce</th>")+"<th>Stage</th><th>Next</th>"+(cmp?"":"<th>Issues</th>")+"</tr></thead><tbody>";
   h+=shown.map(function(a){var sel=V.sel&&V.sel.kind==="article"&&V.sel.id===a.id;
-    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button>'+qBadge(a)+versionMark(a)+'<span class="sub">'+esc(typeLabel(a.type))+"</span>"+workflowSub(a)+'<span class="sub">'+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span></td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
+    return '<tr class="'+(sel?"sel":"")+'"><td><input type="checkbox" data-pick="'+esc(a.id)+'" aria-label="Select '+esc(a.title)+'" '+(V.picked[a.id]?"checked":"")+(canEdit(a)?"":" disabled")+'></td><td><button type="button" class="art" data-open="'+esc(a.id)+'">'+esc(a.title)+'</button>'+qBadge(a)+versionMark(a)+'<span class="sub">'+esc(typeLabel(a.type))+"</span>"+workflowSub(a)+'<span class="sub">'+(cmp&&V.view==="mine"?" \u00b7 "+esc(myRoles(a).map(function(r){return ROLE_L[r]}).join(", ")):"")+"</span>"+(cmp?sfLinks(a):"")+"</td>"+(cmp?"":"<td>"+esc(shortCat(a.category))+"</td><td>"+fieldCell(a,fk)+"</td><td>"+sfLinks(a)+"</td>")+"<td>"+dots(a)+'</td><td><span class="pill p-'+esc(a.step)+'">'+esc(a.st.l)+"</span>"+(cmp&&a.live.length?'<span class="sub">'+a.live.length+" to fix</span>":"")+"</td>"+(cmp?"":"<td>"+(a.live.length||"")+"</td>")+"</tr>"}).join("");
   h+="</tbody></table></div>";
   if(rows.length>V.limit)h+='<button type="button" class="btn ghost more" id="more">Show '+Math.min(200,rows.length-V.limit)+" more</button>";
   return h;

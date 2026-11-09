@@ -6,7 +6,7 @@ Each board is a single, self-contained HTML file. You upload it in Trail OS unde
 
 | Board | Folder | Latest file in repo | Status |
 |---|---|---|---|
-| Knowledge Studio | [`boards/knowledge-studio`](boards/knowledge-studio) | v1.21 | Active in Trail OS (confirmed Nov 9, 2026). |
+| Knowledge Studio | [`boards/knowledge-studio`](boards/knowledge-studio) | v1.22 | Active in Trail OS (activated Nov 9, 2026). |
 | Content Studio | [`boards/content-studio`](boards/content-studio) | v1 | Built Nov 7, 2026. Not yet activated. |
 | Trail Crew Boards | [`boards/trail-crew`](boards/trail-crew) | v1.4 | Active in Trail OS (confirmed Nov 9, 2026). |
 | Program Studio | [`boards/program-studio`](boards/program-studio) | v1.2 | Active in Trail OS (confirmed Nov 9, 2026). |

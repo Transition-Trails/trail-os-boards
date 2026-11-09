@@ -15,5 +15,6 @@ mark(){ git rev-parse -q --verify "refs/tags/$2" >/dev/null || git tag "$2" "$(g
 mark program-studio/v1   program-studio/v1-active-2026-11-08
 mark program-studio/v1.2 program-studio/v1.2-active-2026-11-09
 mark knowledge-studio/v1.21 knowledge-studio/v1.21-active-2026-11-09
+mark knowledge-studio/v1.22 knowledge-studio/v1.22-active-2026-11-09
 mark trail-crew/v1.4     trail-crew/v1.4-active-2026-11-09
 git push origin --tags
