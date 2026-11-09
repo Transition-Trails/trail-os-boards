@@ -10,7 +10,7 @@ The staff and volunteer board for all Transition Trails content: Build With Me v
 | Size | 57,534 bytes |
 | sha256 | `c640fe51c78471e3f5b9108d247011a3e3fe298287ba2e4dbd1fddebc7614b8a` |
 | Active in Trail OS | Not yet |
-| Note | The build spec's checklist records 57,511 bytes and sha256 `c244e7ee…`. This copy is 23 bytes larger, so it's a later save of v1. Update the spec's checklist to match whichever file you upload. |
+| Note | 23 bytes larger than the original v1 build: the Nov 7 Content Manager change (staff tabs show when `isStaff` or `isManager` is true). Matches the build spec. |
 | Contract | board `content-studio`, `boardVersion 1`, `contractVersion 1` |
 | Trail OS resource key | `content-studio-board:main`, files under `/objects/content-studio-boards/` |
 

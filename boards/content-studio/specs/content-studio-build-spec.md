@@ -155,7 +155,7 @@ Four points still need Angela's answer. Each has a default so the build can star
 
 ## Checks before the board is made current
 
-Board version 1 is `content-studio-board-v1.html`: 57,511 bytes, SHA-256 `c244e7ee9a99021f62a64df7413c898c3f54dbb9b671da633bd4d9af2cf906a6`. It was tested against sample data at 1440 px and 390 px wide, with no script errors.
+Board version 1 is `content-studio-board-v1.html` (in the repo as `boards/content-studio/content-studio-board.html`): 57,534 bytes, SHA-256 `c640fe51c78471e3f5b9108d247011a3e3fe298287ba2e4dbd1fddebc7614b8a`. The Nov 7 Content Manager change added 23 bytes: the board shows staff tabs when isStaff or isManager is true. It was tested against sample data at 1440 px and 390 px wide, as staff, Content Manager and volunteer, with no script errors.
 
 - [ ] The two Recording Review fields exist and the FT27 items are linked to week Products
 - [ ] Board version 1 uploads, previews and activates; restoring an earlier version works
