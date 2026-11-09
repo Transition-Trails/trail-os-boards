@@ -337,6 +337,7 @@ blockquote{margin:0;padding:8px 12px;border-left:3px solid var(--line);backgroun
 select:disabled,input:disabled,textarea:disabled{background:var(--bg);color:var(--body)}
 @media (max-width:1000px){aside.panel:not(.focus){flex-shrink:0}}
 @media (max-width:640px){.grid2{grid-template-columns:1fr}.kv span{min-width:100px}main.main{padding:14px 12px 30px}.pb{padding:12px 14px 20px}}
+.mhead .closedtg{margin-left:auto;font-size:13px}
 
 </style>
 </head>
@@ -361,7 +362,7 @@ select:disabled,input:disabled,textarea:disabled{background:var(--bg);color:var(
 /* Program Studio board v1 */
 var BOARD="program-studio",BOARD_VERSION=1,CONTRACT=1;
 var D=null,pending={},seq=0,busy={};
-var V={view:"overview",sel:null,tab:null,q:"",focus:false,forms:{},errs:{},flt:{status:"",mgr:""},showCanceled:false,fresh:{}};
+var V={view:"overview",sel:null,tab:null,q:"",focus:false,forms:{},errs:{},flt:{status:"",mgr:""},showClosed:false,fresh:{}};
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function lc(s){return String(s||"").trim().toLowerCase()}
@@ -470,18 +471,31 @@ function draftBadge(r){var s=draftSt(r),h="";if(!r.salesforceId)h+='<span class=
 
 /* ---------- views ---------- */
 function hasProblem(r){var dl=r.workflow.delivery||{};return r.issues.length>0||dl.status==="needs_attention"}
-var VIEWS={
+/* archived and canceled records are hidden unless the viewer turns them on; work queues always show them */
+function closedSt(s){return /cancel|archiv/i.test(String(s||""))}
+function hiddenRec(r){if(V.showClosed)return false;if(closedSt(r.fields.pmdm__Status__c))return true;if(D.byC[r.id]===r){var p=progOf(r);if(p&&closedSt(p.fields.pmdm__Status__c))return true}return false}
+function vis(rows){return rows.filter(function(r){return !hiddenRec(r)})}
+var BASE={
   programs:function(){return D.programs},
   cohorts:function(){return D.cohorts},
   proposals:function(){return D.programs.filter(function(p){return val(p,"pmdm__Status__c")==="In Discovery"||!p.salesforceId})},
+  mine:function(){return D.programs.concat(D.cohorts).filter(function(r){return (r.fields.Program_Manager__c&&D.myMgr[r.fields.Program_Manager__c])||isMine(r)||(draftSt(r)==="awaiting_approval"&&r.perms.approve)})}
+};
+BASE.calendar=BASE.cohorts;BASE.overview=function(){return D.programs.concat(D.cohorts)};
+function closedToggle(){var b=BASE[V.view];if(!b)return "";var o=V.showClosed;V.showClosed=false;var n=b().filter(hiddenRec).length;V.showClosed=o;if(!n)return "";
+  return '<span class="checks closedtg"><label><input type="checkbox" id="showclosed"'+(V.showClosed?" checked":"")+">Show archived and canceled ("+n+")</label></span>"}
+var VIEWS={
+  programs:function(){return vis(BASE.programs())},
+  cohorts:function(){return vis(BASE.cohorts())},
+  proposals:function(){return vis(BASE.proposals())},
   approve:function(){return D.programs.concat(D.cohorts).filter(function(r){return draftSt(r)==="awaiting_approval"})},
-  mine:function(){return D.programs.concat(D.cohorts).filter(function(r){return (r.fields.Program_Manager__c&&D.myMgr[r.fields.Program_Manager__c])||isMine(r)||(draftSt(r)==="awaiting_approval"&&r.perms.approve)})},
+  mine:function(){return vis(BASE.mine())},
   problems:function(){return D.programs.concat(D.cohorts).filter(hasProblem)}
 };
 function kindOf(r){return D.byP[r.id]===r?"program":"cohort"}
 function matchQ(r){if(!V.q)return true;var q=lc(V.q),s=lc(nm(r));if(s.indexOf(q)>=0)return true;if(kindOf(r)==="cohort"){var p=progOf(r);return !!(p&&lc(nm(p)).indexOf(q)>=0)}return false}
 function railHtml(){
-  var items=[["overview","Overview",null],["programs","Programs",D.programs.length],["cohorts","Cohorts",D.cohorts.length],["calendar","Calendar",null],["proposals","Proposals",VIEWS.proposals().length],["approve","Waiting for approval",VIEWS.approve().length],["mine","My work",VIEWS.mine().length],["problems","Needs attention",VIEWS.problems().length]];
+  var items=[["overview","Overview",null],["programs","Programs",VIEWS.programs().length],["cohorts","Cohorts",VIEWS.cohorts().length],["calendar","Calendar",null],["proposals","Proposals",VIEWS.proposals().length],["approve","Waiting for approval",VIEWS.approve().length],["mine","My work",VIEWS.mine().length],["problems","Needs attention",VIEWS.problems().length]];
   return items.map(function(x){return '<button type="button" data-view="'+x[0]+'" aria-current="'+(V.view===x[0])+'"><span>'+esc(x[1])+"</span>"+(x[2]!=null?'<span class="n">'+x[2]+"</span>":"")+"</button>"}).join("");
 }
 function render(){
@@ -494,10 +508,10 @@ function render(){
 function renderMain(){
   var m=$("main"),y=m.scrollTop,h="";
   var titles={overview:"Programs at a glance",programs:"Programs",cohorts:"Cohorts",calendar:"Cohort calendar",proposals:"Proposals",approve:"Waiting for approval",mine:"My work",problems:"Needs attention"};
-  h+='<div class="mhead"><h2>'+esc(titles[V.view]||"Programs")+"</h2></div>";
+  h+='<div class="mhead"><h2>'+esc(titles[V.view]||"Programs")+"</h2>"+closedToggle()+"</div>";
   if(V.view==="overview")h+=overview();
-  else if(V.view==="programs")h+=programFilters()+programTable(D.programs.filter(matchQ).filter(function(p){return (!V.flt.status||val(p,"pmdm__Status__c")===V.flt.status)&&(!V.flt.mgr||val(p,"Program_Manager__c")===V.flt.mgr)}));
-  else if(V.view==="cohorts")h+=cohortFilters()+cohortTable(D.cohorts.filter(matchQ).filter(function(c){return !V.flt.cstatus||val(c,"pmdm__Status__c")===V.flt.cstatus}));
+  else if(V.view==="programs")h+=programFilters()+programTable((V.flt.status?D.programs:VIEWS.programs()).filter(matchQ).filter(function(p){return (!V.flt.status||val(p,"pmdm__Status__c")===V.flt.status)&&(!V.flt.mgr||val(p,"Program_Manager__c")===V.flt.mgr)}));
+  else if(V.view==="cohorts")h+=cohortFilters()+cohortTable((V.flt.cstatus?D.cohorts:VIEWS.cohorts()).filter(matchQ).filter(function(c){return !V.flt.cstatus||val(c,"pmdm__Status__c")===V.flt.cstatus}));
   else if(V.view==="calendar")h+=calendar();
   else if(V.view==="proposals")h+=programTable(VIEWS.proposals().filter(matchQ),true);
   else h+=mixedTable(VIEWS[V.view]().filter(matchQ));
@@ -511,7 +525,7 @@ function programTable(rows,prop){
   if(!rows.length)return '<div class="card empty">Nothing here'+(V.q?" for this search":"")+".</div>";
   return '<div class="card tablewrap"><table><thead><tr><th>Program</th><th>Status</th><th>Manager</th><th>Dates</th><th>'+(prop?"Proposal":"Cohorts")+"</th><th>Approval and delivery</th></tr></thead><tbody>"+rows.map(function(p){
     var pc=p.proposalCompleteness||{},mgr=lookName("managers",val(p,"Program_Manager__c"));
-    return '<tr class="'+(isSel("program",p)?"sel":"")+'"><td><button type="button" class="art" data-open="program:'+esc(p.id)+'">'+esc(nm(p))+"</button>"+draftBadge(p)+(val(p,"pmdm__ShortSummary__c")?'<span class="sub">'+esc(String(val(p,"pmdm__ShortSummary__c")).slice(0,110))+"</span>":"")+"</td><td>"+statusPill(val(p,"pmdm__Status__c"))+"</td><td>"+esc(mgr||"Not set")+"</td><td>"+dates(p)+"</td><td>"+(prop?(pc.total?esc(pc.done+" of "+pc.total+" sections"):"Not confirmed"):cohortsOf(p).length)+"</td><td>"+wfCell(p)+"</td></tr>"}).join("")+"</tbody></table></div>";
+    return '<tr class="'+(isSel("program",p)?"sel":"")+'"><td><button type="button" class="art" data-open="program:'+esc(p.id)+'">'+esc(nm(p))+"</button>"+draftBadge(p)+(val(p,"pmdm__ShortSummary__c")?'<span class="sub">'+esc(String(val(p,"pmdm__ShortSummary__c")).slice(0,110))+"</span>":"")+"</td><td>"+statusPill(val(p,"pmdm__Status__c"))+"</td><td>"+esc(mgr||"Not set")+"</td><td>"+dates(p)+"</td><td>"+(prop?(pc.total?esc(pc.done+" of "+pc.total+" sections"):"Not confirmed"):vis(cohortsOf(p)).length)+"</td><td>"+wfCell(p)+"</td></tr>"}).join("")+"</tbody></table></div>";
 }
 function dates(r){var s=val(r,"pmdm__StartDate__c"),e=val(r,"pmdm__EndDate__c");if(!s&&!e)return '<span class="note">No dates</span>';return esc((s?fmtDate(s):"No start")+" \u2013 "+(e?fmtDate(e):"no end"))}
 function seatsCell(c){var cap=val(c,"Cohort_Capacity__c"),en=enrolled(c),so=c.seatsOpen;var h=(cap==null||cap===""?"No capacity":esc(cap)+" seats")+'<span class="sub">'+(en==null?"Enrolled not confirmed":en+" enrolled or active")+"</span>";if(so!=null&&so<0)h+='<span class="sub warnt">Over capacity by '+(-so)+"</span>";else if(so!=null)h+='<span class="sub">'+so+" open</span>";return h}
@@ -528,11 +542,11 @@ function mixedTable(rows){
 function wfCell(r){var a=r.workflow.approval,d=r.workflow.delivery;return '<span class="sub" style="color:var(--ink)">'+esc(a&&a.label||"Approval not confirmed")+'</span><span class="sub">'+esc(d&&d.label||"Delivery not confirmed")+"</span>"}
 function overview(){
   var h='<div class="tiles">';
-  var st={};D.programs.forEach(function(p){var s=val(p,"pmdm__Status__c")||"No status";st[s]=(st[s]||0)+1});
+  var st={};VIEWS.programs().forEach(function(p){var s=val(p,"pmdm__Status__c")||"No status";st[s]=(st[s]||0)+1});
   h+='<div class="tile"><span class="tl">Programs by status</span><span class="stl">'+Object.keys(st).map(function(s){return '<button type="button" class="linkbtn" data-pstatus="'+esc(s)+'">'+esc(s)+" "+st[s]+"</button>"}).join("")+"</span></div>";
-  var t0=today(),soon=D.cohorts.filter(function(c){var s=dnum(val(c,"pmdm__StartDate__c"));return s!=null&&s>=t0&&s<=t0+90&&val(c,"pmdm__Status__c")!=="Canceled"});
+  var t0=today(),soon=VIEWS.cohorts().filter(function(c){var s=dnum(val(c,"pmdm__StartDate__c"));return s!=null&&s>=t0&&s<=t0+90});
   h+='<button type="button" class="tile" data-view="calendar"><span class="tl">Cohorts starting in 90 days</span><span class="tv">'+soon.length+"</span></button>";
-  var open=0,unk=0;D.cohorts.forEach(function(c){var s=val(c,"pmdm__Status__c");if(s!=="Planned"&&s!=="Active")return;if(c.seatsOpen==null)unk++;else if(c.seatsOpen>0)open+=c.seatsOpen});
+  var open=0,unk=0;VIEWS.cohorts().forEach(function(c){var s=val(c,"pmdm__Status__c");if(s!=="Planned"&&s!=="Active")return;if(c.seatsOpen==null)unk++;else if(c.seatsOpen>0)open+=c.seatsOpen});
   h+='<button type="button" class="tile" data-view="cohorts"><span class="tl">Open seats in planned and active cohorts</span><span class="tv">'+open+'</span><span class="ts">'+(unk?unk+" cohort"+(unk===1?"":"s")+" with capacity not confirmed":"")+"</span></button>";
   h+='<button type="button" class="tile" data-view="approve"><span class="tl">Waiting for approval</span><span class="tv">'+VIEWS.approve().length+"</span></button>";
   h+='<button type="button" class="tile'+(VIEWS.problems().length?" bad":"")+'" data-view="problems"><span class="tl">Needs attention</span><span class="tv">'+VIEWS.problems().length+'</span><span class="ts">issues or delivery problems</span></button>';
@@ -543,9 +557,9 @@ function overview(){
   return h;
 }
 function calendar(){
-  var rows=D.cohorts.filter(function(c){return dnum(val(c,"pmdm__StartDate__c"))!=null&&(V.showCanceled||val(c,"pmdm__Status__c")!=="Canceled")});
-  var h='<div class="btnrow"><label class="checks"><label><input type="checkbox" id="showcan"'+(V.showCanceled?" checked":"")+">Show canceled cohorts</label></label></div>";
-  var none=D.cohorts.filter(function(c){return dnum(val(c,"pmdm__StartDate__c"))==null});
+  var rows=VIEWS.cohorts().filter(function(c){return dnum(val(c,"pmdm__StartDate__c"))!=null});
+  var h="";
+  var none=VIEWS.cohorts().filter(function(c){return dnum(val(c,"pmdm__StartDate__c"))==null});
   if(!rows.length)return h+'<div class="card empty">No cohorts with a start date.</div>';
   rows.sort(function(a,b){return dnum(val(a,"pmdm__StartDate__c"))-dnum(val(b,"pmdm__StartDate__c"))});
   var lo=Infinity,hi=-Infinity;rows.forEach(function(c){var s=dnum(val(c,"pmdm__StartDate__c")),e=dnum(val(c,"pmdm__EndDate__c"));lo=Math.min(lo,s);hi=Math.max(hi,e!=null?e:s+30)});
@@ -587,7 +601,7 @@ function programPanel(p){
   var tab=V.tab||"overview";V.tab=tab;
   var sub=esc(val(p,"pmdm__Status__c")||"No status")+" \u00b7 "+dates(p)+(val(p,"Program_Manager__c")?" \u00b7 Manager: "+esc(lookName("managers",val(p,"Program_Manager__c"))):"");
   var h=head("Program",nm(p),sub,statusPill(val(p,"pmdm__Status__c"))+draftBadge(p))+guidance(p)+issuesHtml(p)+"</div>";
-  var tabs=[["overview","Overview"],["plan","Plan"],["resources","Resources"],["cohorts","Cohorts \u00b7 "+cohortsOf(p).length],["courses","Courses"],["approval","Approval"+(p.changes.length?" \u00b7 "+p.changes.length:"")],["sync","Sync"]];
+  var tabs=[["overview","Overview"],["plan","Plan"],["resources","Resources"],["cohorts","Cohorts \u00b7 "+vis(cohortsOf(p)).length],["courses","Courses"],["approval","Approval"+(p.changes.length?" \u00b7 "+p.changes.length:"")],["sync","Sync"]];
   var th=tabsHtml(tabs,tab);
   if(V.focus)h='<div class="fside">'+h+th+"</div>";else h+=th;
   var body={overview:pOverview,plan:function(x){return fieldsTab(x,"program",P_TABS.plan,"Plan")},resources:pResources,cohorts:pCohorts,courses:pCourses,approval:approvalTab,sync:syncTab}[tab](p);
@@ -647,7 +661,7 @@ function statusBlock(r,kind){
   return h;
 }
 function pCohorts(p){
-  var cs=cohortsOf(p),h=cs.length?'<div class="list card">'+cs.map(function(c){return '<button type="button" class="item" data-open="cohort:'+esc(c.id)+'"><span><span class="t">'+esc(nm(c))+'</span><span class="k">'+dates(c)+"</span></span><span>"+statusPill(val(c,"pmdm__Status__c"))+"</span></button>"}).join("")+"</div>":'<p class="note">No cohorts yet.</p>';
+  var cs=cohortsOf(p),shown=vis(cs),nh=cs.length-shown.length,h=(shown.length?'<div class="list card">'+shown.map(function(c){return '<button type="button" class="item" data-open="cohort:'+esc(c.id)+'"><span><span class="t">'+esc(nm(c))+'</span><span class="k">'+dates(c)+"</span></span><span>"+statusPill(val(c,"pmdm__Status__c"))+"</span></button>"}).join("")+"</div>":'<p class="note">'+(cs.length?"No open cohorts.":"No cohorts yet.")+"</p>")+(nh?'<p class="note">'+nh+" archived or canceled cohort"+(nh===1?" is":"s are")+' hidden. <button type="button" class="linkbtn" data-showclosed="1">Show them</button></p>':"");
   if(!p.perms.edit)return h;
   if(!p.salesforceId)return h+'<p class="note">Cohorts can be added once this program has been approved and delivered to Salesforce.</p>';
   var f=form("nc:"+p.id),key="newc:"+p.id;
@@ -797,7 +811,8 @@ document.addEventListener("click",function(e){
   if(t.id==="newprog"){V.sel={kind:"new"};V.focus=false;render();var n=$("np-name");if(n)n.focus();return}
   if(t.id==="np-go"){doPropose();return}
   if(t.id==="np-cancel"){delete V.forms.newp;V.sel=null;render();return}
-  if(t.id==="showcan"){V.showCanceled=t.checked;renderMain();return}
+  if(t.id==="showclosed"){V.showClosed=t.checked;render();return}
+  if(ds.showclosed){V.showClosed=true;render();return}
   if(ds.save){doSave(ds.save);return}
   if(ds.undo){delete V.forms[ds.undo];renderPanel();return}
   if(ds.stgo){doStatus(ds.stgo);return}
