@@ -8,7 +8,7 @@ Each board is a single, self-contained HTML file. You upload it in Trail OS unde
 |---|---|---|---|
 | Knowledge Studio | [`boards/knowledge-studio`](boards/knowledge-studio) | v1.22 | Active in Trail OS (activated Nov 9, 2026). |
 | Content Studio | [`boards/content-studio`](boards/content-studio) | v1 | Built Nov 7, 2026. Not yet activated. |
-| Trail Crew Boards | [`boards/trail-crew`](boards/trail-crew) | v1.4 | Active in Trail OS (confirmed Nov 9, 2026). |
+| Trail Crew Boards | [`boards/trail-crew`](boards/trail-crew) | v1.5 | v1.4 active in Trail OS (confirmed Nov 9, 2026). v1.5 built Nov 17, 2026, not yet activated. |
 | Program Studio | [`boards/program-studio`](boards/program-studio) | v1.2 | Active in Trail OS (confirmed Nov 9, 2026). |
 | Academy Board | [`boards/academy`](boards/academy) | AcademyBoard contract v2 | Prototype from Oct 31, 2026. |
 

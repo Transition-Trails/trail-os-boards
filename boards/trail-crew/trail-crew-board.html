@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Trail Crew Boards</title>
 <style>
-/* Trail Crew Boards v1: team header, eight views; renders only from Trail OS BoardData */
+/* Trail Crew Boards v1.5: case search by Salesforce case number or Trail OS ID. v1: team header, eight views; renders only from Trail OS BoardData */
 :root{
   --bg:#f3f5f2; --surface:#ffffff; --sunk:#e8ece6; --line:#d3dacf; --fg:#17251d; --muted:#5a6a60;
   --accent:#1f5a40; --accent-ink:#ffffff; --accent-soft:#dcebe2;
@@ -306,6 +306,20 @@ details.rstory[open]>summary{margin-bottom:10px}
 .rs-title{color:var(--fg)}
 .rs-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 details.rstory .tbl-wrap{border-radius:10px}
+.csearch{position:relative;margin-top:14px;max-width:560px}
+.csearch label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.csearch input[type=search]{width:100%;font:inherit;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.csearch input[type=search]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.cres{position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:20;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);max-height:min(60vh,420px);overflow:auto;padding:6px}
+.cres ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.cres li{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;align-items:baseline;padding:8px 10px;border-radius:8px}
+.cres li:hover,.cres li.on{background:var(--sunk)}
+.cres .ids{display:flex;flex-direction:column;gap:2px;min-width:92px}
+.cres .ids .tos{font:600 13px var(--mono)}
+.cres .ids .num{font:500 12px var(--mono);color:var(--muted)}
+.cres .what{min-width:0}
+.cres .what b{display:block;font-weight:600;overflow-wrap:anywhere}
+.cres .empty{padding:10px;font-size:14px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -318,6 +332,12 @@ details.rstory .tbl-wrap{border-radius:10px}
         <p class="sub" id="tmission">Loading from Trail OS&#8230;</p>
       </div>
       <div class="teams" role="group" aria-label="Team" id="teambtns"></div>
+    </div>
+    <div class="csearch" role="search" id="csearch">
+      <label for="cq">Find a case</label>
+      <input type="search" id="cq" name="cq" placeholder="Case number or Trail OS ID, e.g. 1280 or 026" aria-controls="cres" aria-describedby="cqhelp">
+      <span id="cqhelp" hidden>Type a Salesforce case number or a Trail OS ID. Press Enter to open the first match.</span>
+      <div class="cres" id="cres" hidden></div>
     </div>
     <nav class="tabs" aria-label="Views" id="tabs">
       <a href="#overview" data-view="overview">Overview</a>
@@ -448,7 +468,7 @@ details.rstory .tbl-wrap{border-radius:10px}
    Every save is a named action that Trail OS checks on the server. */
 (function(){
 "use strict";
-const BOARD_VERSION=1, CONTRACT=1;
+const BOARD_VERSION="1.5", CONTRACT=1;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=id=>document.getElementById(id);
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
@@ -535,6 +555,7 @@ function render(){
   $("tmission").textContent=[T.goal,T.description].filter(Boolean).join(". ")||"";
   document.querySelectorAll(".asof").forEach(e=>e.textContent="Data as of "+fmtWhen(D.asOf));
   $("foot").textContent=`Data as of ${fmtWhen(D.asOf)}. ${D.insights&&D.insights.generatedAt?"Insights as of "+fmtWhen(D.insights.generatedAt)+(D.insights.stale?" (stale)":"")+".":"Checks are computed from the data; Claude insights arrive in a later phase."} Board version ${BOARD_VERSION}. Refreshes on the hour, 6 AM to 9 PM Central.`;
+  if($("cq")&&$("cq").value.trim())drawSearch();
   [renderOverview,renderPrio,renderFeatures,renderTeam,renderDiscovery,renderSprint,renderPipeline,renderRelease].forEach(f=>{try{f()}catch(e){console.error(f.name,e)}});
   show();
 }
@@ -784,6 +805,49 @@ function renderRelease(){
   $("recsum").textContent=ss.length?`${ss.filter(s=>!s.items.length||s.items.some(b=>!((b.changeSetId&&D.csBy[b.changeSetId])||b.manualStep))).length} of ${ss.length} stories need attention`:"";
   $("signs").innerHTML=(rel.signoffs||[]).slice().sort((a,b)=>(a.sequence||0)-(b.sequence||0)).map(x=>`<li><span class="pill ${x.status==="Approved"?"ok":x.status==="Rejected"?"high":""}">${esc(x.status)}</span><span><b>${esc(x.approver||"")}</b> \u00b7 ${esc(x.role||"")}</span></li>`).join("")||`<li><span class="pill">None</span><span>No sign-offs on this release yet.</span></li>`;
 }
+
+
+/* ---------- case search (v1.5) ---------- */
+// Matches a Salesforce case number (00001280, 1280), a Trail OS ID (026, 26) or a Salesforce record ID.
+// The Trail OS ID is read from cases[].trailOsId when Trail OS sends it (added field; contract unchanged).
+const caseTos=c=>c.trailOsId!=null&&c.trailOsId!==""?String(c.trailOsId):"";
+const nz=s=>String(s||"").replace(/\D/g,"").replace(/^0+/,"");
+function findCases(q){
+  q=String(q||"").trim();if(!q||!D)return [];
+  const raw=q.replace(/^(case|tos|trail\s*os)\s*[-#:]?\s*/i,"").replace(/^#/,"").trim();
+  if(/^[a-zA-Z0-9]{15,18}$/.test(raw)&&/^500/.test(raw)){const c=D.cases.find(x=>String(x.id).slice(0,15)===raw.slice(0,15));return c?[{c,how:"record"}]:[]}
+  const d=nz(raw);if(!d)return [];
+  const out=[],seen=new Set(),add=(c,how,rank)=>{if(seen.has(c.id))return;seen.add(c.id);out.push({c,how,rank})};
+  D.cases.forEach(c=>{if(caseTos(c)&&nz(caseTos(c))===d)add(c,"tos",0)});
+  D.cases.forEach(c=>{if(nz(c.number)===d)add(c,"number",1)});
+  const rd=raw.replace(/\D/g,"");
+  if(rd.length>=2)D.cases.forEach(c=>{const t=caseTos(c).replace(/\D/g,"");if(t&&t.startsWith(rd))add(c,"tos",2);else if(d.length>=2&&nz(c.number).startsWith(d))add(c,"number",2)});
+  return out.sort((a,b)=>a.rank-b.rank||nz(a.c.number).localeCompare(nz(b.c.number),undefined,{numeric:true})).slice(0,12);
+}
+let csHits=[],csOn=-1;
+function drawSearch(){
+  const box=$("cres"),q=$("cq").value.trim();
+  if(!q){box.hidden=true;box.innerHTML="";csHits=[];return}
+  if(!D){box.hidden=false;box.innerHTML=`<p class="empty">The board is still loading cases from Trail OS.</p>`;return}
+  csHits=findCases(q);if(csOn>=csHits.length)csOn=csHits.length-1;
+  const anyTos=D.cases.some(c=>caseTos(c));
+  if(!csHits.length){
+    box.hidden=false;
+    box.innerHTML=`<p class="empty">No open case matches “${esc(q)}”. This board lists open Platform Change cases only.${anyTos?"":" Trail OS IDs aren’t in the board’s data yet, so search by the Salesforce case number for now."}</p>`;return}
+  box.hidden=false;
+  box.innerHTML=`<ul role="listbox" aria-label="Matching cases">${csHits.map((h,i)=>{const c=h.c,tos=caseTos(c),num=String(c.number||"").replace(/^0+/,"");
+    return `<li role="option" id="cs-${i}" class="${i===csOn?"on":""}" aria-selected="${i===csOn}"><span class="ids">${tos?`<span class="tos">Trail OS ${esc(tos)}</span>`:""}${rec("case",c.id,"Case "+num).replace('class="clink linkbtn mono"','class="clink linkbtn mono num"')}</span><span class="what"><b>${esc(c.subject||"")}</b><span class="note">${esc(teamName(c.team))} · ${esc(c.status||"")} · ${esc(stageName(c.stage))}${c.assignee?" · "+esc(c.assignee):""}</span></span></li>`}).join("")}</ul>`;
+}
+async function openHit(i){const h=csHits[i];if(!h)return;const r=await act("openRecord",{type:"case",id:h.c.id});if(!r.ok){const box=$("cres");box.insertAdjacentHTML("beforeend",`<p class="empty">${esc(r.message||"Couldn’t open that case.")}</p>`)}}
+$("cq").addEventListener("input",()=>{csOn=-1;drawSearch()});
+$("cq").addEventListener("keydown",e=>{
+  if(e.key==="ArrowDown"&&csHits.length){e.preventDefault();csOn=(csOn+1)%csHits.length;drawSearch()}
+  else if(e.key==="ArrowUp"&&csHits.length){e.preventDefault();csOn=csOn<=0?csHits.length-1:csOn-1;drawSearch()}
+  else if(e.key==="Escape"){$("cq").value="";drawSearch()}
+  else if(e.key==="Enter"){e.preventDefault();if(csHits.length)openHit(csOn<0?0:csOn)}
+});
+document.addEventListener("click",e=>{if(!e.target.closest("#csearch"))$("cres").hidden=true});
+$("cq").addEventListener("focus",()=>{if($("cq").value.trim())drawSearch()});
 
 /* ---------- events ---------- */
 document.addEventListener("click",async e=>{

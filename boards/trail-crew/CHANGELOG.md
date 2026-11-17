@@ -2,6 +2,7 @@
 
 | Version | Built | Notes | Activated in Trail OS |
 |---|---|---|---|
+| v1.5 | 2026-11-17 | Find a case: search by Salesforce case number, Trail OS ID (reads `cases[].trailOsId` when Trail OS sends it) or Salesforce record ID. Contract unchanged. | Not yet |
 | v1.4 | 2026-10-28 | | Active (confirmed 2026-11-09) |
 | v1.3 | 2026-10-28 | | |
 | v1.2 | 2026-10-28 | | |
